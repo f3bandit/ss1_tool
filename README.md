@@ -138,6 +138,9 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
 
+### About
+- Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
+
 ### Debug Report
 - One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health and logs into a single text file for Taki and the mods
 - Starts with an automatic **FINDINGS** summary of known problems, including whether the SS1 HDMI fix is applied
@@ -251,7 +254,7 @@ Developed by **f3bandit**.
 
 Special thanks to **Taki Udon** and the team, and all the admins on the Taki Discord.
 
-<p><a href="https://discord.gg/74pb5PJRxX"><b>💬 Join the Taki Udon Discord</b></a></p>
+<p><a href="https://discord.gg/74pb5PJRxX"><b>💬 Join the Taki Udon Discord</b></a> &nbsp;·&nbsp; <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation"><b>📖 SuperStation One Documentation</b></a></p>
 
 SuperStation One, Console Mode and MiSTer belong to their respective owners. This project uses [x/crypto/ssh](https://pkg.go.dev/golang.org/x/crypto/ssh) and downloads [Update All](https://github.com/theypsilon/Update_All_MiSTer) and the official [SS1 SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer) at runtime.
 
