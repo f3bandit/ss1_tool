@@ -53,6 +53,7 @@
 - Status panel: kernel, `/MiSTer.version`, Console Mode, Samba, `update_linux`, scraper login, installed scripts and free space
 
 ### Setup
+Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
 - Enable Samba at boot, so the SD card shows up in Windows as `\\IP\sdcard`
 - Install the latest [Update All](https://github.com/theypsilon/Update_All_MiSTer) and set `downloader.ini` to the MiSTer-devel distribution with `update_linux = false`, which protects Console Mode's kernel
