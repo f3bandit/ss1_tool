@@ -35,7 +35,7 @@ It's built around three jobs:
 
 | Problem | How SS1 Tool helps |
 |---|---|
-| **Update All breaking Console Mode** by replacing the Linux kernel | Installs Update All with `update_linux = false` and the MiSTer-devel distribution, and shows whether those settings are in place |
+| **Linux kernel updates breaking cores or front ends** (see [below](#linux-kernel-updates-and-the-stable-lane)) | Installs Update All with `update_linux = false` and the MiSTer-devel distribution, shows whether those settings are in place, and shows the current [Linux update advisory](#linux-update-advisory) |
 | **Broken or mistyped `MiSTer.ini`** | Edit it from your PC with an automatic backup before every change, plus named and timestamped backups you can restore in one click |
 | **HDMI settings the SS1 doesn't support** | The SS1 HDMI fix comments out the HDMI-CEC, `hdmi_off` and `video_off_logo` settings and shows the state of each one |
 | **SD card problems:** corrupted cards, the faulty `fix_sd_overlap` tool, Windows asking to scan the card, failing or fake-capacity cards | Removes the faulty overlap tool, checks the partition table and exFAT health, tests whether Windows will complain, runs deep read/write tests, adds a safe shutdown, and flashes the official SS1 SD Card Installer |
@@ -45,11 +45,39 @@ It's built around three jobs:
 
 SS1 Tool is **not a replacement for [MiSTer Companion](https://github.com/Anime0t4ku/mister-companion)** or other general MiSTer management apps. It doesn't try to manage your game library, saves, artwork or cores. It focuses on the SuperStation One's setup, diagnostics and support needs, and works alongside whatever other tools you already use. The remote control and file manager are there to help with setup and troubleshooting.
 
+### Linux kernel updates and the stable lane
+
+A Linux kernel update delivered through Update All broke some hybrid cores, such as **Street Fighter III: 3rd Strike**, **Quake** and **Duke Nukem 3D**, as well as front ends including Console Mode. Many owners had to reflash their SD card to recover. That problem has since been fixed.
+
+Kernel updates can still bring breaking changes in the future, though. SS1 Tool keeps your SS1 in a more stable lane: with `update_linux = false`, Update All still updates your cores and the MiSTer menu, but leaves the Linux kernel alone. You don't have to worry about a breaking kernel change forcing you to reflash your SD card again.
+
+### Linux update advisory
+
+SS1 Tool also shows whether Linux updates are currently considered **safe** or **not recommended**. This advisory is maintained by hand in [`update_flags/`](https://github.com/f3bandit/ss1_tool/tree/main/update_flags) in this repo and updated when a problem is found or resolved. The app reads it from GitHub each time you open it, so you always see the latest status without updating the tool. It appears in **Setup → Update All** and in the **System status** panel:
+
+| Status | What it means |
+|---|---|
+| ✓ **Reported safe** | No known problems with the current Linux update. Keeping `update_linux = false` is still the most stable choice. |
+| ⚠ **NOT recommended** | A known problem exists; the reason is shown. If your SS1 still has Linux updates turned on, the tool tells you to click **Install Update All + apply settings**. |
+| No advisory | Nothing has been published right now. |
+
+The advisory is only information. SS1 Tool never changes your settings by itself.
+
+<details>
+<summary>Advisory file format (for maintainers)</summary>
+
+- `update_flags/linux_update.ini` contains one line: `Linux_update = safe` or `Linux_update = unsafe`. Any other value shows as "No advisory".
+- `update_flags/linux_update_readme.ini` contains a short plain-text explanation, shown to users under the status.
+
+</details>
+
 ---
 
 ## Contents
 
 - [What is SS1 Tool?](#what-is-ss1-tool)
+- [Linux kernel updates and the stable lane](#linux-kernel-updates-and-the-stable-lane)
+- [Linux update advisory](#linux-update-advisory)
 - [Screenshots](#screenshots)
 - [Features](#features)
 - [Getting started](#getting-started)
@@ -83,7 +111,8 @@ SS1 Tool is **not a replacement for [MiSTer Companion](https://github.com/Anime0
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
 - Enable Samba at boot, so the SD card shows up in Windows as `\\IP\sdcard`
-- Install the latest [Update All](https://github.com/theypsilon/Update_All_MiSTer) and set `downloader.ini` to the MiSTer-devel distribution with `update_linux = false`, which protects Console Mode's kernel
+- Install the latest [Update All](https://github.com/theypsilon/Update_All_MiSTer) and set `downloader.ini` to the MiSTer-devel distribution with `update_linux = false`, so cores and the menu keep updating while the Linux kernel stays put
+- Shows the current [Linux update advisory](#linux-update-advisory) from this repo
 - Remove the faulty `fix_sd_overlap.sh` / `exfat_fix_overlap` tool, which misreads the correct SS1 partition layout as overlapping ([SuperStation-Documentation #14](https://github.com/Takiiiiiiii/SuperStation-Documentation/issues/14))
 - Save your own ScreenScraper login and TheGamesDB API key for Console Mode, with the installed values shown under each field
 
@@ -170,7 +199,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 ## Privacy and security
 
 - The app only listens on `127.0.0.1` (your own PC), and every request needs a random session token.
-- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to download Update All and the SD installer, and to TheGamesDB, to test an API key you enter.
+- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory and download Update All and the SD installer, and to TheGamesDB, to test an API key you enter.
 - Saved devices store the name, IP and user only, never the password.
 - Scraper logins are written only to your SS1, in `/media/fat/ConsoleMode/`.
 - The SS1 is reached over SSH with host-key checking off, because the SS1 creates new host keys every time it's reflashed. Only use the tool on networks you trust.
@@ -180,7 +209,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 1. Open the **Debug Report** tab and click **Create debug report**.
 2. Save the file.
 3. **Problem with your SS1:** post the file in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX) along with a short description of what's wrong.
-   **Problem with SS1 Tool itself:** attach the file to a new [issue](../../issues).
+   **Problem with SS1 Tool itself:** attach the file to a new [issue](https://github.com/f3bandit/ss1_tool/issues).
 
 Please say which version you're using; it's shown in the bottom right corner of the app.
 
