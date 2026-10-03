@@ -5,8 +5,8 @@
 <h1 align="center">SS1 Tool</h1>
 
 <p align="center">
-  <b>Unofficial SuperStation One toolkit for Windows</b><br>
-  One exe, no install. Connects to your SS1 over the network and runs in your web browser.
+  <b>Unofficial setup, diagnostics and support tool for the SuperStation One</b><br>
+  One Windows exe, no install. Connects to your SS1 over the network and runs in your web browser.
 </p>
 
 <p align="center">
@@ -21,8 +21,35 @@
 
 ---
 
+## What is SS1 Tool?
+
+SS1 Tool helps SuperStation One owners set up their system correctly, avoid the problems that come up most often, and get help quickly when something does go wrong.
+
+It's built around three jobs:
+
+- **Setup:** get a new or freshly flashed SS1 configured the right way in a few clicks.
+- **Diagnostics:** check the SD card, NVMe drive and configuration for known problems.
+- **Support:** create one debug report you can post in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX), so the admins can see exactly what's on your system instead of asking question after question.
+
+### Problems it helps prevent
+
+| Problem | How SS1 Tool helps |
+|---|---|
+| **Update All breaking Console Mode** by replacing the Linux kernel | Installs Update All with `update_linux = false` and the MiSTer-devel distribution, and shows whether those settings are in place |
+| **Broken or mistyped `MiSTer.ini`** | Edit it from your PC with an automatic backup before every change, plus named and timestamped backups you can restore in one click |
+| **HDMI settings the SS1 doesn't support** | The SS1 HDMI fix comments out the HDMI-CEC, `hdmi_off` and `video_off_logo` settings and shows the state of each one |
+| **SD card problems:** corrupted cards, the faulty `fix_sd_overlap` tool, Windows asking to scan the card, failing or fake-capacity cards | Removes the faulty overlap tool, checks the partition table and exFAT health, tests whether Windows will complain, runs deep read/write tests, adds a safe shutdown, and flashes the official SS1 SD Card Installer |
+| **Hard-to-explain problems** | One click creates a debug report with versions, configs, storage health and logs, ready to post in the Taki Udon Discord. Passwords, keys, WiFi names and MAC addresses are redacted. |
+
+### What it isn't
+
+SS1 Tool is **not a replacement for [MiSTer Companion](https://github.com/Anime0t4ku/mister-companion)** or other general MiSTer management apps. It doesn't try to manage your game library, saves, artwork or cores. It focuses on the SuperStation One's setup, diagnostics and support needs, and works alongside whatever other tools you already use. The remote control and file manager are there to help with setup and troubleshooting.
+
+---
+
 ## Contents
 
+- [What is SS1 Tool?](#what-is-ss1-tool)
 - [Screenshots](#screenshots)
 - [Features](#features)
 - [Getting started](#getting-started)
@@ -151,7 +178,9 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 ## Reporting a problem
 
 1. Open the **Debug Report** tab and click **Create debug report**.
-2. Save the file and attach it to a new [issue](../../issues), or post it in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX).
+2. Save the file.
+3. **Problem with your SS1:** post the file in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX) along with a short description of what's wrong.
+   **Problem with SS1 Tool itself:** attach the file to a new [issue](../../issues).
 
 Please say which version you're using; it's shown in the bottom right corner of the app.
 
