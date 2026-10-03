@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Taki Udon Discord
+    url: https://discord.gg/74pb5PJRxX
+    about: General SuperStation One and Console Mode help, and chat with the community.
+  - name: SuperStation One documentation
+    url: https://github.com/Takiiiiiiii/SuperStation-Documentation
+    about: Official SS1 setup guides and the Console Mode wiki.
