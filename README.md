@@ -50,7 +50,7 @@
 ### Connect
 - Connect by IP address (default login `root` / `1`)
 - Saved devices with one-click **Connect**, **Rename** and **Delete**
-- Status panel: kernel, `/MiSTer.version`, Console Mode, Samba, `update_linux`, installed scripts and free space
+- Status panel: kernel, `/MiSTer.version`, Console Mode, Samba, `update_linux`, scraper login, installed scripts and free space
 
 ### Setup
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
