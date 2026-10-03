@@ -184,6 +184,12 @@ ssh -t root@<SS1-IP> "bash /media/fat/Scripts/sd_integrity.sh"
 | `shutdown.sh` | Flushes all writes, marks the drives clean where possible, shows **SAFE TO POWER OFF** and halts. It doesn't stop Bluetooth, which avoids the `RememberPowered` problem from [Scripts_MiSTer #36](https://github.com/MiSTer-devel/Scripts_MiSTer/issues/36). |
 | `ss1_debug_report.sh` | Writes `/media/fat/SS1_debug_report_<date>.txt` for support requests. |
 
+**Running them from Console Mode:** Console Mode hides the script terminal while a script runs. When the scripts detect that, they draw their messages straight onto the screen instead, using a small helper that SS1 Tool installs in `Scripts/.ss1tool/ss1fb`:
+
+- `shutdown.sh` shows **Shutting down**, then **SAFE TO POWER OFF** with each drive's state.
+- `ss1_debug_report.sh` shows its progress, then the report's file name and findings for 20 seconds.
+- `sd_integrity.sh` runs the quick check and the "Will Windows complain?" check, and shows the results for 30 seconds. Use the MiSTer Scripts menu or SS1 Tool for the full menu.
+
 `sd_integrity.sh` also has a non-interactive mode:
 
 ```bash
@@ -198,7 +204,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_HDMI_fix_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer`, `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
-| On the SS1 | Scripts in `/media/fat/Scripts/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot |
+| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot |
 
 ## Privacy and security
 
@@ -222,8 +228,9 @@ Please say which version you're using; it's shown in the bottom right corner of 
 Needs [Go](https://go.dev/) 1.22 or newer. Run these from the project folder:
 
 ```bash
-# 1. Keyboard/controller helper that runs on the SS1 (32-bit ARM)
+# 1. Helpers that run on the SS1 (32-bit ARM)
 CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w" -o bin/ss1kbd_arm ./kbdhelper
+CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w" -o bin/ss1fb_arm ./fbhelper
 
 # 2. Windows icon resource (only needed if you change icon/ss1tool.ico)
 go install github.com/akavel/rsrc@latest
@@ -245,6 +252,7 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `features2.go` | Remote keyboard and controller, saved devices, drive transfers, ini backups |
 | `platform_windows.go` | Explorer, terminal, Save As dialog, disk listing and SD flashing |
 | `kbdhelper/` | Virtual keyboard and controller program for the SS1 |
+| `fbhelper/` | On-screen message program the scripts use when started from Console Mode |
 | `scripts/` | The SS1 scripts embedded in the app |
 | `web/index.html` | The user interface |
 | `icon/` | App icon |
