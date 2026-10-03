@@ -71,8 +71,9 @@
 
 ### MiSTer Settings
 - Edit `MiSTer.ini`, `downloader.ini`, Console Mode's `config.ini` and every ini in `ConsoleMode/themeconfig`, including `section_groups`
-- **SS1 HDMI fix**: comment out unused HDMI settings, restorable at any time
-- Backups saved on your PC, one folder per ini file, with optional names and date-time stamps; restore, show in Explorer, delete, or back up all files at once
+- **SS1 HDMI fix**: shows and comments out the MiSTer.ini settings the SS1 doesn't support (`hdmi_cec`, `hdmi_cec_input_mode`, `hdmi_cec_power_on`, `hdmi_cec_sleep`, `hdmi_cec_wake`, `hdmi_cec_clock`, `hdmi_off`, `video_off_logo`); a backup is made first
+- Backups saved on your PC in a `backups` folder next to the exe: each backup gets its own folder named after what you type plus the date and time, with category folders inside and the original file names kept
+- Back up the selected file or all ini files at once; **Restore all** or **Restore file** for any backup, plus Show in Explorer and Delete
 - An automatic backup is taken before every change the tool makes
 
 ### SD Diagnostics (SD card or NVMe)
@@ -82,7 +83,7 @@
 
 ### Debug Report
 - One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health and logs into a single text file for Taki and the mods
-- Starts with an automatic **FINDINGS** summary of known problems
+- Starts with an automatic **FINDINGS** summary of known problems, including whether the SS1 HDMI fix is applied
 - Passwords, keys, tokens, WiFi names and MAC addresses are redacted
 - A Save As window lets you store it anywhere
 
@@ -133,7 +134,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | What | Where |
 |---|---|
 | Settings and saved devices | `%APPDATA%\SS1Tool\config.json` |
-| ini backups | Next to `SS1Tool.exe`, one folder per file: `MiSTer.ini\`, `downloader.ini\`, `ConsoleMode.ini\`, `ConsoleMode themeconfig\section_groups\Arcade.ini\` and so on |
+| ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_HDMI_fix_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer`, `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
 | On the SS1 | Scripts in `/media/fat/Scripts/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot |
