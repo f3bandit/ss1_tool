@@ -106,6 +106,7 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 - Connect by IP address (default login `root` / `1`)
 - Saved devices with one-click **Connect**, **Rename** and **Delete**
 - Status panel: kernel, `/MiSTer.version`, Console Mode, Samba, `update_linux`, scraper login, installed scripts and free space
+- A pop-up tells you when the SS1 is switched off, restarts or drops off the network, with a **Reconnect** button
 
 ### Setup
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
@@ -120,6 +121,7 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - On-screen controller: D-pad, A/B/X/Y, Select, Start and OSD, with hold-to-press
 - Remote keyboard: on-screen keys and live key capture
 - Reload the menu, reboot, safe shutdown, open an SSH terminal or the Samba share
+- **Safe shutdown** shows its progress and **SAFE TO POWER OFF** on the screen connected to the SS1, even while the Console Mode UI is showing
 
 ### Files
 - Two-pane file manager with a drive picker on each side
@@ -137,6 +139,14 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Quick check: partition table and overlap, exFAT boot region checksums, kernel I/O errors
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
+
+### WiFi
+- Creates the SuperStation One's WiFi settings file, `linux/wpa_supplicant.conf`, in the same format as MiSTer's `_wpa_supplicant.conf` template
+- Scans for networks with this PC's WiFi adapter, showing signal, security and band (2.4/5/6 GHz), or type the name for a hidden network
+- Password and country entry; the password is never stored by SS1 Tool
+- **Option A, SD card in this PC:** writes the file straight to the SS1's SD card in your card reader
+- **Option B, over the network:** sends the file to an SS1 temporarily connected by Ethernet, then restarts it onto WiFi, showing the new WiFi IP
+- Keeps a `.bak` copy of any existing WiFi file
 
 ### About
 - Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
