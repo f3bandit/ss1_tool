@@ -108,9 +108,14 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 - Status panel: kernel, `/MiSTer.version`, Console Mode, Samba, `update_linux`, scraper login, installed scripts and free space
 - A pop-up tells you when the SS1 is switched off, restarts or drops off the network, with a **Reconnect** button
 
+### Dashboard
+- Live health of the SS1's Linux side, refreshed every 3 seconds: temperature (with a Normal / Warm / Hot badge and history graph), CPU use and load, memory, storage space on the SD card and USB/NVMe drives, network traffic, uptime, the current core, and running processes
+- Kernel log viewer (last 20 to 200 messages) for tracking down controllers, WiFi adapters or drives that keep disconnecting
+
 ### Setup
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
+- Install or update community scripts straight from their authors: [Reflex Adapt Manager](https://github.com/misteraddons/Reflex-Adapt) (MiSTer Addons) and [PSX BIOS Patcher](https://gist.github.com/IncognitoMan/fd1f9fbd5794af83370a5c6b02b7d6ee) (IncognitoMan)
 - Enable Samba at boot, so the SD card shows up in Windows as `\\IP\sdcard`
 - Install the latest [Update All](https://github.com/theypsilon/Update_All_MiSTer) and set `downloader.ini` to the MiSTer-devel distribution with `update_linux = false`, so cores and the menu keep updating while the Linux kernel stays put
 - Shows the current [Linux update advisory](#linux-update-advisory) from this repo
@@ -151,6 +156,11 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 ### About
 - Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
 - **Winter mode:** falling snowflakes from November to March. Choose Automatic, Always on or Off; it stays hidden if animations are turned off in Windows.
+
+### SD Backup
+- Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on
+- Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary
+- Progress bar, cancel, and a list of backups with Open folder and Delete
 
 ### Debug Report
 - One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health and logs into a single text file for Taki and the mods
@@ -211,6 +221,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | What | Where |
 |---|---|
 | Settings and saved devices | `%APPDATA%\SS1Tool\config.json` |
+| SD card backups | `backup\sdcard\<name>_<date-time>\` next to `SS1Tool.exe` |
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_HDMI_fix_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer`, `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
