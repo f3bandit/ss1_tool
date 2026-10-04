@@ -27,7 +27,7 @@ SS1 Tool helps SuperStation One owners set up their system correctly, avoid the 
 
 It's built around three jobs:
 
-- **Setup:** get a new or freshly flashed SS1 configured the right way in a few clicks.
+- **Setup:** get a new or freshly flashed SS1 configured the right way. The **★ Wizard** walks a new owner through everything, from flashing the SD card to WiFi, scripts and Update All.
 - **Diagnostics:** check the SD card, NVMe drive and configuration for known problems.
 - **Support:** create one debug report you can post in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX), so the admins can see exactly what's on your system instead of asking question after question.
 
@@ -92,13 +92,19 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 
 ## Screenshots
 
-| Connect | Remote |
+| Wizard | Dashboard |
 |---|---|
-| ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) |
-| **Files** | **MiSTer Settings** |
-| ![Files: two-pane SD card and NVMe file manager](docs/screenshots/files.png) | ![MiSTer Settings: ini editor, HDMI fix and backups](docs/screenshots/settings.png) |
-| **Setup** | **SD Diagnostics** |
-| ![Setup: scripts, Samba, Update All and scraper logins](docs/screenshots/setup.png) | ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) |
+| ![Wizard: first-time setup, choosing the SD card image](docs/screenshots/wizard.png) | ![Dashboard: CPU cores and threads, memory, storage, network and processes](docs/screenshots/dashboard.png) |
+| **Connect** | **Setup** |
+| ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Setup: scripts, community scripts, Samba, Update All and scraper logins](docs/screenshots/setup.png) |
+| **Remote** | **Files** |
+| ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) | ![Files: two-pane SD card and NVMe file manager](docs/screenshots/files.png) |
+| **MiSTer Settings** | **SD Diagnostics** |
+| ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) | ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) |
+| **SD Backup** | **Flash SD Card** |
+| ![SD Backup: backing up the SD card to this PC](docs/screenshots/sdbackup.png) | ![Flash SD Card: choosing the Console Mode or Regular image](docs/screenshots/flash.png) |
+| **WiFi** | **About** |
+| ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) | ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) |
 
 ## Features
 
@@ -108,8 +114,17 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 - Status panel: kernel, `/MiSTer.version`, Console Mode, Samba, `update_linux`, scraper login, installed scripts and free space
 - A pop-up tells you when the SS1 is switched off, restarts or drops off the network, with a **Reconnect** button
 
+### Wizard (first-time setup)
+Open **★ Wizard** (bottom left of the menu, always visible). It walks a new owner through everything, one step at a time, and remembers where you left off:
+1. Pick the SD card from a list (only SD/USB card readers are shown)
+2. Choose the **Console Mode** or **Regular** image from the latest official release
+3. Download, install and verify it (a pop-up confirms before anything is erased)
+4. Put the card in the SuperStation and let its installer finish
+5. Finish setup **over the network** (Ethernet) or with the **SD card back in this PC**
+6. WiFi (optional), scripts (SS1 + community), Update All stable lane, Samba, overlap tool check, and ScreenScraper / TheGamesDB (optional)
+
 ### Dashboard
-- Live health of the SS1's Linux side, refreshed every 3 seconds: temperature (with a Normal / Warm / Hot badge and history graph), CPU use and load, memory, storage space on the SD card and USB/NVMe drives, network traffic, uptime, the current core, and running processes
+- Live health of the SS1's Linux side, refreshed every 3 seconds: CPU use and load with the number of cores and threads and a bar for each thread, memory, storage space on the SD card and USB/NVMe drives, network traffic with a download/upload graph, uptime, the current core, running processes (busiest first), and temperature on hardware that has a sensor
 - Kernel log viewer (last 20 to 200 messages) for tracking down controllers, WiFi adapters or drives that keep disconnecting
 
 ### Setup
@@ -169,7 +184,7 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - A Save As window lets you store it anywhere
 
 ### Flash SD Card
-- Downloads the latest official [SuperStation One SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer/releases) and writes it to a card, then reads it back to verify
+- Choose the **Console Mode** or **Regular** image from the latest official [SuperStation One SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer/releases) release, or use an image file you already have; it's written to the card and read back to verify
 - Only SD and USB card readers are listed; internal and boot drives are never shown
 - You must type the disk number to confirm before anything is erased
 
@@ -178,8 +193,9 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 1. Download `SS1Tool.exe` from the [latest release](../../releases/latest).
 2. Run it. Windows SmartScreen will warn because the exe is unsigned: click **More info → Run anyway**.
 3. A console window opens along with the tool in your web browser.
-4. Enter your SS1's IP address and click **Connect**. You can find the IP at the bottom of the MiSTer main menu or in Console Mode's network settings.
-5. Click **Save as device** so next time it's one click.
+4. **New SuperStation or fresh SD card?** Click **★ Wizard** at the bottom left and follow the steps. It covers everything below too.
+5. Otherwise, enter your SS1's IP address and click **Connect**. You can find the IP at the bottom of the MiSTer main menu or in Console Mode's network settings.
+6. Click **Save as device** so next time it's one click.
 
 To close the tool, click **Quit** in the top right corner or close the console window.
 
