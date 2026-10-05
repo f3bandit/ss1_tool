@@ -103,8 +103,10 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) | ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) |
 | **SD Backup** | **Flash SD Card** |
 | ![SD Backup: backing up the SD card to this PC](docs/screenshots/sdbackup.png) | ![Flash SD Card: choosing the Console Mode or Regular image](docs/screenshots/flash.png) |
-| **WiFi** | **About** |
-| ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) | ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) |
+| **USB Devices** | **WiFi** |
+| ![USB Devices: controllers, keyboards and drives on the SuperStation and dock](docs/screenshots/usb.png) | ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) |
+| **About** | |
+| ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) | |
 
 ## Features
 
@@ -126,6 +128,14 @@ Open **★ Wizard** (bottom left of the menu, always visible). It walks a new ow
 ### Dashboard
 - Live health of the SS1's Linux side, refreshed every 3 seconds: CPU use and load with the number of cores and threads and a bar for each thread, memory, storage space on the SD card and USB/NVMe drives, network traffic with a download/upload graph, uptime, the current core, running processes (busiest first), and temperature on hardware that has a sensor
 - Kernel log viewer (last 20 to 200 messages) for tracking down controllers, WiFi adapters or drives that keep disconnecting
+
+### USB Devices
+- Separate **SuperStation** and **Dock** cards: the console's own sockets and built-in parts (such as the WiFi/Bluetooth card), and the dock's sockets, NVMe slot and the TV remote receiver. Shows whether the dock is connected, plus a card for the USB host controllers
+- For each device: name and maker, its type (controller, keyboard, mouse, storage, IR remote receiver, WiFi/Bluetooth adapter, USB serial adapter and so on), hardware ID (vendor:product), USB class, speed, driver, and its **port number**, which always refers to the same physical socket
+- How it shows up to the MiSTer: **controller**, **keyboard** or **mouse**, with its number of buttons, keys and axes, D-pad and rumble support
+- **Name your sockets** (e.g. *Back left*, *Front*, *Dock 1*): the name sticks to that physical socket, and named sockets show as empty when nothing is plugged in
+- Recognizes the dock's built-in NVMe slot, CD/DVD drive and TV remote receiver (`pico_ir_keyboard` by TinyUSB, which shows up as a keyboard and mouse), and notes that the SNAC ports (front, and the dock port labeled SNAC) aren't USB
+- USB drives show their size and where they're mounted; recent USB connection errors from the kernel log are listed, tagged Dock or SuperStation
 
 ### Setup
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
@@ -178,7 +188,7 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Progress bar, cancel, and a list of backups with Open folder and Delete
 
 ### Debug Report
-- One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health and logs into a single text file for Taki and the mods
+- One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health, USB devices and logs into a single text file for Taki and the mods
 - Starts with an automatic **FINDINGS** summary of known problems, including whether the SS1 HDMI fix is applied
 - Passwords, keys, tokens, WiFi names and MAC addresses are redacted
 - A Save As window lets you store it anywhere
