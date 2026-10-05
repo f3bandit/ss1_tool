@@ -105,8 +105,10 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![SD Backup: backing up the SD card to this PC](docs/screenshots/sdbackup.png) | ![Flash SD Card: choosing the Console Mode or Regular image](docs/screenshots/flash.png) |
 | **USB Devices** | **WiFi** |
 | ![USB Devices: controllers, keyboards and drives on the SuperStation and dock](docs/screenshots/usb.png) | ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) |
-| **Controllers** | **About** |
-| ![Controllers: mappings, profiles and backups](docs/screenshots/controllers.png) | ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) |
+| **Screenshots** | **Controllers** |
+| ![Screenshots: take, view and copy screenshots](docs/screenshots/screenshots.png) | ![Controllers: mappings, profiles and backups](docs/screenshots/controllers.png) |
+| **About** | |
+| ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) | |
 
 ## Features
 
@@ -158,6 +160,12 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Two-pane file manager with a drive picker on each side
 - Copy and move between the SD card and the NVMe/USB drive; the copy runs on the SS1 itself, so nothing goes through your PC
 - Upload, download (folders as zip), rename, delete and create folders; system folders are protected
+
+### Screenshots
+- **Take a screenshot** of whatever is running on the SuperStation from your PC, with an optional name and an option for the scaled picture as shown on the TV. It's saved on the SS1 and copied to `backups\screenshots\<core>\` next to SS1Tool.exe
+- Two cards, **On this PC** and **On the SD card**, each with a scrolling list and a built-in viewer
+- On this PC: show in folder, open full size, delete. On the SD card: copy one or all to this PC, open full size, delete from the SD card
+- Works while a game or core is running; the MiSTer menu and Console Mode's own screens can't be captured
 
 ### MiSTer Settings
 - Edit `MiSTer.ini`, `downloader.ini`, Console Mode's `config.ini` and every ini in `ConsoleMode/themeconfig`, including `section_groups`
@@ -254,6 +262,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 |---|---|
 | Settings and saved devices | `%APPDATA%\SS1Tool\config.json` |
 | SD card backups | `backup\sdcard\<name>_<date-time>\` next to `SS1Tool.exe` |
+| Screenshots | `backups\screenshots\<core>\` next to `SS1Tool.exe` |
 | Controller mapping backups | `backups\controller-maps\<name>_<date-time>\` next to `SS1Tool.exe` |
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_HDMI_fix_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer`, `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
