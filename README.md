@@ -99,6 +99,8 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Setup: scripts, community scripts, Samba, Update All and scraper logins](docs/screenshots/setup.png) |
 | **Remote** | **Files** |
 | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) | ![Files: two-pane SD card and NVMe file manager](docs/screenshots/files.png) |
+| **Saves** | **Saves: backup in progress** |
+| ![Saves: game saves and save states per system, ready to back up](docs/screenshots/saves.png) | ![Saves: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) |
 | **MiSTer Settings** | **SD Diagnostics** |
 | ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) | ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) |
 | **SD Backup** | **Flash SD Card** |
@@ -162,6 +164,23 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Two-pane file manager with a drive picker on each side
 - Copy and move between the SD card and the NVMe/USB drive; the copy runs on the SS1 itself, so nothing goes through your PC
 - Upload, download (folders as zip), rename, delete and create folders; system folders are protected
+
+### Saves
+- **Back up and restore game saves and save states** for every supported system, kept on this PC in `backups\saves\<name>_<date-time>\` next to SS1Tool.exe
+- Supported systems:
+  - **Sega:** Genesis / Mega Drive, Master System, Game Gear, SG-1000, Sega CD / Mega CD, 32X, Saturn
+  - **Nintendo:** NES / Famicom Disk System, SNES, Nintendo 64, Game Boy, Game Boy Color, Super Game Boy, Game Boy Advance, Virtual Boy, Pokemon mini
+  - **NEC:** PC Engine / TurboGrafx-16, PC Engine CD / TurboGrafx-CD
+  - **Atari:** Jaguar
+  - **SNK:** Neo Geo (MVS / AES), Neo Geo CD, Neo Geo Pocket / Color
+  - **Sony:** PlayStation
+  - **Bandai:** WonderSwan / Color
+- Finds saves (`saves/<core>`) and save states (`savestates/<core>`) on the SD card and on any USB or NVMe drive, and lists them by system with the number of files, size and when each system was last saved
+- **Files** shows every save and save state of a system, with a download button for each
+- Tick the systems to back up, give the backup a name if you like, and choose whether to include save states
+- **Restore** a whole backup or only the systems you tick. Saves with the same name are replaced and every other save is left alone. The current saves for those systems are backed up on this PC first
+- Backup and restore run with a progress bar, the current step, files and megabytes copied, elapsed time and a log
+- Exit the game to the menu before backing up or restoring: a running game writes its save when it exits
 
 ### Screenshots
 - **Take a screenshot** of whatever is running on the SuperStation from your PC, with an optional name and an option for the scaled picture as shown on the TV. It's saved on the SS1 and copied to `backups\screenshots\<core>\` next to SS1Tool.exe
@@ -273,6 +292,8 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | Settings and saved devices | `%APPDATA%\SS1Tool\config.json` |
 | SD card backups | `backup\sdcard\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Screenshots | `backups\screenshots\<core>\` next to `SS1Tool.exe` |
+| Save backups | `backups\saves\<name>_<date-time>\` next to `SS1Tool.exe` |
+| Bluetooth pairing backups | `backups\bluetooth\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Controller mapping backups | `backups\controller-maps\<name>_<date-time>\` next to `SS1Tool.exe` |
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_HDMI_fix_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer`, `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
@@ -323,6 +344,9 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `sshclient.go` | SSH connection, command and upload helpers |
 | `actions.go` | Status, setup, Samba, Update All, scraper, ini editor, HDMI fix, diagnostics, debug report, file manager |
 | `features2.go` | Remote keyboard and controller, saved devices, drive transfers, ini backups |
+| `saves.go` | Saves and save states: scan, backup and restore |
+| `bluetooth.go`, `bt_jobs.go` | Bluetooth manager and its progress tracking |
+| `jobs.go` | Progress tracking for background operations |
 | `platform_windows.go` | Explorer, terminal, Save As dialog, disk listing and SD flashing |
 | `kbdhelper/` | Virtual keyboard and controller program for the SS1 |
 | `fbhelper/` | On-screen message program the scripts use when started from Console Mode |
