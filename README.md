@@ -106,6 +106,8 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![Saves: game saves and save states per system, ready to back up](docs/screenshots/saves.png) | ![Saves: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) |
 | **Cifs** | **Cifs: share settings and games on the share** |
 | ![Cifs: testing the connection to a NAS share, script versions and mount status](docs/screenshots/cifs.png) | ![Cifs: share settings, startup options and which system folders MiSTer uses](docs/screenshots/cifs-settings.png) |
+| **Cifs: share a folder from this PC** | |
+| ![Cifs: share a folder from this Windows PC for the SuperStation to play games from](docs/screenshots/pcshare.png) | |
 | **MiSTer Settings** | **SD Diagnostics** |
 | ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) | ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) |
 | **SD Backup** | **Flash SD Card** |
@@ -116,8 +118,8 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![Screenshots: take, view and copy screenshots](docs/screenshots/screenshots.png) | ![Controllers: mappings, profiles and backups](docs/screenshots/controllers.png) |
 | **Bluetooth** | **Bluetooth: restore in progress** |
 | ![Bluetooth: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Bluetooth: progress bar, current step and log while restoring a backup](docs/screenshots/bluetooth-progress.png) |
-| **About** | |
-| ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) | |
+| **About** | **Updates** |
+| ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) | ![Updates: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) |
 
 ## Features
 
@@ -163,7 +165,10 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - On-screen controller: D-pad, A/B/X/Y, Select, Start and OSD, with hold-to-press
 - Remote keyboard: on-screen keys and live key capture
 - Reload the menu, reboot, safe shutdown, open an SSH terminal or the Samba share
-- **Safe shutdown** shows its progress and **SAFE TO POWER OFF** on the screen connected to the SS1, even while the Console Mode UI is showing
+- **Safe shutdown** shows the same **Shutting down** and **SAFE TO POWER OFF** screens on the TV whichever front end is running:
+  - **Console Mode:** the screens are drawn over the Console Mode UI, which is paused so it can't draw over them
+  - **MiSTer mode:** SS1 Tool switches the TV to MiSTer's Linux screen first (going back to the menu core if a game is running, then pressing F9) and checks the switch worked before the screens are drawn. It checks this through the SS1 Tool virtual keyboard: MiSTer releases keyboards only while its Linux screen is showing
+  - If the TV can't show them (for example `fb_terminal=0` in MiSTer.ini), the shutdown still runs and SS1 Tool tells you to wait 15 seconds before switching off
 
 ### Files
 - Two-pane file manager with a drive picker on each side
@@ -199,6 +204,20 @@ Play games straight from a shared folder on a NAS or PC, using MiSTer's own `cif
 - **Games on the share:** each system folder found on the share, and which copy MiSTer actually uses. MiSTer checks `/media/fat/<system>`, then USB and NVMe drives, then `/media/fat/cifs`, then `/media/fat/games`, so a system folder on the NVMe drive is flagged when it hides the share's copy
 - The password is written to `cifs_mount.ini` on the SD card in plain text, because that's how the scripts read it. SS1 Tool doesn't keep it; each save keeps a copy of the previous `cifs_mount.ini` in `backups\cifs\` next to SS1Tool.exe
 
+#### No NAS? Share a folder from this PC (Windows)
+For players without a NAS or an NVMe drive: keep your games on your PC, so a failed or reflashed SD card never costs you your collection or a day of copying.
+- **Share this folder** sets everything up after one Windows permission prompt:
+  - creates the folder (default `C:\SS1_Games`) and, if you like, `games\<system>` folders for NES, SNES, N64, Game Boy, GBC, GBA, Genesis, Sega CD, 32X, Master System, Saturn, PC Engine, PC Engine CD, Neo Geo, PlayStation, Jaguar and WonderSwan
+  - creates a Windows account just for the SuperStation with a password that never expires, hidden from the Windows sign-in screen. Choose the account name (default `ss1user`) and password yourself, or leave the password empty for a random 20-character one. Passwords need at least 8 characters and no commas, spaces or backslashes, because MiSTer's `cifs_mount.sh` can't pass those on
+  - SS1 Tool only ever changes or removes accounts it created itself: it refuses Windows' built-in accounts, the account you're signed in with, and any other existing account. Changing the account name later removes the old SS1 Tool account
+  - gives that account access to that folder only, and shares the folder (default share name `ROMS`) for that account only
+  - makes sure Windows file sharing (the Server service) is running and starts with Windows
+  - allows file sharing through the firewall from your local network, on private networks only. If Windows has your network set to Public, it offers to set it to Private, because Windows blocks file sharing on Public networks
+- Then it finds this PC's address on the SuperStation's network and fills in the Cifs settings: server, share, `ss1user` and the password, mounted at `/media/fat/cifs` and at every startup. With **Set up the SuperStation and mount the share now** ticked, it mounts the share straight away
+- Status shows the share, folder, account, firewall rule, file sharing service and network type, and warns if this PC's address changed since the SuperStation was set up. **Share this folder again** fixes that and anything else that's missing
+- **Remove share from this PC** unmounts the share on the SuperStation, then removes the share, the `ss1user` account and the firewall rule. Your game files stay where they are
+- Keep the PC switched on and awake while you play
+
 ### Screenshots
 - **Take a screenshot** of whatever is running on the SuperStation from your PC, with an optional name and an option for the scaled picture as shown on the TV. It's saved on the SS1 and copied to `backups\screenshots\<core>\` next to SS1Tool.exe
 - Two cards, **On this PC** and **On the SD card**, each with a scrolling list and a built-in viewer
@@ -228,6 +247,17 @@ Play games straight from a shared folder on a NAS or PC, using MiSTer's own `cif
 ### About
 - Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
 - **Winter mode:** falling snowflakes from November to March. Choose Automatic, Always on or Off; it stays hidden if animations are turned off in Windows.
+
+### Updates
+- **Update status:** this version, the newest release on GitHub and when it was last checked. Up to date shows green; an update shows yellow, both here and as a pill in the header that opens this card
+- **What's new:** the release notes of the newer version, shown before you update
+- **Update and restart:** downloads `SS1Tool.exe` from the [f3bandit/ss1_tool releases](https://github.com/f3bandit/ss1_tool/releases), checks it against the SHA-256 GitHub lists for the file, swaps it in next to the running copy and restarts. The browser window switches to the new version by itself, and a message confirms the update. If the new copy doesn't start, the old one is put back
+- **Automatic updates** (About → Updates):
+  - **Install updates automatically:** the new version downloads in the background, then a bar at the top counts down 15 seconds before restarting. **Not now** puts it off; install it from About when you're ready
+  - **Tell me when there's an update** (default): shows the update; you choose when to install it
+  - **Don't check for updates:** no update checks at all
+- SS1 Tool checks when it starts and every 6 hours. An update never starts while a backup, restore, copy between drives, Bluetooth operation, network share operation or SD card download or flash is running
+- SS1 Tool updates itself only if it can write to its own folder. If it's somewhere protected like Program Files, it says so; download the new version from the release page instead, or move SS1 Tool to a folder you own
 
 ### SD Backup
 - Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on
@@ -321,8 +351,9 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 ## Privacy and security
 
 - The app only listens on `127.0.0.1` (your own PC), and every request needs a random session token.
-- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory and download Update All, the SD installer and the CIFS scripts, and to TheGamesDB, to test an API key you enter.
+- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory, check for and download SS1 Tool updates, and download Update All, the SD installer and the CIFS scripts, and to TheGamesDB, to test an API key you enter.
 - Saved devices store the name, IP and user only, never the password.
+- **Share a folder from this PC** creates a local Windows account (default `ss1user`) that can only open that one folder. Its password is written only to the SS1's `cifs_mount.ini`; SS1 Tool doesn't keep it. **Remove share from this PC** deletes the account.
 - The CIFS share password is written only to your SS1, in `/media/fat/Scripts/cifs_mount.ini`, because MiSTer's `cifs_mount.sh` needs it there. Copies of earlier `cifs_mount.ini` files are kept on your PC in `backups\cifs\`.
 - Scraper logins are written only to your SS1, in `/media/fat/ConsoleMode/`.
 - The SS1 is reached over SSH with host-key checking off, because the SS1 creates new host keys every time it's reflashed. Only use the tool on networks you trust.
@@ -363,8 +394,10 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `sshclient.go` | SSH connection, command and upload helpers |
 | `actions.go` | Status, setup, Samba, Update All, scraper, ini editor, HDMI fix, diagnostics, debug report, file manager |
 | `features2.go` | Remote keyboard and controller, saved devices, drive transfers, ini backups |
+| `pcshare.go`, `pcshare_windows.go` | Sharing a folder from this Windows PC: account, share, firewall and Cifs setup |
 | `cifs.go` | CIFS network share: script install and update, settings, connection test, mount and unmount |
 | `saves.go` | Saves and save states: scan, backup and restore |
+| `update.go` | Update check, download, checksum, swap and restart |
 | `bluetooth.go`, `bt_jobs.go` | Bluetooth manager and its progress tracking |
 | `jobs.go` | Progress tracking for background operations |
 | `platform_windows.go` | Explorer, terminal, Save As dialog, disk listing and SD flashing |
