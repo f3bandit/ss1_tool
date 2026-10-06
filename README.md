@@ -120,6 +120,8 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![Bluetooth: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Bluetooth: progress bar, current step and log while restoring a backup](docs/screenshots/bluetooth-progress.png) |
 | **About** | **Updates** |
 | ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) | ![Updates: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) |
+| **Update offer at startup** | |
+| ![Update offer: a bar at the top offers the new version with Update now, What's new and Not now](docs/screenshots/update-offer.png) | |
 
 ## Features
 
@@ -254,7 +256,7 @@ For players without a NAS or an NVMe drive: keep your games on your PC, so a fai
 - **Update and restart:** downloads `SS1Tool.exe` from the [f3bandit/ss1_tool releases](https://github.com/f3bandit/ss1_tool/releases), checks it against the SHA-256 GitHub lists for the file, swaps it in next to the running copy and restarts. The browser window switches to the new version by itself, and a message confirms the update. If the new copy doesn't start, the old one is put back
 - **Automatic updates** (About → Updates):
   - **Install updates automatically:** the new version downloads in the background, then a bar at the top counts down 15 seconds before restarting. **Not now** puts it off; install it from About when you're ready
-  - **Tell me when there's an update** (default): shows the update; you choose when to install it
+  - **Tell me when there's an update** (default): when SS1 Tool starts and there's a newer version, a bar at the top offers it: **Update now**, **What's new** (opens the release notes) or **Not now**. Not now hides the bar until SS1 Tool next starts; the header pill stays
   - **Don't check for updates:** no update checks at all
 - SS1 Tool checks when it starts and every 6 hours. An update never starts while a backup, restore, copy between drives, Bluetooth operation, network share operation or SD card download or flash is running
 - SS1 Tool updates itself only if it can write to its own folder. If it's somewhere protected like Program Files, it says so; download the new version from the release page instead, or move SS1 Tool to a folder you own
