@@ -107,6 +107,8 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![USB Devices: controllers, keyboards and drives on the SuperStation and dock](docs/screenshots/usb.png) | ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) |
 | **Screenshots** | **Controllers** |
 | ![Screenshots: take, view and copy screenshots](docs/screenshots/screenshots.png) | ![Controllers: mappings, profiles and backups](docs/screenshots/controllers.png) |
+| **Bluetooth** | **Bluetooth: restore in progress** |
+| ![Bluetooth: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Bluetooth: progress bar, current step and log while restoring a backup](docs/screenshots/bluetooth-progress.png) |
 | **About** | |
 | ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) | |
 
@@ -195,6 +197,14 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on
 - Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary
 - Progress bar, cancel, and a list of backups with Open folder and Delete
+
+### Bluetooth
+- Lists every **paired Bluetooth device** (controllers first) with connected, paired and trusted status, its ID, and for controllers which button mapping MiSTer uses
+- **Disconnect**, **Trust / Untrust** (trusted controllers reconnect on their own) and **Remove pairing** per device, or **Remove all pairings**
+- **Back up** all pairings to `backups\bluetooth\<name>_<date-time>\` on this PC and **restore** them, for example after reflashing the SD card. A backup is always saved first before anything is removed or replaced
+- **Export** one pairing or all of them to a zip, and **Import** a zip exported by SS1 Tool
+- **Start pairing** (sends F11 to the MiSTer menu) and **Restart Bluetooth**
+- **Progress** for backup, restore, export, import and removing pairings: a progress bar, the current step (for example *Step 4 of 6: Stopping Bluetooth*), files copied, elapsed time and a log. It stays on screen while the operation runs, and the other Bluetooth buttons are locked until it finishes
 
 ### Controllers
 - For each connected controller (USB or Bluetooth): whether it uses a **custom mapping** (set with *Define joystick buttons* in the MiSTer menu, including which cores have their own) or MiSTer's **automatic mapping** from its controller database, with **Reset to automatic**
