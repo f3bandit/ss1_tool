@@ -53,20 +53,23 @@ Kernel updates can still bring breaking changes in the future, though. SS1 Tool 
 
 ### Linux update advisory
 
-SS1 Tool also shows whether Linux updates are currently considered **safe** or **not recommended**. This advisory is maintained by hand in [`update_flags/`](https://github.com/f3bandit/ss1_tool/tree/main/update_flags) in this repo and updated when a problem is found or resolved. The app reads it from GitHub each time you open it, so you always see the latest status without updating the tool. It appears in **Setup → Update All** and in the **System status** panel:
+SS1 Tool also shows whether Linux updates are currently considered **safe**, need **caution**, or are **not recommended**. This advisory is maintained by hand in [`update_flags/`](https://github.com/f3bandit/ss1_tool/tree/main/update_flags) in this repo and updated when a problem is found or resolved. The app reads it from GitHub each time you open it, so you always see the latest status without updating the tool. It appears in **Setup → Update All** and in the **System status** panel:
 
-| Status | What it means |
-|---|---|
-| ✓ **Reported safe** | No known problems with the current Linux update. Keeping `update_linux = false` is still the most stable choice. |
-| ⚠ **NOT recommended** | A known problem exists; the reason is shown. If your SS1 still has Linux updates turned on, the tool tells you to click **Install Update All + apply settings**. |
-| No advisory | Nothing has been published right now. |
+| Status | Color | What it means |
+|---|---|---|
+| ✓ **Reported safe** | Green | No known problems with the current Linux update. Keeping `update_linux = false` is still the most stable choice. |
+| ⚠ **Use caution** | Yellow | The update works, but has known issues worth reading about first; the note is shown. If your SS1 has Linux updates turned on, the tool points this out. |
+| ✗ **NOT recommended** | Red | A known problem exists; the reason is shown. If your SS1 still has Linux updates turned on, the tool tells you to click **Install Update All + apply settings**. |
+| No advisory | Grey | Nothing has been published right now, or GitHub couldn't be reached. |
+
+The same colors are used everywhere the advisory appears: **Connect → System status**, **Setup → Update All** and the **Wizard**. The `update_linux` setting follows them too: green when it's `false`, and when Linux updates are on, green, yellow or red to match the advisory.
 
 The advisory is only information. SS1 Tool never changes your settings by itself.
 
 <details>
 <summary>Advisory file format (for maintainers)</summary>
 
-- `update_flags/linux_update.ini` contains one line: `Linux_update = safe` or `Linux_update = unsafe`. Any other value shows as "No advisory".
+- `update_flags/linux_update.ini` contains one line: `Linux_update = safe`, `Linux_update = warning` or `Linux_update = unsafe` (not case-sensitive; `warn` and `caution` also mean warning). Any other value shows as "No advisory".
 - `update_flags/linux_update_readme.ini` contains a short plain-text explanation, shown to users under the status.
 
 </details>
@@ -101,6 +104,8 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) | ![Files: two-pane SD card and NVMe file manager](docs/screenshots/files.png) |
 | **Saves** | **Saves: backup in progress** |
 | ![Saves: game saves and save states per system, ready to back up](docs/screenshots/saves.png) | ![Saves: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) |
+| **Cifs** | **Cifs: share settings and games on the share** |
+| ![Cifs: testing the connection to a NAS share, script versions and mount status](docs/screenshots/cifs.png) | ![Cifs: share settings, startup options and which system folders MiSTer uses](docs/screenshots/cifs-settings.png) |
 | **MiSTer Settings** | **SD Diagnostics** |
 | ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) | ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) |
 | **SD Backup** | **Flash SD Card** |
@@ -181,6 +186,18 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - **Restore** a whole backup or only the systems you tick. Saves with the same name are replaced and every other save is left alone. The current saves for those systems are backed up on this PC first
 - Backup and restore run with a progress bar, the current step, files and megabytes copied, elapsed time and a log
 - Exit the game to the menu before backing up or restoring: a running game writes its save when it exits
+
+### Cifs
+Play games straight from a shared folder on a NAS or PC, using MiSTer's own `cifs_mount.sh` and `cifs_umount.sh` scripts from [MiSTer-devel/Scripts_MiSTer](https://github.com/MiSTer-devel/Scripts_MiSTer).
+- **Status:** the installed script versions (compared with the newest on GitHub), CIFS support in the SuperStation's Linux, where the settings are kept, whether the share is mounted at startup, and what's mounted where
+- **Install scripts / Update scripts** downloads the newest `cifs_mount.sh` and `cifs_umount.sh` to `/media/fat/Scripts`. Settings that were typed into an old `cifs_mount.sh` are moved to `cifs_mount.ini` first, so updating never loses them
+- **Share settings:** server, share name, a folder inside the share, user name and password (or guest access), domain, where to mount the share, extra mount options with an SMB version picker, mount at startup and wait for the server. They're saved to `/media/fat/Scripts/cifs_mount.ini` in the format the scripts read
+- **Where to mount:** `/media/fat/cifs` (recommended, MiSTer checks it before `/media/fat/games`), another folder name, folders matching the share's (for example `games|Scripts`), or every folder on the share (`*`)
+- **Test connection** checks each step with your unsaved settings and explains what's wrong in plain words: the server name can't be found, the server doesn't answer, file sharing isn't reachable, the user name or password is refused, or the share doesn't exist. If the default SMB version fails it tries 3.0, 2.1, 2.0 and 1.0 and tells you which one works. It then lists what's on the share and whether it has a `games` folder
+- **Mount now, Unmount, Unmount all CIFS** run the scripts with their output shown live in the progress card. For a new setup you don't need to install anything first: if the scripts are missing, or older than 2.2.0 (the first version that reads `cifs_mount.ini` as plain settings and mounts at startup through `user-startup.sh`), **Mount now** installs the newest ones before mounting
+- **Mount at startup** uses the same managed entry in `linux/user-startup.sh` that `cifs_mount.sh` itself writes, so the app and the script always agree. The last startup mount log (`/tmp/cifs_mount.log`) is shown
+- **Games on the share:** each system folder found on the share, and which copy MiSTer actually uses. MiSTer checks `/media/fat/<system>`, then USB and NVMe drives, then `/media/fat/cifs`, then `/media/fat/games`, so a system folder on the NVMe drive is flagged when it hides the share's copy
+- The password is written to `cifs_mount.ini` on the SD card in plain text, because that's how the scripts read it. SS1 Tool doesn't keep it; each save keeps a copy of the previous `cifs_mount.ini` in `backups\cifs\` next to SS1Tool.exe
 
 ### Screenshots
 - **Take a screenshot** of whatever is running on the SuperStation from your PC, with an optional name and an option for the scaled picture as shown on the TV. It's saved on the SS1 and copied to `backups\screenshots\<core>\` next to SS1Tool.exe
@@ -292,6 +309,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | Settings and saved devices | `%APPDATA%\SS1Tool\config.json` |
 | SD card backups | `backup\sdcard\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Screenshots | `backups\screenshots\<core>\` next to `SS1Tool.exe` |
+| Previous `cifs_mount.ini` files (contain the share password) | `backups\cifs\` next to `SS1Tool.exe` |
 | Save backups | `backups\saves\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Bluetooth pairing backups | `backups\bluetooth\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Controller mapping backups | `backups\controller-maps\<name>_<date-time>\` next to `SS1Tool.exe` |
@@ -303,8 +321,9 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 ## Privacy and security
 
 - The app only listens on `127.0.0.1` (your own PC), and every request needs a random session token.
-- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory and download Update All and the SD installer, and to TheGamesDB, to test an API key you enter.
+- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory and download Update All, the SD installer and the CIFS scripts, and to TheGamesDB, to test an API key you enter.
 - Saved devices store the name, IP and user only, never the password.
+- The CIFS share password is written only to your SS1, in `/media/fat/Scripts/cifs_mount.ini`, because MiSTer's `cifs_mount.sh` needs it there. Copies of earlier `cifs_mount.ini` files are kept on your PC in `backups\cifs\`.
 - Scraper logins are written only to your SS1, in `/media/fat/ConsoleMode/`.
 - The SS1 is reached over SSH with host-key checking off, because the SS1 creates new host keys every time it's reflashed. Only use the tool on networks you trust.
 
@@ -344,6 +363,7 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `sshclient.go` | SSH connection, command and upload helpers |
 | `actions.go` | Status, setup, Samba, Update All, scraper, ini editor, HDMI fix, diagnostics, debug report, file manager |
 | `features2.go` | Remote keyboard and controller, saved devices, drive transfers, ini backups |
+| `cifs.go` | CIFS network share: script install and update, settings, connection test, mount and unmount |
 | `saves.go` | Saves and save states: scan, backup and restore |
 | `bluetooth.go`, `bt_jobs.go` | Bluetooth manager and its progress tracking |
 | `jobs.go` | Progress tracking for background operations |
