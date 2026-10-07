@@ -99,33 +99,31 @@ In menu order.
 
 | Wizard | Dashboard |
 |---|---|
-| ![Wizard: first-time setup, choosing the SD card image](docs/screenshots/wizard.png) | ![Dashboard: CPU cores and threads, memory, storage, network and processes](docs/screenshots/dashboard.png) |
+| ![Wizard: first-time setup, step by step](docs/screenshots/wizard.png) | ![Dashboard: CPU, memory, storage, network and processes](docs/screenshots/dashboard.png) |
 | **Connect** | **Setup** |
-| ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Setup: scripts, community scripts, Samba, Update All and scraper logins](docs/screenshots/setup.png) |
+| ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Setup: scripts, community scripts, Samba, Update All and the Linux update advisory](docs/screenshots/setup.png) |
 | **Setup: RetroAchievements account** | **Setup: Flash SD card** |
-| ![Setup: RetroAchievements account card with a tested login](docs/screenshots/retroachievements.png) | ![Flash SD Card: choosing the Console Mode or Regular image](docs/screenshots/flash.png) |
-| **Network** | **Network: WiFi setup** |
-| ![Network: Ethernet connection details and WiFi setup on one page](docs/screenshots/network.png) | ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) |
-| **Cifs** | **Cifs: share settings and games on the share** |
-| ![Cifs: testing the connection to a NAS share, script versions and mount status](docs/screenshots/cifs.png) | ![Cifs: share settings, startup options and which system folders MiSTer uses](docs/screenshots/cifs-settings.png) |
-| **Cifs: share a folder from this PC** | **Files** |
-| ![Cifs: share a folder from this Windows PC for the SuperStation to play games from](docs/screenshots/pcshare.png) | ![Files: file manager, saves, SD card backup and screenshots on one page, with Jump to links](docs/screenshots/files.png) |
-| **Files: Saves** | **Files: Saves backup in progress** |
-| ![Saves: game saves and save states per system, ready to back up](docs/screenshots/saves.png) | ![Saves: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) |
-| **Files: SD card backup** | **Files: Screenshots** |
-| ![SD Backup: backing up the SD card to this PC](docs/screenshots/sdbackup.png) | ![Screenshots: take, view and copy screenshots](docs/screenshots/screenshots.png) |
-| **Devices** | **Devices: USB devices** |
-| ![Devices: USB devices, Bluetooth and controllers on one page, with Jump to links](docs/screenshots/devices.png) | ![USB Devices: controllers, keyboards and drives on the SuperStation and dock](docs/screenshots/usb.png) |
+| ![Setup: RetroAchievements account card with a tested login](docs/screenshots/retroachievements.png) | ![Setup: flashing the SuperStation One SD card image](docs/screenshots/flash.png) |
+| **Setup: MiSTer settings** | **Network** |
+| ![Setup: editing MiSTer.ini with the SS1 HDMI fix](docs/screenshots/settings.png) | ![Network: Ethernet connection details, with Jump to links for WiFi and Cifs](docs/screenshots/network.png) |
+| **Network: WiFi setup** | **Network: Cifs** |
+| ![Network: WiFi setup by SD card or over the network](docs/screenshots/wifi.png) | ![Network: testing the connection to a NAS share, script versions and mount status](docs/screenshots/cifs.png) |
+| **Network: Cifs share settings** | **Network: share a folder from this PC** |
+| ![Network: Cifs share settings, startup options and which system folders MiSTer uses](docs/screenshots/cifs-settings.png) | ![Network: sharing a folder from this Windows PC for the SuperStation to play games from](docs/screenshots/pcshare.png) |
+| **Files** | **Files: Saves** |
+| ![Files: file manager, saves, SD card backup and screenshots on one page, with Jump to links](docs/screenshots/files.png) | ![Files: game saves and save states per system, ready to back up](docs/screenshots/saves.png) |
+| **Files: Saves backup in progress** | **Files: SD card backup** |
+| ![Files: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) | ![Files: SD card backup to this PC](docs/screenshots/sdbackup.png) |
+| **Files: Screenshots** | **Devices** |
+| ![Files: taking and browsing screenshots](docs/screenshots/screenshots.png) | ![Devices: USB devices on the SuperStation and its dock, with Jump to links for Bluetooth and Controllers](docs/screenshots/devices.png) |
 | **Devices: Bluetooth** | **Devices: Bluetooth restore in progress** |
-| ![Bluetooth: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Bluetooth: progress bar, current step and log while restoring a backup](docs/screenshots/bluetooth-progress.png) |
-| **Devices: Controllers** | **MiSTer Settings** |
-| ![Controllers: mappings, profiles and backups](docs/screenshots/controllers.png) | ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) |
-| **Remote** | **Diag** |
-| ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) | ![Diag: SD diagnostics and the debug report on one page](docs/screenshots/diag.png) |
-| **Diag: SD diagnostics** | **About** |
-| ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) | ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) |
+| ![Devices: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Devices: progress bar, current step and log while restoring a Bluetooth backup](docs/screenshots/bluetooth-progress.png) |
+| **Devices: Controllers** | **Remote** |
+| ![Devices: controller mappings and profiles](docs/screenshots/controllers.png) | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) |
+| **Diag** | **About** |
+| ![Diag: SD diagnostics and the debug report on one page](docs/screenshots/diag.png) | ![About: credits, links, updates and the window setting](docs/screenshots/about.png) |
 | **About: Updates** | **Update offer at startup** |
-| ![Updates: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) | ![Update offer: a bar at the top offers the new version with Update now, What's new and Not now](docs/screenshots/update-offer.png) |
+| ![About: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) | ![Update offer: a bar at the top offers the new version with Update now, What's new and Not now](docs/screenshots/update-offer.png) |
 
 ## Features
 
@@ -149,6 +147,8 @@ Open **★ Wizard** (bottom left of the menu, always visible). It walks a new ow
 - Kernel log viewer (last 20 to 200 messages) for tracking down controllers, WiFi adapters or drives that keep disconnecting
 
 ### Setup
+One-click fixes and installs, with **Flash SD card** and **MiSTer settings** at the bottom of the page (the **Further down** links jump to them).
+
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
 - Install or update community scripts straight from their authors: [Reflex Adapt Manager](https://github.com/misteraddons/Reflex-Adapt) (MiSTer Addons) and [PSX BIOS Patcher](https://gist.github.com/IncognitoMan/fd1f9fbd5794af83370a5c6b02b7d6ee) (IncognitoMan)
@@ -168,8 +168,15 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Only SD and USB card readers are listed; internal and boot drives are never shown
 - You must type the disk number to confirm before anything is erased
 
+#### MiSTer Settings
+- Edit `MiSTer.ini`, `downloader.ini`, Console Mode's `config.ini` and every ini in `ConsoleMode/themeconfig`, including `section_groups`
+- **SS1 HDMI fix**: shows and comments out the MiSTer.ini settings the SS1 doesn't support (`hdmi_cec`, `hdmi_cec_input_mode`, `hdmi_cec_power_on`, `hdmi_cec_sleep`, `hdmi_cec_wake`, `hdmi_cec_clock`, `hdmi_off`, `video_off_logo`); a backup is made first
+- Backups saved on your PC in a `backups` folder next to the exe: each backup gets its own folder named after what you type plus the date and time, with category folders inside and the original file names kept
+- Back up the selected file or all ini files at once; **Restore all** or **Restore file** for any backup, plus Show in Explorer and Delete
+- An automatic backup is taken before every change the tool makes
+
 ### Network
-How the SuperStation connects to your network, with Ethernet and WiFi on one page.
+How the SuperStation connects to your network, with Ethernet, WiFi and network shares (Cifs) on one page, and **Jump to** links at the top.
 
 #### Ethernet
 - Shows the SuperStation's wired connection: whether a cable is connected, the link speed and duplex, IP address, subnet mask, gateway, DNS servers, whether the address comes from your router (DHCP) or is set manually, and the MAC address
@@ -186,7 +193,7 @@ How the SuperStation connects to your network, with Ethernet and WiFi on one pag
 - **Option B, over the network:** sends the file to an SS1 temporarily connected by Ethernet, then restarts it onto WiFi, showing the new WiFi IP
 - Keeps a `.bak` copy of any existing WiFi file
 
-### Cifs
+#### Network share (Cifs)
 Play games straight from a shared folder on a NAS or PC, using MiSTer's own `cifs_mount.sh` and `cifs_umount.sh` scripts from [MiSTer-devel/Scripts_MiSTer](https://github.com/MiSTer-devel/Scripts_MiSTer).
 - **Status:** the installed script versions (compared with the newest on GitHub), CIFS support in the SuperStation's Linux, where the settings are kept, whether the share is mounted at startup, and what's mounted where
 - **Install scripts / Update scripts** downloads the newest `cifs_mount.sh` and `cifs_umount.sh` to `/media/fat/Scripts`. Settings that were typed into an old `cifs_mount.sh` are moved to `cifs_mount.ini` first, so updating never loses them
@@ -198,7 +205,7 @@ Play games straight from a shared folder on a NAS or PC, using MiSTer's own `cif
 - **Games on the share:** each system folder found on the share, and which copy MiSTer actually uses. MiSTer checks `/media/fat/<system>`, then USB and NVMe drives, then `/media/fat/cifs`, then `/media/fat/games`, so a system folder on the NVMe drive is flagged when it hides the share's copy
 - The password is written to `cifs_mount.ini` on the SD card in plain text, because that's how the scripts read it. SS1 Tool doesn't keep it; each save keeps a copy of the previous `cifs_mount.ini` in `backups\cifs\` next to SS1Tool.exe
 
-#### No NAS? Share a folder from this PC (Windows)
+##### No NAS? Share a folder from this PC (Windows)
 For players without a NAS or an NVMe drive: keep your games on your PC, so a failed or reflashed SD card never costs you your collection or a day of copying.
 - **Share this folder** sets everything up after one Windows permission prompt:
   - creates the folder (default `C:\SS1_Games`) and, if you like, `games\<system>` folders for NES, SNES, N64, Game Boy, GBC, GBA, Genesis, Sega CD, 32X, Master System, Saturn, PC Engine, PC Engine CD, Neo Geo, PlayStation, Jaguar and WonderSwan
@@ -272,13 +279,6 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
 - For each connected controller (USB or Bluetooth): whether it uses a **custom mapping** (set with *Define joystick buttons* in the MiSTer menu, including which cores have their own) or MiSTer's **automatic mapping** from its controller database, with **Reset to automatic**
 - Lists the mapping files on the SD card (`/media/fat/config/inputs`) and your own controller profiles (`linux/gamecontrollerdb/gamecontrollerdb_user.txt`): which controller, which core, what kind
 - **Back up** mappings and profiles to `backups\controller-maps\<name>_<date-time>\` on this PC, **restore** any backup, or **delete** them all from the SD card. A backup is always saved first before anything is replaced or removed
-
-### MiSTer Settings
-- Edit `MiSTer.ini`, `downloader.ini`, Console Mode's `config.ini` and every ini in `ConsoleMode/themeconfig`, including `section_groups`
-- **SS1 HDMI fix**: shows and comments out the MiSTer.ini settings the SS1 doesn't support (`hdmi_cec`, `hdmi_cec_input_mode`, `hdmi_cec_power_on`, `hdmi_cec_sleep`, `hdmi_cec_wake`, `hdmi_cec_clock`, `hdmi_off`, `video_off_logo`); a backup is made first
-- Backups saved on your PC in a `backups` folder next to the exe: each backup gets its own folder named after what you type plus the date and time, with category folders inside and the original file names kept
-- Back up the selected file or all ini files at once; **Restore all** or **Restore file** for any backup, plus Show in Explorer and Delete
-- An automatic backup is taken before every change the tool makes
 
 ### Remote
 - On-screen controller: D-pad, A/B/X/Y, Select, Start and OSD, with hold-to-press
