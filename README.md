@@ -100,6 +100,8 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 | ![Wizard: first-time setup, choosing the SD card image](docs/screenshots/wizard.png) | ![Dashboard: CPU cores and threads, memory, storage, network and processes](docs/screenshots/dashboard.png) |
 | **Connect** | **Setup** |
 | ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Setup: scripts, community scripts, Samba, Update All and scraper logins](docs/screenshots/setup.png) |
+| **Setup: RetroAchievements account** | |
+| ![Setup: RetroAchievements account card with a tested login](docs/screenshots/retroachievements.png) | |
 | **Remote** | **Files** |
 | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) | ![Files: two-pane SD card and NVMe file manager](docs/screenshots/files.png) |
 | **Saves** | **Saves: backup in progress** |
@@ -162,6 +164,11 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Shows the current [Linux update advisory](#linux-update-advisory) from this repo
 - Remove the faulty `fix_sd_overlap.sh` / `exfat_fix_overlap` tool, which misreads the correct SS1 partition layout as overlapping ([SuperStation-Documentation #14](https://github.com/Takiiiiiiii/SuperStation-Documentation/issues/14))
 - Save your own ScreenScraper login and TheGamesDB API key for Console Mode, with the installed values shown under each field
+- **RetroAchievements account:** your [retroachievements.org](https://retroachievements.org) login for the RetroAchievements build of MiSTer (by odelot), saved in `/media/fat/retroachievements.cfg` where that build reads it
+  - Shows whether the RetroAchievements build is installed (`MiSTer_RA` and the `[RA_*] main=MiSTer_RA` block in MiSTer.ini), which account is saved, and warns if the file still has the build's example login (`odelot`)
+  - **Test login** checks the username and password with RetroAchievements from the PC, the same way the build logs in, and shows your points
+  - **Save** checks the login first, so a typo is never saved. If RetroAchievements can't be reached, it saves anyway and says the login wasn't checked. Leave the password blank to keep the saved one
+  - Only the `username=` and `password=` lines are changed; every other setting and comment in the file stays as it is. **Remove login** clears them
 
 ### Remote
 - On-screen controller: D-pad, A/B/X/Y, Select, Start and OSD, with hold-to-press
@@ -353,11 +360,12 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 ## Privacy and security
 
 - The app only listens on `127.0.0.1` (your own PC), and every request needs a random session token.
-- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory, check for and download SS1 Tool updates, and download Update All, the SD installer and the CIFS scripts, and to TheGamesDB, to test an API key you enter.
+- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory, check for and download SS1 Tool updates, and download Update All, the SD installer and the CIFS scripts, to TheGamesDB, to test an API key you enter, and to retroachievements.org, to check a RetroAchievements login you enter.
 - Saved devices store the name, IP and user only, never the password.
 - **Share a folder from this PC** creates a local Windows account (default `ss1user`) that can only open that one folder. Its password is written only to the SS1's `cifs_mount.ini`; SS1 Tool doesn't keep it. **Remove share from this PC** deletes the account.
 - The CIFS share password is written only to your SS1, in `/media/fat/Scripts/cifs_mount.ini`, because MiSTer's `cifs_mount.sh` needs it there. Copies of earlier `cifs_mount.ini` files are kept on your PC in `backups\cifs\`.
 - Scraper logins are written only to your SS1, in `/media/fat/ConsoleMode/`.
+- The RetroAchievements login is written only to your SS1, in `/media/fat/retroachievements.cfg`, in plain text because that's how the RetroAchievements build reads it. **Test login** and **Save** send it to retroachievements.org to check it; the login token RetroAchievements returns is not kept.
 - The SS1 is reached over SSH with host-key checking off, because the SS1 creates new host keys every time it's reflashed. Only use the tool on networks you trust.
 
 ## Reporting a problem
@@ -394,6 +402,7 @@ For development on Linux or macOS, `go build .` produces a version without the W
 |---|---|
 | `main.go` | Local web server, session token, config |
 | `sshclient.go` | SSH connection, command and upload helpers |
+| `ra.go` | RetroAchievements account: read, check and save the login in `retroachievements.cfg` |
 | `actions.go` | Status, setup, Samba, Update All, scraper, ini editor, HDMI fix, diagnostics, debug report, file manager |
 | `features2.go` | Remote keyboard and controller, saved devices, drive transfers, ini backups |
 | `pcshare.go`, `pcshare_windows.go` | Sharing a folder from this Windows PC: account, share, firewall and Cifs setup |
