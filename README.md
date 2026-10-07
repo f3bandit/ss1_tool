@@ -95,35 +95,37 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 
 ## Screenshots
 
+In menu order.
+
 | Wizard | Dashboard |
 |---|---|
 | ![Wizard: first-time setup, choosing the SD card image](docs/screenshots/wizard.png) | ![Dashboard: CPU cores and threads, memory, storage, network and processes](docs/screenshots/dashboard.png) |
 | **Connect** | **Setup** |
 | ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Setup: scripts, community scripts, Samba, Update All and scraper logins](docs/screenshots/setup.png) |
-| **Setup: RetroAchievements account** | |
-| ![Setup: RetroAchievements account card with a tested login](docs/screenshots/retroachievements.png) | |
-| **Remote** | **Files** |
-| ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) | ![Files: two-pane SD card and NVMe file manager](docs/screenshots/files.png) |
-| **Saves** | **Saves: backup in progress** |
-| ![Saves: game saves and save states per system, ready to back up](docs/screenshots/saves.png) | ![Saves: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) |
+| **Setup: RetroAchievements account** | **Setup: Flash SD card** |
+| ![Setup: RetroAchievements account card with a tested login](docs/screenshots/retroachievements.png) | ![Flash SD Card: choosing the Console Mode or Regular image](docs/screenshots/flash.png) |
+| **Network** | **Network: WiFi setup** |
+| ![Network: Ethernet connection details and WiFi setup on one page](docs/screenshots/network.png) | ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) |
 | **Cifs** | **Cifs: share settings and games on the share** |
 | ![Cifs: testing the connection to a NAS share, script versions and mount status](docs/screenshots/cifs.png) | ![Cifs: share settings, startup options and which system folders MiSTer uses](docs/screenshots/cifs-settings.png) |
-| **Cifs: share a folder from this PC** | |
-| ![Cifs: share a folder from this Windows PC for the SuperStation to play games from](docs/screenshots/pcshare.png) | |
-| **MiSTer Settings** | **SD Diagnostics** |
-| ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) | ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) |
-| **SD Backup** | **Flash SD Card** |
-| ![SD Backup: backing up the SD card to this PC](docs/screenshots/sdbackup.png) | ![Flash SD Card: choosing the Console Mode or Regular image](docs/screenshots/flash.png) |
-| **USB Devices** | **WiFi** |
-| ![USB Devices: controllers, keyboards and drives on the SuperStation and dock](docs/screenshots/usb.png) | ![WiFi: scanning networks and saving the WiFi settings](docs/screenshots/wifi.png) |
-| **Screenshots** | **Controllers** |
-| ![Screenshots: take, view and copy screenshots](docs/screenshots/screenshots.png) | ![Controllers: mappings, profiles and backups](docs/screenshots/controllers.png) |
-| **Bluetooth** | **Bluetooth: restore in progress** |
+| **Cifs: share a folder from this PC** | **Files** |
+| ![Cifs: share a folder from this Windows PC for the SuperStation to play games from](docs/screenshots/pcshare.png) | ![Files: file manager, saves, SD card backup and screenshots on one page, with Jump to links](docs/screenshots/files.png) |
+| **Files: Saves** | **Files: Saves backup in progress** |
+| ![Saves: game saves and save states per system, ready to back up](docs/screenshots/saves.png) | ![Saves: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) |
+| **Files: SD card backup** | **Files: Screenshots** |
+| ![SD Backup: backing up the SD card to this PC](docs/screenshots/sdbackup.png) | ![Screenshots: take, view and copy screenshots](docs/screenshots/screenshots.png) |
+| **Devices** | **Devices: USB devices** |
+| ![Devices: USB devices, Bluetooth and controllers on one page, with Jump to links](docs/screenshots/devices.png) | ![USB Devices: controllers, keyboards and drives on the SuperStation and dock](docs/screenshots/usb.png) |
+| **Devices: Bluetooth** | **Devices: Bluetooth restore in progress** |
 | ![Bluetooth: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Bluetooth: progress bar, current step and log while restoring a backup](docs/screenshots/bluetooth-progress.png) |
-| **About** | **Updates** |
-| ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) | ![Updates: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) |
-| **Update offer at startup** | |
-| ![Update offer: a bar at the top offers the new version with Update now, What's new and Not now](docs/screenshots/update-offer.png) | |
+| **Devices: Controllers** | **MiSTer Settings** |
+| ![Controllers: mappings, profiles and backups](docs/screenshots/controllers.png) | ![MiSTer Settings: ini editor, SS1 HDMI fix and backups](docs/screenshots/settings.png) |
+| **Remote** | **Diag** |
+| ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) | ![Diag: SD diagnostics and the debug report on one page](docs/screenshots/diag.png) |
+| **Diag: SD diagnostics** | **About** |
+| ![SD Diagnostics: storage checks](docs/screenshots/diagnostics.png) | ![About: credits, Discord and documentation links, Winter mode](docs/screenshots/about.png) |
+| **About: Updates** | **Update offer at startup** |
+| ![Updates: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) | ![Update offer: a bar at the top offers the new version with Update now, What's new and Not now](docs/screenshots/update-offer.png) |
 
 ## Features
 
@@ -146,15 +148,6 @@ Open **★ Wizard** (bottom left of the menu, always visible). It walks a new ow
 - Live health of the SS1's Linux side, refreshed every 3 seconds: CPU use and load with the number of cores and threads and a bar for each thread, memory, storage space on the SD card and USB/NVMe drives, network traffic with a download/upload graph, uptime, the current core, running processes (busiest first), and temperature on hardware that has a sensor
 - Kernel log viewer (last 20 to 200 messages) for tracking down controllers, WiFi adapters or drives that keep disconnecting
 
-### USB Devices
-- Separate **SuperStation** and **Dock** cards: the console's own sockets and built-in parts (such as the WiFi/Bluetooth card), and the dock's sockets, NVMe slot and the TV remote receiver. Shows whether the dock is connected, plus a card for the USB host controllers
-- For each device: name and maker, its type (controller, keyboard, mouse, storage, IR remote receiver, WiFi/Bluetooth adapter, USB serial adapter and so on), hardware ID (vendor:product), USB class, speed, driver, and its **port number**, which always refers to the same physical socket
-- How it shows up to the MiSTer: **controller**, **keyboard** or **mouse**, with its number of buttons, keys and axes, D-pad and rumble support
-- **Bluetooth controllers** are listed too, and **virtual devices** (such as SS1 Tool's Remote keyboard and controller) are shown separately so they aren't mistaken for real hardware
-- **Name your sockets** (e.g. *Back left*, *Front*, *Dock 1*): the name sticks to that physical socket, and named sockets show as empty when nothing is plugged in
-- Recognizes the dock's built-in NVMe slot, CD/DVD drive and TV remote receiver (`pico_ir_keyboard` by TinyUSB, which shows up as a keyboard and mouse), and notes that the SNAC ports (front, and the dock port labeled SNAC) aren't USB
-- USB drives show their size and where they're mounted; recent USB connection errors from the kernel log are listed, tagged Dock or SuperStation
-
 ### Setup
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
@@ -170,36 +163,28 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
   - **Save** checks the login first, so a typo is never saved. If RetroAchievements can't be reached, it saves anyway and says the login wasn't checked. Leave the password blank to keep the saved one
   - Only the `username=` and `password=` lines are changed; every other setting and comment in the file stays as it is. **Remove login** clears them
 
-### Remote
-- On-screen controller: D-pad, A/B/X/Y, Select, Start and OSD, with hold-to-press
-- Remote keyboard: on-screen keys and live key capture
-- Reload the menu, reboot, safe shutdown, open an SSH terminal or the Samba share
-- **Safe shutdown** shows the same **Shutting down** and **SAFE TO POWER OFF** screens on the TV whichever front end is running:
-  - **Console Mode:** the screens are drawn over the Console Mode UI, which is paused so it can't draw over them
-  - **MiSTer mode:** SS1 Tool switches the TV to MiSTer's Linux screen first (going back to the menu core if a game is running, then pressing F9) and checks the switch worked before the screens are drawn. It checks this through the SS1 Tool virtual keyboard: MiSTer releases keyboards only while its Linux screen is showing
-  - If the TV can't show them (for example `fb_terminal=0` in MiSTer.ini), the shutdown still runs and SS1 Tool tells you to wait 15 seconds before switching off
+#### Flash SD Card
+- Choose the **Console Mode** or **Regular** image from the latest official [SuperStation One SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer/releases) release, or use an image file you already have; it's written to the card and read back to verify
+- Only SD and USB card readers are listed; internal and boot drives are never shown
+- You must type the disk number to confirm before anything is erased
 
-### Files
-- Two-pane file manager with a drive picker on each side
-- Copy and move between the SD card and the NVMe/USB drive; the copy runs on the SS1 itself, so nothing goes through your PC
-- Upload, download (folders as zip), rename, delete and create folders; system folders are protected
+### Network
+How the SuperStation connects to your network, with Ethernet and WiFi on one page.
 
-### Saves
-- **Back up and restore game saves and save states** for every supported system, kept on this PC in `backups\saves\<name>_<date-time>\` next to SS1Tool.exe
-- Supported systems:
-  - **Sega:** Genesis / Mega Drive, Master System, Game Gear, SG-1000, Sega CD / Mega CD, 32X, Saturn
-  - **Nintendo:** NES / Famicom Disk System, SNES, Nintendo 64, Game Boy, Game Boy Color, Super Game Boy, Game Boy Advance, Virtual Boy, Pokemon mini
-  - **NEC:** PC Engine / TurboGrafx-16, PC Engine CD / TurboGrafx-CD
-  - **Atari:** Jaguar
-  - **SNK:** Neo Geo (MVS / AES), Neo Geo CD, Neo Geo Pocket / Color
-  - **Sony:** PlayStation
-  - **Bandai:** WonderSwan / Color
-- Finds saves (`saves/<core>`) and save states (`savestates/<core>`) on the SD card and on any USB or NVMe drive, and lists them by system with the number of files, size and when each system was last saved
-- **Files** shows every save and save state of a system, with a download button for each
-- Tick the systems to back up, give the backup a name if you like, and choose whether to include save states
-- **Restore** a whole backup or only the systems you tick. Saves with the same name are replaced and every other save is left alone. The current saves for those systems are backed up on this PC first
-- Backup and restore run with a progress bar, the current step, files and megabytes copied, elapsed time and a log
-- Exit the game to the menu before backing up or restoring: a running game writes its save when it exits
+#### Ethernet
+- Shows the SuperStation's wired connection: whether a cable is connected, the link speed and duplex, IP address, subnet mask, gateway, DNS servers, whether the address comes from your router (DHCP) or is set manually, and the MAC address
+- Marks the connection used for the internet and the one SS1 Tool is connected through
+- Counts data, errors and link drops since the SuperStation started, and flags a slow or half-duplex link. Errors and drops usually mean a damaged cable or a bad router port
+- With no cable connected, it says how the SuperStation is online instead (for example through WiFi) and why a cable helps: it's faster and more reliable for playing games from a network share and for big copies
+- Built-in ports and USB Ethernet adapters are both shown. Any address range works, including setups that don't use 192.168.x.x
+
+#### WiFi
+- Creates the SuperStation One's WiFi settings file, `linux/wpa_supplicant.conf`, in the same format as MiSTer's `_wpa_supplicant.conf` template
+- Scans for networks with this PC's WiFi adapter, showing signal, security and band (2.4/5/6 GHz), or type the name for a hidden network
+- Password and country entry; the password is never stored by SS1 Tool
+- **Option A, SD card in this PC:** writes the file straight to the SS1's SD card in your card reader
+- **Option B, over the network:** sends the file to an SS1 temporarily connected by Ethernet, then restarts it onto WiFi, showing the new WiFi IP
+- Keeps a `.bak` copy of any existing WiFi file
 
 ### Cifs
 Play games straight from a shared folder on a NAS or PC, using MiSTer's own `cifs_mount.sh` and `cifs_umount.sh` scripts from [MiSTer-devel/Scripts_MiSTer](https://github.com/MiSTer-devel/Scripts_MiSTer).
@@ -227,11 +212,66 @@ For players without a NAS or an NVMe drive: keep your games on your PC, so a fai
 - **Remove share from this PC** unmounts the share on the SuperStation, then removes the share, the `ss1user` account and the firewall rule. Your game files stay where they are
 - Keep the PC switched on and awake while you play
 
-### Screenshots
+### Files
+File manager, saves, SD card backup and screenshots on one page, with **Jump to** links at the top. Each part loads when you scroll to it.
+
+#### File manager
+- Two-pane file manager with a drive picker on each side
+- Copy and move between the SD card and the NVMe/USB drive; the copy runs on the SS1 itself, so nothing goes through your PC
+- Upload, download (folders as zip), rename, delete and create folders; system folders are protected
+
+#### Saves
+- **Back up and restore game saves and save states** for every supported system, kept on this PC in `backups\saves\<name>_<date-time>\` next to SS1Tool.exe
+- Supported systems:
+  - **Sega:** Genesis / Mega Drive, Master System, Game Gear, SG-1000, Sega CD / Mega CD, 32X, Saturn
+  - **Nintendo:** NES / Famicom Disk System, SNES, Nintendo 64, Game Boy, Game Boy Color, Super Game Boy, Game Boy Advance, Virtual Boy, Pokemon mini
+  - **NEC:** PC Engine / TurboGrafx-16, PC Engine CD / TurboGrafx-CD
+  - **Atari:** Jaguar
+  - **SNK:** Neo Geo (MVS / AES), Neo Geo CD, Neo Geo Pocket / Color
+  - **Sony:** PlayStation
+  - **Bandai:** WonderSwan / Color
+- Finds saves (`saves/<core>`) and save states (`savestates/<core>`) on the SD card and on any USB or NVMe drive, and lists them by system with the number of files, size and when each system was last saved
+- **Files** shows every save and save state of a system, with a download button for each
+- Tick the systems to back up, give the backup a name if you like, and choose whether to include save states
+- **Restore** a whole backup or only the systems you tick. Saves with the same name are replaced and every other save is left alone. The current saves for those systems are backed up on this PC first
+- Backup and restore run with a progress bar, the current step, files and megabytes copied, elapsed time and a log
+- Exit the game to the menu before backing up or restoring: a running game writes its save when it exits
+
+#### SD Backup
+- Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on
+- Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary
+- Progress bar, cancel, and a list of backups with Open folder and Delete
+
+#### Screenshots
 - **Take a screenshot** of whatever is running on the SuperStation from your PC, with an optional name and an option for the scaled picture as shown on the TV. It's saved on the SS1 and copied to `backups\screenshots\<core>\` next to SS1Tool.exe
 - Two cards, **On this PC** and **On the SD card**, each with a scrolling list and a built-in viewer
 - On this PC: show in folder, open full size, delete. On the SD card: copy one or all to this PC, open full size, delete from the SD card
 - Works while a game or core is running; the MiSTer menu and Console Mode's own screens can't be captured
+
+### Devices
+USB devices, Bluetooth and controllers on one page, with **Jump to** links at the top.
+
+#### USB Devices
+- Separate **SuperStation** and **Dock** cards: the console's own sockets and built-in parts (such as the WiFi/Bluetooth card), and the dock's sockets, NVMe slot and the TV remote receiver. Shows whether the dock is connected, plus a card for the USB host controllers
+- For each device: name and maker, its type (controller, keyboard, mouse, storage, IR remote receiver, WiFi/Bluetooth adapter, USB serial adapter and so on), hardware ID (vendor:product), USB class, speed, driver, and its **port number**, which always refers to the same physical socket
+- How it shows up to the MiSTer: **controller**, **keyboard** or **mouse**, with its number of buttons, keys and axes, D-pad and rumble support
+- **Bluetooth controllers** are listed too, and **virtual devices** (such as SS1 Tool's Remote keyboard and controller) are shown separately so they aren't mistaken for real hardware
+- **Name your sockets** (e.g. *Back left*, *Front*, *Dock 1*): the name sticks to that physical socket, and named sockets show as empty when nothing is plugged in
+- Recognizes the dock's built-in NVMe slot, CD/DVD drive and TV remote receiver (`pico_ir_keyboard` by TinyUSB, which shows up as a keyboard and mouse), and notes that the SNAC ports (front, and the dock port labeled SNAC) aren't USB
+- USB drives show their size and where they're mounted; recent USB connection errors from the kernel log are listed, tagged Dock or SuperStation
+
+#### Bluetooth
+- Lists every **paired Bluetooth device** (controllers first) with connected, paired and trusted status, its ID, and for controllers which button mapping MiSTer uses
+- **Disconnect**, **Trust / Untrust** (trusted controllers reconnect on their own) and **Remove pairing** per device, or **Remove all pairings**
+- **Back up** all pairings to `backups\bluetooth\<name>_<date-time>\` on this PC and **restore** them, for example after reflashing the SD card. A backup is always saved first before anything is removed or replaced
+- **Export** one pairing or all of them to a zip, and **Import** a zip exported by SS1 Tool
+- **Start pairing** (sends F11 to the MiSTer menu) and **Restart Bluetooth**
+- **Progress** for backup, restore, export, import and removing pairings: a progress bar, the current step (for example *Step 4 of 6: Stopping Bluetooth*), files copied, elapsed time and a log. It stays on screen while the operation runs, and the other Bluetooth buttons are locked until it finishes
+
+#### Controllers
+- For each connected controller (USB or Bluetooth): whether it uses a **custom mapping** (set with *Define joystick buttons* in the MiSTer menu, including which cores have their own) or MiSTer's **automatic mapping** from its controller database, with **Reset to automatic**
+- Lists the mapping files on the SD card (`/media/fat/config/inputs`) and your own controller profiles (`linux/gamecontrollerdb/gamecontrollerdb_user.txt`): which controller, which core, what kind
+- **Back up** mappings and profiles to `backups\controller-maps\<name>_<date-time>\` on this PC, **restore** any backup, or **delete** them all from the SD card. A backup is always saved first before anything is replaced or removed
 
 ### MiSTer Settings
 - Edit `MiSTer.ini`, `downloader.ini`, Console Mode's `config.ini` and every ini in `ConsoleMode/themeconfig`, including `section_groups`
@@ -240,24 +280,34 @@ For players without a NAS or an NVMe drive: keep your games on your PC, so a fai
 - Back up the selected file or all ini files at once; **Restore all** or **Restore file** for any backup, plus Show in Explorer and Delete
 - An automatic backup is taken before every change the tool makes
 
-### SD Diagnostics (SD card or NVMe)
+### Remote
+- On-screen controller: D-pad, A/B/X/Y, Select, Start and OSD, with hold-to-press
+- Remote keyboard: on-screen keys and live key capture
+- Reload the menu, reboot, safe shutdown, open an SSH terminal or the Samba share
+- **Safe shutdown** shows the same **Shutting down** and **SAFE TO POWER OFF** screens on the TV whichever front end is running:
+  - **Console Mode:** the screens are drawn over the Console Mode UI, which is paused so it can't draw over them
+  - **MiSTer mode:** SS1 Tool switches the TV to MiSTer's Linux screen first (going back to the menu core if a game is running, then pressing F9) and checks the switch worked before the screens are drawn. It checks this through the SS1 Tool virtual keyboard: MiSTer releases keyboards only while its Linux screen is showing
+  - If the TV can't show them (for example `fb_terminal=0` in MiSTer.ini), the shutdown still runs and SS1 Tool tells you to wait 15 seconds before switching off
+
+### Diag
+SD card diagnostics and the debug report on one page.
+
+#### SD Diagnostics
 - Quick check: partition table and overlap, exFAT boot region checksums, kernel I/O errors
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
 
-### WiFi
-- Creates the SuperStation One's WiFi settings file, `linux/wpa_supplicant.conf`, in the same format as MiSTer's `_wpa_supplicant.conf` template
-- Scans for networks with this PC's WiFi adapter, showing signal, security and band (2.4/5/6 GHz), or type the name for a hidden network
-- Password and country entry; the password is never stored by SS1 Tool
-- **Option A, SD card in this PC:** writes the file straight to the SS1's SD card in your card reader
-- **Option B, over the network:** sends the file to an SS1 temporarily connected by Ethernet, then restarts it onto WiFi, showing the new WiFi IP
-- Keeps a `.bak` copy of any existing WiFi file
+#### Debug Report
+- One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health, USB devices and logs into a single text file for Taki and the mods
+- Starts with an automatic **FINDINGS** summary of known problems, including whether the SS1 HDMI fix is applied
+- Passwords, keys, tokens, WiFi names and MAC addresses are redacted
+- A Save As window lets you store it anywhere
 
 ### About
 - Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
 - **Winter mode:** falling snowflakes from November to March. Choose Automatic, Always on or Off; it stays hidden if animations are turned off in Windows.
 
-### Updates
+#### Updates
 - **Update status:** this version, the newest release on GitHub and when it was last checked. Up to date shows green; an update shows yellow, both here and as a pill in the header that opens this card
 - **What's new:** the release notes of the newer version, shown before you update
 - **Update and restart:** downloads `SS1Tool.exe` from the [f3bandit/ss1_tool releases](https://github.com/f3bandit/ss1_tool/releases), checks it against the SHA-256 GitHub lists for the file, swaps it in next to the running copy and restarts. The browser window switches to the new version by itself, and a message confirms the update. If the new copy doesn't start, the old one is put back
@@ -268,34 +318,13 @@ For players without a NAS or an NVMe drive: keep your games on your PC, so a fai
 - SS1 Tool checks when it starts and every 6 hours. An update never starts while a backup, restore, copy between drives, Bluetooth operation, network share operation or SD card download or flash is running
 - SS1 Tool updates itself only if it can write to its own folder. If it's somewhere protected like Program Files, it says so; download the new version from the release page instead, or move SS1 Tool to a folder you own
 
-### SD Backup
-- Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on
-- Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary
-- Progress bar, cancel, and a list of backups with Open folder and Delete
-
-### Bluetooth
-- Lists every **paired Bluetooth device** (controllers first) with connected, paired and trusted status, its ID, and for controllers which button mapping MiSTer uses
-- **Disconnect**, **Trust / Untrust** (trusted controllers reconnect on their own) and **Remove pairing** per device, or **Remove all pairings**
-- **Back up** all pairings to `backups\bluetooth\<name>_<date-time>\` on this PC and **restore** them, for example after reflashing the SD card. A backup is always saved first before anything is removed or replaced
-- **Export** one pairing or all of them to a zip, and **Import** a zip exported by SS1 Tool
-- **Start pairing** (sends F11 to the MiSTer menu) and **Restart Bluetooth**
-- **Progress** for backup, restore, export, import and removing pairings: a progress bar, the current step (for example *Step 4 of 6: Stopping Bluetooth*), files copied, elapsed time and a log. It stays on screen while the operation runs, and the other Bluetooth buttons are locked until it finishes
-
-### Controllers
-- For each connected controller (USB or Bluetooth): whether it uses a **custom mapping** (set with *Define joystick buttons* in the MiSTer menu, including which cores have their own) or MiSTer's **automatic mapping** from its controller database, with **Reset to automatic**
-- Lists the mapping files on the SD card (`/media/fat/config/inputs`) and your own controller profiles (`linux/gamecontrollerdb/gamecontrollerdb_user.txt`): which controller, which core, what kind
-- **Back up** mappings and profiles to `backups\controller-maps\<name>_<date-time>\` on this PC, **restore** any backup, or **delete** them all from the SD card. A backup is always saved first before anything is replaced or removed
-
-### Debug Report
-- One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health, USB devices and logs into a single text file for Taki and the mods
-- Starts with an automatic **FINDINGS** summary of known problems, including whether the SS1 HDMI fix is applied
-- Passwords, keys, tokens, WiFi names and MAC addresses are redacted
-- A Save As window lets you store it anywhere
-
-### Flash SD Card
-- Choose the **Console Mode** or **Regular** image from the latest official [SuperStation One SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer/releases) release, or use an image file you already have; it's written to the card and read back to verify
-- Only SD and USB card readers are listed; internal and boot drives are never shown
-- You must type the disk number to confirm before anything is erased
+### Windows app
+- SS1 Tool runs as a normal Windows program: no console window
+- It opens in **its own window** (using Microsoft Edge's app mode, built into Windows 10 and 11), with the SS1 icon on its taskbar button. About → Window can switch it to your default browser instead
+- It keeps an icon in the **notification area** by the clock, so long jobs like backups can finish if you close the window. Click the icon to open SS1 Tool again; right-click it for **Open SS1 Tool** and **Quit**. If something is still running, Quit asks first
+- **Only one copy runs at a time**: starting SS1 Tool again just opens the running copy
+- The exe carries proper Windows details: its icon at every size, the product name, publisher and version that Explorer and Task Manager show, and an application manifest
+- If SS1 Tool can't start, it says why in a Windows message box
 
 ## Getting started
 
@@ -370,7 +399,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 
 ## Reporting a problem
 
-1. Open the **Debug Report** tab and click **Create debug report**.
+1. Open **Diag**, go to **Debug report** and click **Create debug report**.
 2. Save the file.
 3. **Problem with your SS1:** post the file in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX) along with a short description of what's wrong.
    **Problem with SS1 Tool itself:** attach the file to a new [issue](https://github.com/f3bandit/ss1_tool/issues).
@@ -379,22 +408,25 @@ Please say which version you're using; it's shown in the bottom right corner of 
 
 ## Building from source
 
-Needs [Go](https://go.dev/) 1.22 or newer. Run these from the project folder:
+Needs [Go](https://go.dev/) 1.22 or newer. From the project folder, run the build script:
 
-```bash
-# 1. Helpers that run on the SS1 (32-bit ARM)
-CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w" -o bin/ss1kbd_arm ./kbdhelper
-CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w" -o bin/ss1fb_arm ./fbhelper
-
-# 2. Windows icon resource (only needed if you change icon/ss1tool.ico)
-go install github.com/akavel/rsrc@latest
-rsrc -ico icon/ss1tool.ico -arch amd64 -o rsrc_windows_amd64.syso
-
-# 3. The app
-GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o SS1Tool.exe .
+```powershell
+.\build.ps1        # on Windows
 ```
 
-For development on Linux or macOS, `go build .` produces a version without the Windows-only features (flashing, terminal windows, Save As dialogs) that you can run against a real SS1.
+```bash
+./build.sh          # on Linux or macOS (cross-compiles SS1Tool.exe)
+```
+
+The script does three things, in this order:
+
+1. Builds the two helpers that run on the SS1 (32-bit ARM Linux): `bin/ss1kbd_arm` and `bin/ss1fb_arm`
+2. Runs `go run ./tools/winres`, which generates `rsrc_windows_amd64.syso` from `appVersion` in `main.go`: the icon (16 to 256 px), the version information Windows shows in Explorer and Task Manager (product name, publisher, version), and the application manifest. Because it's generated at every build, the version and icon can never go stale between releases. `go generate` runs the same step
+3. Builds `SS1Tool.exe` as a normal Windows program with `-ldflags "-H windowsgui"`, so there's no console window
+
+When you release a new version, change `appVersion` in `main.go` and run the build script; nothing else needs updating.
+
+For development on Linux or macOS, `go build .` produces a version without the Windows-only features (tray icon, app window, flashing, terminal windows, Save As dialogs) that you can run against a real SS1.
 
 ## Project layout
 
@@ -408,6 +440,9 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `pcshare.go`, `pcshare_windows.go` | Sharing a folder from this Windows PC: account, share, firewall and Cifs setup |
 | `cifs.go` | CIFS network share: script install and update, settings, connection test, mount and unmount |
 | `saves.go` | Saves and save states: scan, backup and restore |
+| `app_windows.go` | Windows app shell: tray icon, one running copy, app window, message boxes |
+| `tools/winres` | Generates the Windows icon, version information and manifest from `appVersion` |
+| `build.ps1`, `build.sh` | Build scripts |
 | `update.go` | Update check, download, checksum, swap and restart |
 | `bluetooth.go`, `bt_jobs.go` | Bluetooth manager and its progress tracking |
 | `jobs.go` | Progress tracking for background operations |
