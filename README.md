@@ -322,7 +322,7 @@ SD card diagnostics and the debug report on one page.
 - SS1 Tool runs as a normal Windows program: no console window
 - It opens in **its own window** (using Microsoft Edge's app mode, built into Windows 10 and 11), with the SS1 icon on its taskbar button. About → Window can switch it to your default browser instead
 - It keeps an icon in the **notification area** by the clock, so long jobs like backups can finish if you close the window. Click the icon to open SS1 Tool again; right-click it for **Open SS1 Tool** and **Quit**. If something is still running, Quit asks first
-- **Only one copy runs at a time**: starting SS1 Tool again just opens the running copy
+- **Only one copy and one window**: starting SS1 Tool again, clicking its icon by the clock, or using its taskbar button's menu brings the open window to the front (restoring it if it's minimized) instead of opening another one. A new window opens only when none is open
 - The exe carries proper Windows details: its icon at every size, the product name, publisher and version that Explorer and Task Manager show, and an application manifest
 - If SS1 Tool can't start, it says why in a Windows message box
 
