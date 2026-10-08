@@ -1708,7 +1708,9 @@ function ptFill(w,list,box){const seen=new Set();
  for(const d of list){const el=ptPanel(w,d,d.id);seen.add(el.id);el.classList.remove("idle");
   el.querySelector("h4").textContent=d.db_name||d.name||"Controller";
   const L=PTL[el.dataset.l];
-  el.querySelector(".pills").innerHTML=`<span class="pill muted">${ptKind[d.kind]||d.kind}</span><span class="pill muted">${esc(d.vidpid)}</span>`
+  el.querySelector(".pills").innerHTML=w==="snac"?`<span class="pill good">Front port 1 (SNAC), read by Console Mode</span><span class="pill muted">Digital buttons and D-pad only</span>`
+   +(PT.last&&PT.last.core&&PT.last.core.toUpperCase()!=="MENU"?`<span class="pill warn">A core is running (${esc(PT.last.core)}): the core reads the port now, so nothing changes here until you're back in the menu</span>`:"")+`<span class="pill muted">Shown as ${esc(L.n)}</span>`
+   :`<span class="pill muted">${ptKind[d.kind]||d.kind}</span><span class="pill muted">${esc(d.vidpid)}</span>`
    +(d.db_name?`<span class="pill good">In the controller database${d.db_user?" (your own entry)":""}</span>`:`<span class="pill warn">Not in the controller database - standard Linux button names</span>`)
    +(d.db_name&&d.name&&d.name!==d.db_name?`<span class="pill muted">Reports itself as ${esc(d.name)}</span>`:"")+`<span class="pill muted">Shown as ${esc(L.n)}</span>`;
   ptPaint(el,d.ctl);
@@ -1721,7 +1723,7 @@ function ptIdle(msg){ptIdleBox("usb",$("ptUsb"),msg||"Connect to the SuperStatio
 function ptRender(m){PT.last=m;
  if(m.usb&&m.usb.length)ptFill("usb",m.usb,$("ptUsb"));else ptIdleBox("usb",$("ptUsb"),"No USB or Bluetooth controller found. Plug one in or switch it on: it shows up here within a couple of seconds.");
  if(m.snac&&m.snac.length)ptFill("snac",m.snac,$("ptSnac"));
- else ptIdleBox("snac",$("ptSnac"),(m.core&&m.core.toUpperCase()!=="MENU")?`A core is running (${m.core}). The front ports are read by the Console Mode menu core: go back to the menu or Console Mode.`:"No SNAC input reaches Linux. It needs the SuperStation's Console Mode menu core (menu.rbf from Retro Remake), a PlayStation controller in port 1, and the dock's SNAC Bypass switch set to Disabled.")}
+ else ptIdleBox("snac",$("ptSnac"),(m.core&&m.core.toUpperCase()!=="MENU")?`A core is running (${esc(m.core)}). The front port is read by Console Mode while the menu is loaded: go back to the menu or Console Mode.`:"Console Mode isn't reading the front port right now. It does while Console Mode is running (it adds a \"ConsoleMode SNAC Pad\" to the SuperStation); in plain MiSTer mode the port isn't read until a core that supports SNAC is loaded. Also check the dock's SNAC Bypass switch is set to Disabled.")}
 async function ptLoop(){if(PT.run)return;PT.run=true;let retry=false;
  try{while(PT.vis&&$("diag").classList.contains("on")&&!document.hidden){
   try{const j=await api("/api/padtest/state"+(retry?"?retry=1":""));retry=false;

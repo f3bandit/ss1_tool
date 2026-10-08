@@ -315,7 +315,12 @@ func padConvert(d rawPad) padOut {
 	for _, n := range padCtlNames {
 		o.Ctl[n] = &padCtl{}
 	}
-	name, user, binds := padDBFind(d)
+	var name string
+	var user bool
+	var binds map[string]padBind
+	if d.Kind != "virtual" { // software devices borrow other controllers' IDs (Console Mode's SNAC pad poses as a PS3 pad)
+		name, user, binds = padDBFind(d)
+	}
 	if binds == nil {
 		binds = linuxBinds(d)
 	} else {
@@ -450,18 +455,20 @@ func padModel(line []byte) (map[string]any, error) {
 		return nil, err
 	}
 	padDBLines(st.Devs)
-	var usb, snac, ours []padOut
+	var usb, snac []padOut
+	soft := 0
 	for _, d := range st.Devs {
 		switch {
-		case d.Kind == "virtual" && d.Name == "MiSTer virtual input":
-			// MiSTer's own virtual device, not a controller
-		case d.Kind == "virtual" && (d.Name == "Microsoft X-Box 360 pad" || strings.HasPrefix(d.Name, "SS1 Tool")):
-			ours = append(ours, padConvert(d)) // SS1 Tool's own remote gamepad
-		case d.Kind == "virtual" || d.Kind == "other":
-			snac = append(snac, padConvert(d))
+		case d.Kind == "virtual" && strings.Contains(strings.ToUpper(d.Name), "SNAC"):
+			// Console Mode's menu core reads the front port and Console Mode turns it into this device
+			o := padConvert(d)
+			o.Name = "PlayStation controller in port 1"
+			snac = append(snac, o)
+		case d.Kind == "virtual":
+			soft++ // software controllers (SS1 Tool's and MiSTer Companion's remotes, MiSTer's virtual input)
 		default:
 			usb = append(usb, padConvert(d))
 		}
 	}
-	return map[string]any{"core": st.Core, "usb": usb, "snac": snac, "remote": len(ours)}, nil
+	return map[string]any{"core": st.Core, "usb": usb, "snac": snac, "software": soft}, nil
 }

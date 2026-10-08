@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.28.0"
+const appVersion = "1.28.1"
 
 //go:embed web/index.html
 var webFS embed.FS
