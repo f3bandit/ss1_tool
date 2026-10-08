@@ -39,6 +39,7 @@ It's built around three jobs:
 | **Broken or mistyped `MiSTer.ini`** | Edit it from your PC with an automatic backup before every change, plus named and timestamped backups you can restore in one click |
 | **HDMI settings the SS1 doesn't support** | The SS1 HDMI fix comments out the HDMI-CEC, `hdmi_off` and `video_off_logo` settings and shows the state of each one |
 | **SD card problems:** corrupted cards, the faulty `fix_sd_overlap` tool, Windows asking to scan the card, failing or fake-capacity cards | Removes the faulty overlap tool, checks the partition table and exFAT health, tests whether Windows will complain, runs deep read/write tests, adds a safe shutdown, and flashes the official SS1 SD Card Installer |
+| **A controller or button that doesn't work** | The controller tester shows every button and stick live on a mock controller, for USB and Bluetooth controllers and the SNAC front port, without loading a core |
 | **Hard-to-explain problems** | One click creates a debug report with versions, configs, storage health and logs, ready to post in the Taki Udon Discord. Passwords, keys, WiFi names and MAC addresses are redacted. |
 
 ### What it isn't
@@ -123,7 +124,9 @@ In menu order.
 | **Devices: Controllers** | **Remote** |
 | ![Devices: controller mappings and profiles](docs/screenshots/controllers.png) | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) |
 | **Diag** | **Diag: BIOS and game folders** |
-| ![Diag: SD diagnostics and the debug report on one page](docs/screenshots/diag.png) | ![Diag: BIOS status per system and the games folder MiSTer uses](docs/screenshots/bios.png) |
+| ![Diag: SD diagnostics, BIOS and game folders, debug report and controller tester on one page, with Jump to links](docs/screenshots/diag.png) | ![Diag: BIOS status per system and the games folder MiSTer uses](docs/screenshots/bios.png) |
+| **Diag: Controller tester** | **Diag: Controller tester, Show as a leverless controller** |
+| ![Diag: live button and stick state of USB controllers on mock controllers, green for inputs the controller has and yellow for pressed](docs/screenshots/padtest.png) | ![Diag: the same controllers shown on a leverless all-button layout, with red for inputs a controller doesn't have](docs/screenshots/padtest-layouts.png) |
 | **About** | **Wizard: Why isn't my card listed?** |
 | ![About: credits, links, updates and the window setting](docs/screenshots/about.png) | ![Wizard: every disk Windows reports and why each is or isn't offered](docs/screenshots/cardhelp.png) |
 | **About: Updates** | **Update offer at startup** |
@@ -304,7 +307,7 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
   - If the TV can't show them (for example `fb_terminal=0` in MiSTer.ini), the shutdown still runs and SS1 Tool tells you to wait 15 seconds before switching off
 
 ### Diag
-SD card diagnostics, the BIOS and game folder check, and the debug report on one page.
+SD card diagnostics, the BIOS and game folder check, the debug report and the controller tester on one page.
 
 #### SD Diagnostics
 - Quick check: partition table and overlap, exFAT boot region checksums, kernel I/O errors. USB resets only count as errors when they hit a storage device (NVMe dock, USB drive, card reader); a reset of WiFi, Bluetooth or a controller during start-up is normal and shown as information. Real USB power or cable trouble (over-current, failed enumeration) is shown as a warning
@@ -325,6 +328,15 @@ Uses the same databases as Update All: ajgowans' **BIOS Database** (the exact pa
 - Starts with an automatic **FINDINGS** summary of known problems, including whether the SS1 HDMI fix is applied
 - Passwords, keys, tokens, WiFi names and MAC addresses are redacted
 - A Save As window lets you store it anywhere
+
+#### Controller tester
+Shows what every controller on the SuperStation is pressing, live, without loading a core or a test ROM. SS1 Tool only watches: it reads the button and stick state Linux keeps for each controller, so the controllers keep working in MiSTer and Console Mode while you test.
+- **USB controllers:** wired controllers and wireless ones through a USB dongle, on the SuperStation or its dock, plus Bluetooth controllers paired with the SuperStation. Plugging one in or switching it on shows it within a couple of seconds
+- **SNAC controller (front ports):** the PlayStation controller in port 1, which the SuperStation's Console Mode menu core reads while the menu or Console Mode is on screen. If nothing comes through, the card says what's needed (the menu on screen, a controller in port 1, SNAC Bypass set to Disabled)
+- Each controller is drawn on a mock controller: **green** = it has that input, **red** = it doesn't have it, **yellow** = pressed or moved now. Sticks move with the real stick, analog triggers fill as you press them, and inputs the mock doesn't show are listed below it with the raw axis values
+- Controllers are identified with the controller database MiSTer uses (SDL's GameControllerDB in `linux/gamecontrollerdb`, including your own `gamecontrollerdb_user.txt`), so the buttons land where they physically are. Controllers that aren't in it use the standard Linux button names, and the card says so
+- **Show as** picks the mock controller: Automatic (from the controller's name), modern pads (Generic with every input, Xbox-style, PlayStation DualShock, Switch Pro-style), retro pads (NES, SNES, PC Engine / TurboGrafx-16, Genesis / Mega Drive 3- and 6-button, Neo Geo CD, Jaguar, Saturn, PlayStation digital, N64, Dreamcast, GameCube) and fight pads and sticks (6-button and 8-button fight pads, leverless / all-button controllers like Haute42 and Hit Box, 8-button and 6-button arcade sticks). The choice is remembered
+- The tester only runs while it's on screen
 
 ### About
 - Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
