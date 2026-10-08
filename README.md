@@ -260,7 +260,7 @@ File manager, saves, SD card backup and screenshots on one page, with **Jump to*
 
 #### SD Backup
 - Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on. Mounted network shares (Cifs) are skipped too, so a backup never copies your NAS
-- Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary
+- Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary. Links, and files with names Windows doesn't allow (for example with `:` or `?`), can't be stored on a PC: they're skipped and listed in `_backup_info.txt` instead of stopping the backup
 - Progress bar, cancel, and a list of backups with **Restore...**, Open folder and Delete. Restore uses the same choices as Reflash without losing anything
 
 #### Screenshots
