@@ -100,8 +100,10 @@ In menu order.
 | Wizard | Dashboard |
 |---|---|
 | ![Wizard: first-time setup, step by step](docs/screenshots/wizard.png) | ![Dashboard: CPU, memory, storage, network and processes](docs/screenshots/dashboard.png) |
-| **Connect** | **Setup** |
-| ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Setup: scripts, community scripts, Samba, Update All and the Linux update advisory](docs/screenshots/setup.png) |
+| **Connect** | **Connect: Find my SuperStation** |
+| ![Connect: saved devices and system status](docs/screenshots/connect.png) | ![Connect: Find my SuperStation lists the SS1 first, marked Likely SuperStation](docs/screenshots/find.png) |
+| **Setup** | **Setup: Reflash without losing anything** |
+| ![Setup: scripts, community scripts, Samba, Update All and the Linux update advisory](docs/screenshots/setup.png) | ![Setup: make a restore point, flash, then restore saves, settings, pairings and logins](docs/screenshots/reflash.png) |
 | **Setup: RetroAchievements account** | **Setup: Flash SD card** |
 | ![Setup: RetroAchievements account card with a tested login](docs/screenshots/retroachievements.png) | ![Setup: flashing the SuperStation One SD card image](docs/screenshots/flash.png) |
 | **Setup: MiSTer settings** | **Network** |
@@ -120,8 +122,10 @@ In menu order.
 | ![Devices: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Devices: progress bar, current step and log while restoring a Bluetooth backup](docs/screenshots/bluetooth-progress.png) |
 | **Devices: Controllers** | **Remote** |
 | ![Devices: controller mappings and profiles](docs/screenshots/controllers.png) | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) |
-| **Diag** | **About** |
-| ![Diag: SD diagnostics and the debug report on one page](docs/screenshots/diag.png) | ![About: credits, links, updates and the window setting](docs/screenshots/about.png) |
+| **Diag** | **Diag: BIOS and game folders** |
+| ![Diag: SD diagnostics and the debug report on one page](docs/screenshots/diag.png) | ![Diag: BIOS status per system and the games folder MiSTer uses](docs/screenshots/bios.png) |
+| **About** | **Wizard: Why isn't my card listed?** |
+| ![About: credits, links, updates and the window setting](docs/screenshots/about.png) | ![Wizard: every disk Windows reports and why each is or isn't offered](docs/screenshots/cardhelp.png) |
 | **About: Updates** | **Update offer at startup** |
 | ![About: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) | ![Update offer: a bar at the top offers the new version with Update now, What's new and Not now](docs/screenshots/update-offer.png) |
 
@@ -129,6 +133,7 @@ In menu order.
 
 ### Connect
 - Connect by IP address (default login `root` / `1`)
+- **Find my SuperStation**: searches your home network for it, so you don't need to know its IP. It looks for devices with SSH, reads their names, and lists the ones named like a MiSTer or SuperStation first, with a **Connect** button. It never tries to sign in to anything it finds (routers and NAS boxes often lock out addresses after failed logins); only clicking Connect signs in. Works with any address range
 - Saved devices with one-click **Connect**, **Rename** and **Delete**
 - Status panel: kernel, `/MiSTer.version`, Console Mode, Samba, `update_linux`, scraper login, installed scripts and free space
 - A pop-up tells you when the SS1 is switched off, restarts or drops off the network, with a **Reconnect** button
@@ -165,8 +170,17 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 
 #### Flash SD Card
 - Choose the **Console Mode** or **Regular** image from the latest official [SuperStation One SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer/releases) release, or use an image file you already have; it's written to the card and read back to verify
-- Only SD and USB card readers are listed; internal and boot drives are never shown
+- Only card readers are listed: SD, USB and MMC readers, plus built-in laptop readers that Windows reports differently (as removable, or by their card-reader name). The disk Windows runs from is never shown, and nothing bigger than 2.1 TB is offered
+- **Why isn't my card listed?** shows every disk Windows reports, how it's connected, and why each one is or isn't offered, for a quick answer or a support screenshot. The Wizard has the same button
 - You must type the disk number to confirm before anything is erased
+
+##### Reflash without losing anything
+Reflashing erases the SD card. This card, at the top of Flash SD card, keeps everything else in three steps:
+1. **Make a restore point** while the SuperStation is connected: everything on the SD card except the games folder is copied to this PC
+2. **Flash the SD card**, then let the SuperStation finish installing
+3. **Restore**: choose a restore point and what to bring back. Saves and save states, core settings and controller mappings, Bluetooth pairings, WiFi, MiSTer settings, the network share (Cifs, including mounting at startup), the RetroAchievements login, Console Mode settings and scraper logins (never the Console Mode program itself), screenshots and Samba are ticked. Update All settings (`downloader.ini`) and the startup script are left off unless you tick them, because the new card may have newer versions
+
+Only settings and data are restored, never system files. Before anything is replaced, the SuperStation's current copies are saved on this PC (`before-restore_<date>`), so a restore can be undone. Bluetooth restarts afterwards, the SS1 Tool scripts are reinstalled, and **Restart the SuperStation now** finishes the job. Any SD card backup can be restored this way, from here or with **Restore...** in Files → SD card backup
 
 #### MiSTer Settings
 - Edit `MiSTer.ini`, `downloader.ini`, Console Mode's `config.ini` and every ini in `ConsoleMode/themeconfig`, including `section_groups`
@@ -245,9 +259,9 @@ File manager, saves, SD card backup and screenshots on one page, with **Jump to*
 - Exit the game to the menu before backing up or restoring: a running game writes its save when it exits
 
 #### SD Backup
-- Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on
+- Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on. Mounted network shares (Cifs) are skipped too, so a backup never copies your NAS
 - Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary
-- Progress bar, cancel, and a list of backups with Open folder and Delete
+- Progress bar, cancel, and a list of backups with **Restore...**, Open folder and Delete. Restore uses the same choices as Reflash without losing anything
 
 #### Screenshots
 - **Take a screenshot** of whatever is running on the SuperStation from your PC, with an optional name and an option for the scaled picture as shown on the TV. It's saved on the SS1 and copied to `backups\screenshots\<core>\` next to SS1Tool.exe
@@ -290,12 +304,20 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
   - If the TV can't show them (for example `fb_terminal=0` in MiSTer.ini), the shutdown still runs and SS1 Tool tells you to wait 15 seconds before switching off
 
 ### Diag
-SD card diagnostics and the debug report on one page.
+SD card diagnostics, the BIOS and game folder check, and the debug report on one page.
 
 #### SD Diagnostics
 - Quick check: partition table and overlap, exFAT boot region checksums, kernel I/O errors
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
+
+#### BIOS and game folders
+Uses the same databases as Update All: ajgowans' **BIOS Database** (the exact path, size and checksum of each BIOS file) and the MiSTer distribution (the official `games/<system>` folder names). SS1 Tool only checks; Update All's BIOS Database option installs missing BIOS files.
+- For every system you have games folders for: the folder MiSTer actually uses (USB and NVMe drives come before the SD card, then the network share) and its BIOS status: **Ready**, **Different version** (may still work), **BIOS missing**, or **BIOS in the wrong folder**
+- **Wrong folder** catches a common problem: a BIOS on the SD card is ignored when the same system also has a games folder on the NVMe drive, because MiSTer uses that one. The check says where the BIOS is and where it needs to be
+- Systems that can't start without a BIOS (PlayStation, Saturn, Sega CD, PC Engine CD, Neo Geo, Neo Geo CD, Jaguar, N64, 3DO, CD-i) are flagged when it's missing; for the rest a missing BIOS is optional
+- **Folders MiSTer won't look in**: folders that don't match any MiSTer system, with the right name for common mistakes (for example `PS1` → `PSX`, `Sega CD` → `MegaCD`)
+- Also flags systems with games in two places, where MiSTer uses only one of them
 
 #### Debug Report
 - One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health, USB devices and logs into a single text file for Taki and the mods
@@ -321,7 +343,12 @@ SD card diagnostics and the debug report on one page.
 ### Windows app
 - SS1 Tool runs as a normal Windows program: no console window
 - It opens in **its own window** (using Microsoft Edge's app mode, built into Windows 10 and 11), with the SS1 icon on its taskbar button. About → Window can switch it to your default browser instead
-- It keeps an icon in the **notification area** by the clock, so long jobs like backups can finish if you close the window. Click the icon to open SS1 Tool again; right-click it for **Open SS1 Tool** and **Quit**. If something is still running, Quit asks first
+- Closing the window keeps SS1 Tool running, with its icon in the **notification area** by the clock, so long jobs like backups can finish and alerts still reach you. Windows 11 hides new icons behind the ^ arrow; SS1 Tool asks Windows once to keep its icon visible (if you hide it later, Windows keeps your choice)
+- **Click** the icon to bring up the SS1 Tool window, or open one if none is open. **Right-click** it for:
+  - **Open SS1 Tool**
+  - **Start with Windows**: a checkmark you can turn on or off. It starts SS1 Tool quietly with Windows, with just its icon by the clock and no window
+  - **Exit**: the way to close SS1 Tool completely. If something is still running, it asks first
+- **Linux update alerts**: SS1 Tool checks the Linux update advisory every 30 minutes, also while its window is closed, and shows a Windows notification when it changes to "use caution" or "not recommended" (and when it's safe again). Click the notification to open Setup
 - **Only one copy and one window**: starting SS1 Tool again, clicking its icon by the clock, or using its taskbar button's menu brings the open window to the front (restoring it if it's minimized) instead of opening another one. A new window opens only when none is open
 - The exe carries proper Windows details: its icon at every size, the product name, publisher and version that Explorer and Task Manager show, and an application manifest
 - If SS1 Tool can't start, it says why in a Windows message box
@@ -335,7 +362,7 @@ SD card diagnostics and the debug report on one page.
 5. Otherwise, enter your SS1's IP address and click **Connect**. You can find the IP at the bottom of the MiSTer main menu or in Console Mode's network settings.
 6. Click **Save as device** so next time it's one click.
 
-To close the tool, click **Quit** in the top right corner or close the console window.
+Closing the window keeps SS1 Tool running by the clock. To close it completely, right-click its icon by the clock and choose **Exit**.
 
 ## Requirements
 
@@ -389,7 +416,8 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 ## Privacy and security
 
 - The app only listens on `127.0.0.1` (your own PC), and every request needs a random session token.
-- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory, check for and download SS1 Tool updates, and download Update All, the SD installer and the CIFS scripts, to TheGamesDB, to test an API key you enter, and to retroachievements.org, to check a RetroAchievements login you enter.
+- **Find my SuperStation** only connects to port 22 on your local network to read each device's SSH greeting and name; it never tries to sign in.
+- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory, check for and download SS1 Tool updates, download Update All, the SD installer and the CIFS scripts, and read the BIOS and MiSTer distribution databases for the BIOS check, to TheGamesDB, to test an API key you enter, and to retroachievements.org, to check a RetroAchievements login you enter.
 - Saved devices store the name, IP and user only, never the password.
 - **Share a folder from this PC** creates a local Windows account (default `ss1user`) that can only open that one folder. Its password is written only to the SS1's `cifs_mount.ini`; SS1 Tool doesn't keep it. **Remove share from this PC** deletes the account.
 - The CIFS share password is written only to your SS1, in `/media/fat/Scripts/cifs_mount.ini`, because MiSTer's `cifs_mount.sh` needs it there. Copies of earlier `cifs_mount.ini` files are kept on your PC in `backups\cifs\`.
@@ -440,6 +468,10 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `pcshare.go`, `pcshare_windows.go` | Sharing a folder from this Windows PC: account, share, firewall and Cifs setup |
 | `cifs.go` | CIFS network share: script install and update, settings, connection test, mount and unmount |
 | `saves.go` | Saves and save states: scan, backup and restore |
+| `discover.go` | Find my SuperStation: scans the local network for SSH devices |
+| `bios.go` | BIOS and game folder check, using Update All's databases |
+| `restore.go` | Reflash and restore: restores settings and data from an SD card backup |
+| `appwindow.go` | Keeps SS1 Tool to one window |
 | `app_windows.go` | Windows app shell: tray icon, one running copy, app window, message boxes |
 | `tools/winres` | Generates the Windows icon, version information and manifest from `appVersion` |
 | `build.ps1`, `build.sh` | Build scripts |
