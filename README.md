@@ -307,7 +307,7 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
 SD card diagnostics, the BIOS and game folder check, and the debug report on one page.
 
 #### SD Diagnostics
-- Quick check: partition table and overlap, exFAT boot region checksums, kernel I/O errors
+- Quick check: partition table and overlap, exFAT boot region checksums, kernel I/O errors. USB resets only count as errors when they hit a storage device (NVMe dock, USB drive, card reader); a reset of WiFi, Bluetooth or a controller during start-up is normal and shown as information. Real USB power or cable trouble (over-current, failed enumeration) is shown as a warning
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
 
