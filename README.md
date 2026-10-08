@@ -316,8 +316,9 @@ Uses the same databases as Update All: ajgowans' **BIOS Database** (the exact pa
 - For every system you have games folders for: the folder MiSTer actually uses (USB and NVMe drives come before the SD card, then the network share) and its BIOS status: **Ready**, **Different version** (may still work), **BIOS missing**, or **BIOS in the wrong folder**
 - **Wrong folder** catches a common problem: a BIOS on the SD card is ignored when the same system also has a games folder on the NVMe drive, because MiSTer uses that one. The check says where the BIOS is and where it needs to be
 - Systems that can't start without a BIOS (PlayStation, Saturn, Sega CD, PC Engine CD, Neo Geo, Neo Geo CD, Jaguar, N64, 3DO, CD-i) are flagged when it's missing; for the rest a missing BIOS is optional
-- **Folders MiSTer won't look in**: folders that don't match any MiSTer system, with the right name for common mistakes (for example `PS1` → `PSX`, `Sega CD` → `MegaCD`)
-- Also flags systems with games in two places, where MiSTer uses only one of them
+- **Folders no installed core uses**: games folders whose name matches no core on the SuperStation, no official MiSTer system and no BIOS database entry. Folder names of every installed core count, including JOTEGO and unofficial cores, so only truly unknown folders are listed. Common mistakes get the right name (for example `PS1` → `PSX`, `Sega CD` → `MegaCD`); empty unknown folders are left out
+- Also flags systems with games in two places, where MiSTer uses only one of them. Empty duplicate folders aren't flagged, since they hide nothing
+- Problems are listed first; systems that need no BIOS fold into a **Show more** link. **Files** opens a system's BIOS list instantly, without checking again
 
 #### Debug Report
 - One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health, USB devices and logs into a single text file for Taki and the mods
