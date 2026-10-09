@@ -33,6 +33,8 @@ type rawState struct {
 	Core string   `json:"core"`
 	CM   bool     `json:"cm"`
 	Devs []rawPad `json:"devs"`
+	// why the front port can't be read in MiSTer menu mode ("" when it can, or isn't tried)
+	SnacErr string `json:"snacmem_err"`
 }
 
 // a control on the generic controller
@@ -320,7 +322,7 @@ func padConvert(d rawPad) padOut {
 	var name string
 	var user bool
 	var binds map[string]padBind
-	if d.Kind != "virtual" { // software devices borrow other controllers' IDs (Console Mode's SNAC pad poses as a PS3 pad)
+	if d.Kind != "virtual" && d.Kind != "snacmem" { // software devices borrow other controllers' IDs (Console Mode's SNAC pad poses as a PS3 pad)
 		name, user, binds = padDBFind(d)
 	}
 	if binds == nil {
@@ -459,10 +461,21 @@ func padModel(line []byte) (map[string]any, error) {
 	padDBLines(st.Devs)
 	var usb, snac []padOut
 	soft := 0
+	mem := false // the front port read from MiSTer's memory (MiSTer menu mode)
+	for _, d := range st.Devs {
+		mem = mem || d.Kind == "snacmem"
+	}
 	for _, d := range st.Devs {
 		switch {
+		case d.Kind == "virtual" && strings.Contains(strings.ToUpper(d.Name), "SNAC") && mem:
+			// Console Mode's pad stays behind, frozen, in MiSTer menu mode: the memory reading replaces it
 		case d.Kind == "virtual" && strings.Contains(strings.ToUpper(d.Name), "SNAC"):
 			// Console Mode's menu core reads the front port and Console Mode turns it into this device
+			o := padConvert(d)
+			o.Name = "PlayStation controller in port 1"
+			snac = append(snac, o)
+		case d.Kind == "snacmem":
+			// MiSTer menu mode: the front port, read from MiSTer_ConsoleMode's memory by the helper
 			o := padConvert(d)
 			o.Name = "PlayStation controller in port 1"
 			snac = append(snac, o)
@@ -472,5 +485,5 @@ func padModel(line []byte) (map[string]any, error) {
 			usb = append(usb, padConvert(d))
 		}
 	}
-	return map[string]any{"core": st.Core, "cm": st.CM, "usb": usb, "snac": snac, "software": soft}, nil
+	return map[string]any{"core": st.Core, "cm": st.CM, "usb": usb, "snac": snac, "software": soft, "snac_err": st.SnacErr}, nil
 }
