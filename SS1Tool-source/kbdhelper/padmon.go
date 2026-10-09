@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -39,6 +40,9 @@ type padDev struct {
 	f     *os.File
 	codes []int // abs codes
 	ainfo []absInfo
+	ev    *os.File // a second handle that reads the event stream
+	mu    sync.Mutex
+	pulse map[int]time.Time // buttons pressed recently, shown for a moment even if already released
 }
 
 func bitSet(b []byte, n int) bool { return n/8 < len(b) && b[n/8]&(1<<(uint(n)%8)) != 0 }
@@ -109,6 +113,14 @@ func openPad(name string) *padDev {
 		d.Kind = "other"
 	}
 	d.ainfo = make([]absInfo, len(d.codes))
+	// Some software controllers (Console Mode's SNAC pad) send a press and its release
+	// together, so the held state never shows it. Reading the events too catches those taps.
+	// While MiSTer holds an exclusive grab this handle gets nothing, which is fine.
+	d.pulse = map[int]time.Time{}
+	if ev, err := os.Open("/dev/input/" + name); err == nil {
+		d.ev = ev
+		go d.readEvents()
+	}
 	return d
 }
 
@@ -118,8 +130,20 @@ func (d *padDev) poll() bool {
 		return false
 	}
 	d.Down = d.Down[:0]
+	now := time.Now()
+	d.mu.Lock()
+	for k, t := range d.pulse {
+		if now.After(t) {
+			delete(d.pulse, k)
+		}
+	}
+	tapped := map[int]bool{}
+	for k := range d.pulse {
+		tapped[k] = true
+	}
+	d.mu.Unlock()
 	for _, k := range d.Keys {
-		if bitSet(keys, k) {
+		if bitSet(keys, k) || tapped[k] {
 			d.Down = append(d.Down, k)
 		}
 	}
@@ -131,6 +155,48 @@ func (d *padDev) poll() bool {
 		}
 	}
 	return true
+}
+
+// readEvents notes every button press for 250 ms (input_event on 32-bit ARM is 16 bytes).
+func (d *padDev) readEvents() {
+	b := make([]byte, 16*64)
+	for {
+		n, err := d.ev.Read(b)
+		if err != nil {
+			return
+		}
+		for i := 0; i+16 <= n; i += 16 {
+			typ := int(b[i+8]) | int(b[i+9])<<8
+			code := int(b[i+10]) | int(b[i+11])<<8
+			val := int32(uint32(b[i+12]) | uint32(b[i+13])<<8 | uint32(b[i+14])<<16 | uint32(b[i+15])<<24)
+			if typ == 1 && val == 1 {
+				d.mu.Lock()
+				d.pulse[code] = time.Now().Add(250 * time.Millisecond)
+				d.mu.Unlock()
+			}
+		}
+	}
+}
+
+func (d *padDev) close() {
+	d.f.Close()
+	if d.ev != nil {
+		d.ev.Close()
+	}
+}
+
+// consoleModeUp reports whether the Console Mode front end is running (not MiSTer menu mode).
+func consoleModeUp() bool {
+	ents, _ := os.ReadDir("/proc")
+	for _, e := range ents {
+		if c := e.Name()[0]; c < '0' || c > '9' {
+			continue
+		}
+		if b, err := os.ReadFile("/proc/" + e.Name() + "/comm"); err == nil && strings.HasPrefix(string(b), "ConsoleMode_arm") {
+			return true
+		}
+	}
+	return false
 }
 
 func readCore() string {
@@ -164,24 +230,24 @@ func padMon() {
 		}
 		for n, d := range devs {
 			if !seen[n] {
-				d.f.Close()
+				d.close()
 				delete(devs, n)
 			}
 		}
 	}
 	scan()
 	lastScan, lastOut, lastLine := time.Now(), time.Time{}, ""
-	core := readCore()
+	core, cm := readCore(), consoleModeUp()
 	for {
 		if time.Since(lastScan) > 1500*time.Millisecond {
 			scan()
-			core = readCore()
+			core, cm = readCore(), consoleModeUp()
 			lastScan = time.Now()
 		}
 		names := make([]string, 0, len(devs))
 		for n, d := range devs {
 			if !d.poll() { // unplugged
-				d.f.Close()
+				d.close()
 				delete(devs, n)
 				continue
 			}
@@ -192,7 +258,7 @@ func padMon() {
 		for _, n := range names {
 			list = append(list, devs[n])
 		}
-		b, _ := json.Marshal(map[string]any{"core": core, "devs": list})
+		b, _ := json.Marshal(map[string]any{"core": core, "cm": cm, "devs": list})
 		if line := string(b); line != lastLine || time.Since(lastOut) > time.Second {
 			fmt.Println(line)
 			lastLine, lastOut = line, time.Now()

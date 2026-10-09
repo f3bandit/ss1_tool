@@ -31,6 +31,7 @@ type rawPad struct {
 
 type rawState struct {
 	Core string   `json:"core"`
+	CM   bool     `json:"cm"`
 	Devs []rawPad `json:"devs"`
 }
 
@@ -53,6 +54,7 @@ type padOut struct {
 	VIDPID string             `json:"vidpid"`
 	Ctl    map[string]*padCtl `json:"ctl"`
 	Extra  []padExtra         `json:"extra"` // inputs the layout doesn't show
+	Held   []int              `json:"held"`  // raw Linux button codes held now
 	Axes   []padAxis          `json:"axes"`
 }
 
@@ -311,7 +313,7 @@ func keyName(k int) string {
 }
 
 func padConvert(d rawPad) padOut {
-	o := padOut{ID: d.ID, Name: d.Name, Kind: d.Kind, VIDPID: d.VID + ":" + d.PID, Ctl: map[string]*padCtl{}}
+	o := padOut{ID: d.ID, Name: d.Name, Kind: d.Kind, VIDPID: d.VID + ":" + d.PID, Ctl: map[string]*padCtl{}, Held: d.Down}
 	for _, n := range padCtlNames {
 		o.Ctl[n] = &padCtl{}
 	}
@@ -470,5 +472,5 @@ func padModel(line []byte) (map[string]any, error) {
 			usb = append(usb, padConvert(d))
 		}
 	}
-	return map[string]any{"core": st.Core, "usb": usb, "snac": snac, "software": soft}, nil
+	return map[string]any{"core": st.Core, "cm": st.CM, "usb": usb, "snac": snac, "software": soft}, nil
 }
