@@ -341,7 +341,7 @@ Shows what every controller on the SuperStation is pressing, live, without loadi
 
 ### About
 - Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
-- **Winter mode:** falling snowflakes from November to March. Choose Automatic, Always on or Off; it stays hidden if animations are turned off in Windows.
+- **Seasonal mode:** pick **Yer a wizard** (a hall full of floating candles that drift, flicker and fade in and out, so the app keeps showing through), **Oi to the world** (falling snowflakes) or **Off**. Tick **Always on**, or **Seasonal** to show it only in its months: candles in October and November, snow from November to March. It stays hidden if animations are turned off in Windows.
 
 #### Updates
 - **Update status:** this version, the newest release on GitHub and when it was last checked. Up to date shows green; an update shows yellow, both here and as a pill in the header that opens this card

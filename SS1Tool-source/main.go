@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.28.4"
+const appVersion = "1.28.5"
 
 //go:embed web/index.html
 var webFS embed.FS
@@ -40,7 +40,9 @@ type Config struct {
 	User         string            `json:"user"`
 	HDMIKeys     []string          `json:"hdmi_keys"`
 	Devices      []Device          `json:"devices"`
-	Winter       string            `json:"winter"` // auto | on | off
+	Winter       string            `json:"winter"`        // auto | on | off
+	Seasonal     string            `json:"seasonal"`      // candles | snow | off ("" = from Winter)
+	SeasonalWhen string            `json:"seasonal_when"` // always | seasonal
 	PortLabels   map[string]string `json:"port_labels"`
 	UpdateMode   string            `json:"update_mode"` // auto | notify | off
 	OpenIn       string            `json:"open_in"`     // app (own window, default) | browser

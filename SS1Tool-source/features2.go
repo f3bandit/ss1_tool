@@ -1067,15 +1067,25 @@ func apiAdvisory(w http.ResponseWriter, r *http.Request) {
 
 func apiPrefs(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		var req struct{ Winter, OpenIn string }
+		var req struct {
+			Seasonal     string `json:"seasonal"`
+			SeasonalWhen string `json:"seasonal_when"`
+			OpenIn       string `json:"openin"`
+		}
 		if err := readJSON(r, &req); err != nil {
 			fail(w, 400, "bad request")
 			return
 		}
-		switch req.Winter {
-		case "", "auto", "on", "off":
+		switch req.Seasonal {
+		case "", "candles", "snow", "off":
 		default:
-			fail(w, 400, "winter must be auto, on or off")
+			fail(w, 400, "seasonal must be candles, snow or off")
+			return
+		}
+		switch req.SeasonalWhen {
+		case "", "always", "seasonal":
+		default:
+			fail(w, 400, "seasonal_when must be always or seasonal")
 			return
 		}
 		switch req.OpenIn {
@@ -1085,8 +1095,11 @@ func apiPrefs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		cfgMu.Lock()
-		if req.Winter != "" {
-			cfg.Winter = req.Winter
+		if req.Seasonal != "" {
+			cfg.Seasonal = req.Seasonal
+		}
+		if req.SeasonalWhen != "" {
+			cfg.SeasonalWhen = req.SeasonalWhen
 		}
 		if req.OpenIn != "" {
 			cfg.OpenIn = req.OpenIn
@@ -1095,15 +1108,25 @@ func apiPrefs(w http.ResponseWriter, r *http.Request) {
 		saveConfig()
 	}
 	cfgMu.Lock()
-	wm, oi := cfg.Winter, cfg.OpenIn
+	se, sw, oi := cfg.Seasonal, cfg.SeasonalWhen, cfg.OpenIn
+	if se == "" { // carried over from the old Winter mode setting
+		switch cfg.Winter {
+		case "off":
+			se = "off"
+		case "on":
+			se, sw = "snow", "always"
+		default:
+			se = "snow"
+		}
+	}
 	cfgMu.Unlock()
-	if wm == "" {
-		wm = "auto"
+	if sw == "" {
+		sw = "seasonal"
 	}
 	if oi == "" {
 		oi = "app"
 	}
-	writeJSON(w, map[string]any{"winter": wm, "open_in": oi, "app_window": appWindowSupported(), "tray": trayAvailable()})
+	writeJSON(w, map[string]any{"seasonal": se, "seasonal_when": sw, "open_in": oi, "app_window": appWindowSupported(), "tray": trayAvailable()})
 }
 
 // ================================================================ connection watch
