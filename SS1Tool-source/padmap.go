@@ -255,7 +255,38 @@ func linuxBinds(d rawPad) map[string]padBind {
 		"dpup": 544, "dpdown": 545, "dpleft": 546, "dpright": 547} {
 		key(n, c)
 	}
-	if ax[0] && ax[1] {
+	// Plain USB joysticks and cheap pads use the joystick buttons (Trigger, Thumb, ...)
+	// instead of gamepad ones: take them in order, as SDL does for unknown controllers.
+	gp := false
+	for k := 304; k <= 318; k++ {
+		gp = gp || has[k]
+	}
+	if !gp {
+		order := []string{"a", "b", "x", "y", "leftshoulder", "rightshoulder", "lefttrigger", "righttrigger", "back", "start", "leftstick", "rightstick"}
+		n := 0
+		for k := 0x120; k <= 0x12f; k++ {
+			if has[k] {
+				n++
+			}
+		}
+		if n <= 4 { // NES / PC Engine style: two buttons, Select and Start
+			order = []string{"a", "b", "back", "start"}
+		}
+		i := 0
+		for k := 0x120; k <= 0x12f && i < len(order); k++ {
+			if has[k] {
+				res[order[i]] = padBind{kind: 'b', code: k}
+				i++
+			}
+		}
+	}
+	dkeys := has[544] || has[545] || has[546] || has[547]
+	switch {
+	case ax[0] && ax[1] && len(ax) == 2 && !dkeys:
+		// only X and Y: on retro-style pads that's the D-pad, not a stick
+		res["dpleft"], res["dpright"] = padBind{kind: 'a', code: 0, half: -1}, padBind{kind: 'a', code: 0, half: 1}
+		res["dpup"], res["dpdown"] = padBind{kind: 'a', code: 1, half: -1}, padBind{kind: 'a', code: 1, half: 1}
+	case ax[0] && ax[1]:
 		res["leftx"], res["lefty"] = padBind{kind: 'a', code: 0}, padBind{kind: 'a', code: 1}
 	}
 	switch {
