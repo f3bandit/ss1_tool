@@ -35,6 +35,8 @@ var videoKeys = []string{
 	"hdmi_limited", "dvi_mode", "hdmi_game_mode", "hdr", "vrr_mode", "hdmi_audio_96k", "direct_video",
 	"vga_mode", "composite_sync", "vga_sog", "forced_scandoubler", "vga_scaler", "menu_pal", "ntsc_mode",
 	"video_info", "fb_terminal",
+	"hdmi_cec", "hdmi_cec_input_mode", "hdmi_cec_power_on", "hdmi_cec_sleep", "hdmi_cec_wake", "hdmi_cec_clock",
+	"hdmi_off", "video_off", "video_off_logo",
 }
 
 var videoValRe = regexp.MustCompile(`^[A-Za-z0-9_.,:+ -]{0,80}$`)
@@ -375,7 +377,6 @@ func apiVideo(w http.ResponseWriter, r *http.Request) {
 		"hidden_profiles": hidden, "pending": pend, "undo": strings.Fields(undo),
 		"console_mode": cmLines[0] == "yes", "cm_last_ini": lastIni,
 		"core": strings.TrimSpace(core), "yc": strings.TrimSpace(yc) == "yes",
-		"hdmi": hdmiScan(text),
 	})
 }
 

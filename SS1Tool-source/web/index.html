@@ -75,8 +75,6 @@ a.discord:hover{background:#ffe066;border-color:#ffe066}
 .vdip{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}.vdips{display:flex;flex-wrap:wrap;gap:14px 22px;margin:10px 0 6px}.vsw{display:flex;gap:8px;align-items:center;font-size:13px}.vsw.any{opacity:.55}
 .vslot{fill:#11141a;stroke:var(--line)}.vknob{fill:var(--acc)}.vknob.off{fill:#4a5263}
 .vfix{border-bottom:1px dashed var(--line);padding:8px 0}.vfix summary{cursor:pointer;font-weight:600}.vfix p{margin:8px 0;color:var(--dim)}
-#hdmiList{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:4px 28px}
-#hdmiList .kv{gap:12px}
 .sst{margin-top:10px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 18px}
 .adv{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--line);border-radius:6px;padding:10px 12px;font-size:13px}
 .adv.safe{border-left-color:var(--ok);background:#3fb9500d}.adv.warning{border-left-color:var(--warn);background:#e3b34112}.adv.unsafe{border-left-color:var(--bad);background:#f8514912}.adv h4{margin:0 0 4px;font-size:14px}
@@ -246,7 +244,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <table><tbody id="commList"></tbody></table></div>
  <div class="card"><h3>Samba file sharing</h3><p>Enables the built-in Samba add-on at boot and starts it, so the card shows up in Windows as \\IP\sdcard.</p>
   <div class="row"><button class="b p" onclick="act('/api/samba')">Enable Samba</button><button class="b" onclick="act('/api/open-share')">Open share in Explorer</button></div><div class="sst" id="ssSamba"></div></div>
- <div class="card"><h3>Update All</h3><p>Downloads the latest update_all.sh and sets downloader.ini to the MiSTer-devel main distribution with <b>update_linux = false</b>. That keeps your SS1 in a stable lane: cores and the menu still update, but the Linux kernel stays as it is, so a breaking kernel change can't force you to reflash your SD card. A backup of downloader.ini is kept.</p>
+ <div class="card" id="uaCard"><h3>Update All</h3><p>Downloads the latest update_all.sh and sets downloader.ini to the MiSTer-devel main distribution with <b>update_linux = false</b>. That keeps your SS1 in a stable lane: cores and the menu still update, but the Linux kernel stays as it is, so a breaking kernel change can't force you to reflash your SD card. A backup of downloader.ini is kept.</p>
   <div class="row"><button class="b p" onclick="act('/api/update-all')">Install Update All + apply settings</button><button class="b" onclick="term('update_all')">Run Update All (terminal)</button></div><div class="sst" id="ssUA"></div>
   <div class="adv" id="advBox"></div></div>
  <div class="card"><h3>Remove faulty overlap fix tool</h3><p>Deletes fix_sd_overlap.sh / exfat_fix_overlap, which misdetect the correct SS1 layout as overlapping and can destroy the card (SuperStation-Documentation #14).</p>
@@ -306,7 +304,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <button class="b" onclick="loadIni()">Reload</button><button class="b p" onclick="saveIni()">Save</button><span class="muted" id="iniPath"></span></div>
   <textarea id="iniText" spellcheck="false" style="margin-top:10px"></textarea></div>
  <div class="card"><h3>Backups</h3><p>Backups are saved on this PC in the <b>backups</b> folder next to SS1Tool.exe. Each backup gets its own folder named after what you type plus the date and time, with category folders inside (MiSTer, Downloader, ConsoleMode, ConsoleMode\themeconfig\section_groups). File names are never changed. The tool also makes an automatic backup before every change it makes.</p>
-  <div class="row"><input id="bkName" placeholder="Backup name (optional), e.g. before HDMI fix" size="34"><label class="ck"><input type="checkbox" id="bkStamp" checked> Add date and time</label><button class="b p" onclick="iniBackup()">Back up selected file</button><button class="b" onclick="iniBackupAll()" title="Back up every ini in the list into one backup folder">Back up all ini files</button><button class="b" onclick="bkShow('')">Open backups folder</button></div>
+  <div class="row"><input id="bkName" placeholder="Backup name (optional), e.g. before video changes" size="34"><label class="ck"><input type="checkbox" id="bkStamp" checked> Add date and time</label><button class="b p" onclick="iniBackup()">Back up selected file</button><button class="b" onclick="iniBackupAll()" title="Back up every ini in the list into one backup folder">Back up all ini files</button><button class="b" onclick="bkShow('')">Open backups folder</button></div>
   <p class="muted" id="bkDir" style="margin:8px 0 0"></p>
   <table style="margin-top:10px"><thead><tr><th>Backup</th><th>Date</th><th>Files</th><th></th></tr></thead><tbody id="bkBody"></tbody></table></div>
 </div>
@@ -314,7 +312,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 <section id="video">
  <h2>Video</h2><p class="sub">Set the SuperStation up for your TV, monitor, CRT or scaler. Every change can be tried first: if the picture is wrong or gone, it goes back by itself.</p>
  <div class="card vnote"><h3>&#9888; Before you start</h3><p>Everything in Video is based on the <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki" target="_blank" rel="noopener">SuperStation wiki</a> and <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation" target="_blank" rel="noopener">documentation</a> and on MiSTer's own documentation. For some setups those sources give conflicting settings; those are marked <span class="pill warn">sources differ</span>. They'll be updated as issues are reported on GitHub, so if something doesn't work for your setup, please <a href="https://github.com/f3bandit/ss1_tool/issues" target="_blank" rel="noopener">report it on GitHub</a> with your TV or monitor, how it's connected and what you saw.</p></div>
- <div class="jump"><span class="muted">On this page:</span><a href="#" onclick="jumpTo('vcur');return false">Current settings</a><a href="#" onclick="jumpTo('vwiz');return false">Setup wizard</a><a href="#" onclick="jumpTo('vfix');return false">Something looks wrong?</a><a href="#" onclick="jumpTo('vprof');return false">Profiles</a><a href="#" onclick="jumpTo('vclean');return false">Unsupported settings</a></div>
+ <div class="jump"><span class="muted">On this page:</span><a href="#" onclick="jumpTo('vcur');return false">Current settings</a><a href="#" onclick="jumpTo('vwiz');return false">Setup wizard</a><a href="#" onclick="jumpTo('vfix');return false">Something looks wrong?</a><a href="#" onclick="jumpTo('vprof');return false">Profiles</a></div>
  <div id="vTry" class="vtry" style="display:none"></div>
 
  <div class="subpage" id="vcur">
@@ -339,12 +337,6 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <div class="card"><div id="vProfList"></div><p class="muted" style="margin:10px 0 0">MiSTer.ini is used every time the SuperStation starts. A profile picked here stays in use until the SuperStation is switched off, unless Console Mode picks one itself. To use a setup all the time, the wizard can write it into MiSTer.ini.</p></div>
  </div>
 
- <div class="subpage" id="vclean">
-  <h2>Unsupported settings</h2><p class="sub">Settings in MiSTer.ini the SuperStation One doesn't support.</p>
-  <div class="card"><h3>SS1 HDMI fix</h3><p>Comments out these MiSTer.ini settings, which the SuperStation One doesn't support. An automatic backup is made first; restore it from Setup &rsaquo; MiSTer settings &rsaquo; Backups to undo. If you see warnings about Lookahead, VRR or HDMI-CEC after running Update All, the SuperStation documentation also suggests replacing the ini files with its current versions.</p>
-   <div id="hdmiList" class="grid"></div>
-   <div class="row" style="margin-top:10px"><button class="b p" onclick="hdmiFix()">Apply SS1 HDMI fix</button><button class="b" onclick="loadHDMI()">Rescan</button><span class="muted" id="hdmiSummary"></span></div></div>
- </div>
 </section>
 
 <section id="network">
@@ -663,6 +655,9 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 <div id="toast"></div>
 <div id="credit">f3bandit<span>v{{VERSION}}</span></div>
 <script>
+// shown in both wizards: settings-file messages on a fresh card go away after Update All
+const CECNOTE=`<div class="vinfo"><b>Messages about hdmi_cec, hdmi_off, video_off_logo or lookahead when a game starts?</b> On a fresh SD card the SuperStation's settings files already contain these newer settings, but the MiSTer program on the card is older and doesn't know them yet, so it lists them as unknown. They go away once Update All (MiSTer-devel distribution) has updated MiSTer itself and the cores to versions that support HDMI-CEC (MiSTer 20260603 or newer). Keeping Linux updates off doesn't matter for this. Nothing needs to be removed from the settings files.</div>`;
+
 const TOKEN="{{TOKEN}}";
 const $=id=>document.getElementById(id);
 let lastReport="";
@@ -709,7 +704,7 @@ async function loadSetupStatus(){const ok=t=>`<span class="pill good">&#10003; $
  catch(e){for(const id of ids)$(id).textContent=""}}
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
-const PAGELOAD={dash:dashLoad,video:()=>{vLoad();loadHDMI()},setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
+const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
 const SUBLOAD={fm:filesInit,saves:()=>{svLoad();svPoll()},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1()},
  sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
@@ -847,11 +842,6 @@ async function loadIniList(){try{const cur=$("iniSel").value;const l=await api("
   if([...$("iniSel").options].some(o=>o.value===cur))$("iniSel").value=cur}catch(e){}loadIni()}
 async function loadIni(){loadBackups();try{const j=await api("/api/ini?file="+encodeURIComponent($("iniSel").value));$("iniText").value=j.text;$("iniPath").textContent=j.path}catch(e){$("iniText").value="";$("iniPath").textContent="";toast(e.message,true)}}
 function saveIni(){if(!confirm("Save "+$("iniPath").textContent+"? A backup is kept."))return;busy(event.target,async()=>{const j=await api("/api/ini",{file:$("iniSel").value,text:$("iniText").value});toast(j.message);loadBackups()})}
-async function loadHDMI(){try{const j=await api("/api/hdmi");
-  const lab={active:'<span class="pill bad">active - needs fix</span>',commented:'<span class="pill good">commented out</span>',missing:'<span class="pill muted">not in file</span>'};
-  $("hdmiList").innerHTML=j.keys.map(k=>`<div class="kv"><span style="font-family:Consolas,monospace">${esc(k.key)}</span><span>${lab[k.state]}</span></div>`).join("");
-  const n=j.keys.filter(k=>k.state==="active").length;$("hdmiSummary").innerHTML=n?`<span class="pill bad">${n} setting(s) still active</span>`:'<span class="pill good">Fix applied</span>'}catch(e){$("hdmiList").innerHTML="";$("hdmiSummary").textContent=""}}
-function hdmiFix(){busy(event.target,async()=>{const j=await api("/api/hdmi",{});toast(j.message);loadHDMI();vLoad();if($("iniSel").value==="/media/fat/MiSTer.ini")loadIni();else loadBackups()})}
 let BKSETS=[];
 async function loadBackups(){try{const j=await api("/api/ini/backups");BKSETS=j.sets;$("bkDir").textContent="Folder: "+j.dir;
   $("bkBody").innerHTML=j.sets.length?j.sets.map((b,i)=>`<tr><td style="vertical-align:top"><b>${esc(b.name)}</b></td><td style="vertical-align:top;white-space:nowrap">${new Date(b.mtime*1000).toLocaleString()}</td>
@@ -862,7 +852,7 @@ function iniBackupAll(){busy(event.target,async()=>{const j=await api("/api/ini/
 function iniBackup(){busy(event.target,async()=>{const j=await api("/api/ini/backup",{file:$("iniSel").value,name:$("bkName").value,stamp:$("bkStamp").checked});toast(j.message);$("bkName").value="";loadBackups()})}
 function bkRestore(i,k){const b=BKSETS[i];if(!b)return;const one=k>=0?b.files[k]:null;
  if(!confirm(one?`Restore ${one.rel} from "${b.name}"?\nThis overwrites ${one.remote} on the SuperStation.\nThe current file is backed up first.`:`Restore all ${b.files.length} file(s) from "${b.name}"?\n${b.files.map(f=>f.remote).join("\n")}\nThe current files are backed up first.`))return;
- busy(event.target,async()=>{const j=await api("/api/ini/restore",{set:b.name,rel:one?one.rel:""});toast(j.message);loadIni();loadHDMI();loadBackups()})}
+ busy(event.target,async()=>{const j=await api("/api/ini/restore",{set:b.name,rel:one?one.rel:""});toast(j.message);loadIni();loadBackups()})}
 function bkShow(i){const b=i===""?null:BKSETS[i];api("/api/ini/backup-show",{set:b?b.name:""}).catch(e=>toast(e.message,true))}
 function bkDelete(i){const b=BKSETS[i];if(!b||!confirm("Delete backup "+b.name+" and all its files?"))return;busy(null,async()=>{await api("/api/ini/backup-delete",{set:b.name});loadBackups()})}
 // ---------- diagnostics / debug
@@ -1439,7 +1429,8 @@ const WZSTEPS=[
 ()=>`<h3>Update All settings</h3><p>Update All downloads new cores and the MiSTer menu. It can also replace the Linux system underneath. One Linux update broke some hybrid cores (like Street Fighter III: 3rd Strike, Quake and Duke Nukem 3D) and front ends until it was fixed.</p>
  <div class="row">${ADV?advPill(true):""}</div>
  ${wopt("ua","rec",W.ua,"Recommended: stable lane","Installs the latest Update All and sets update_linux = false with the official MiSTer-devel distribution. Cores and the menu keep updating, but Linux stays put, so a breaking change can't force a reflash.")}
- ${wopt("ua","keep",W.ua,"Keep my current settings","Leave Update All and downloader.ini as they are.")}`,
+ ${wopt("ua","keep",W.ua,"Keep my current settings","Leave Update All and downloader.ini as they are.")}
+ ${CECNOTE}`,
 ()=>`<h3>Samba file sharing</h3><p>Lets you open the SD card from Windows File Explorer as <code>\\\\IP\\sdcard</code>, so you can copy games and files over the network.</p>${wzStatusLine()}
  ${wopt("samba","on",W.samba,"Turn on Samba","Starts with the SuperStation every time.")}${wopt("samba","off",W.samba,"Not now","You can turn it on later in Setup.")}`,
 ()=>`<h3>Remove the faulty overlap fix tool</h3><p>Some SS1 images shipped with <code>fix_sd_overlap</code>. It misreads the SuperStation's correct SD card layout as broken, and running it can destroy the card (SuperStation-Documentation issue #14). The 1.2 images shouldn't include it, but this checks to be sure.</p><div class="row" id="wzOv">${wzStatusLine()}</div>`,
@@ -1638,7 +1629,7 @@ loadOpenIn();
 // ---------- video: settings, try with automatic undo, setup wizard, symptom fixer, profiles
 // Explanations come from the SuperStation wiki/docs and MiSTer's documentation and source.
 const VRISK={safe:["good","Safe"],blank:["warn","Can blank some screens"],hdmi:["muted","HDMI only"],crt:["muted","CRT / analog only"],never15:["bad","Never on a TV-style CRT"],audio:["warn","Can stop HDMI sound"]};
-const VGROUPS=[["hdmi","HDMI"],["analog","Analog outputs (CRT, SCART, component, S-Video, composite, VGA)"],["other","Other"]];
+const VGROUPS=[["hdmi","HDMI"],["cec","HDMI-CEC (TV remote and power) - needs MiSTer 20260603 or newer"],["analog","Analog outputs (CRT, SCART, component, S-Video, composite, VGA)"],["other","Other"]];
 const VOPT={
  video_mode:{n:"HDMI resolution",g:"hdmi",d:"Auto",r:"blank",v:[["","Auto (the TV's preferred mode)"],["0","1280x720 60 Hz (720p)"],["8","1920x1080 60 Hz (1080p)"],["7","1280x720 50 Hz (PAL)"],["9","1920x1080 50 Hz (PAL)"],["2","720x480 60 Hz (480p)"],["3","720x576 50 Hz (576p)"],["6","640x480 60 Hz (VGA)"],["5","800x600 60 Hz"],["1","1024x768 60 Hz"],["4","1280x1024 60 Hz"],["10","1366x768 60 Hz"],["11","1024x600 60 Hz"],["12","1920x1440 60 Hz"],["13","2048x1536 60 Hz"],["14","2560x1440 60 Hz"]],
   t:"The resolution sent over HDMI. When it isn't set, MiSTer asks the TV for its preferred mode, which through a switch, AV receiver or capture card can be one that doesn't show. 720p and 1080p are the safest fixed choices.",w:"Not every TV or monitor accepts every mode."},
@@ -1656,6 +1647,15 @@ const VOPT={
  vrr_mode:{n:"Variable refresh rate (VRR)",g:"hdmi",d:"0",r:"blank",v:[["0","0 - Off"],["1","1 - Automatic"],["2","2 - AMD FreeSync"],["3","3 - VESA (HDMI VRR)"],["4","4 - MiSTer VRR"]],t:"For TVs and monitors with VRR or FreeSync. Not used in the menu."},
  hdmi_audio_96k:{n:"HDMI sound sample rate",g:"hdmi",d:"0",r:"audio",v:[["0","0 - 48 kHz"],["1","1 - 96 kHz"]],t:"48 kHz works everywhere. Some TVs and receivers have no sound at 96 kHz."},
  direct_video:{n:"Direct Video (HDMI to analog adapter)",g:"hdmi",d:"0",r:"blank",v:[["0","0 - Off"],["1","1 - On"],["2","2 - Automatic (known adapters)"]],t:"Sends the game's own timing over HDMI for HDMI-to-VGA adapters (AG62xx) and scalers that accept it. MiSTer's docs say it only works with AG62xx adapters.",w:"On a normal TV or monitor there's no picture."},
+ hdmi_cec:{n:"HDMI-CEC",g:"cec",d:"0",r:"safe",v:[["0","0 - Off"],["1","1 - On"]],t:"Lets the SuperStation and the TV talk over HDMI: the TV remote can work the menu, and the TV can be switched to the SuperStation and put to sleep. The other CEC settings below only work while this is on. The TV must support CEC too (often called Anynet+, Bravia Sync, SimpLink or similar). Games in cores built before May 2026 can't use it while they run; Update All brings newer cores."},
+ hdmi_cec_input_mode:{n:"TV remote works the menu",g:"cec",d:"1",r:"safe",v:[["1","1 - On"],["0","0 - Off"]],t:"Passes the TV remote's buttons to the SuperStation."},
+ hdmi_cec_power_on:{n:"Switch the TV to the SuperStation at power-on",g:"cec",d:"1",r:"safe",v:[["1","1 - On"],["0","0 - Off"]],t:"When the SuperStation starts, it asks the TV once to switch to its input, and wakes a TV in standby."},
+ hdmi_cec_sleep:{n:"Put the TV to sleep when idle",g:"cec",d:"0",r:"safe",v:[["0","0 - Off"],["1","1 - On"]],t:"Sends the TV to standby when the HDMI output switches off after no input (the HDMI off timer below must be set)."},
+ hdmi_cec_wake:{n:"Wake the TV on input",g:"cec",d:"0",r:"safe",v:[["0","0 - Off"],["1","1 - On"]],t:"After that idle period, pressing a button wakes the TV and switches it back to the SuperStation."},
+ hdmi_cec_clock:{n:"CEC clock",g:"cec",d:"0 (detect)",r:"safe",v:[["0","0 - Detect automatically"],["12","12 MHz"],["50","50 MHz"]],t:"MiSTer measures the HDMI chip's CEC clock when it starts (12 or 50 MHz), which is how the same MiSTer works on both the DE10-Nano and the SuperStation. Leave it on detect unless CEC doesn't respond."},
+ hdmi_off:{n:"HDMI off after no input (minutes)",g:"cec",d:"0",r:"safe",v:[["0","0 - Never"],["10","10"],["15","15"],["30","30"],["60","60"],["120","120"]],t:"Switches the HDMI output off after this many minutes without controller, keyboard or mouse input, in every core. Works without CEC; with CEC sleep and wake on, it also puts the TV to sleep."},
+ video_off:{n:"Black screen in the menu after (seconds)",g:"cec",d:"0",r:"safe",v:[["0","0 - Never"],["60","60"],["300","300"],["600","600"]],t:"Shows a black picture in the menu after this many seconds without use (only while the menu's on-screen display times out)."},
+ video_off_logo:{n:"Moving logo on the black screen",g:"cec",d:"0",r:"safe",v:[["0","0 - Off"],["1","1 - On"]],t:"Shows a moving MiSTer logo on that black screen, so it's clear the SuperStation is still on."},
  vga_mode:{n:"Analog output",g:"analog",d:"rgb",r:"crt",v:[["rgb","rgb - RGB (SCART, VGA, PVM)"],["ypbpr","ypbpr - Component"],["svideo","svideo - S-Video and composite, FPGA encoder"],["cvbs","cvbs - Composite, FPGA encoder"],["subcarrier","subcarrier - RGB plus S-Video/composite from the Sony encoder (SS1 default)"]],
   t:"What the analog outputs carry. subcarrier is the SuperStation's default: RGB on VGA, the mini-DIN and the RCA jacks at once, plus S-Video and composite from the Sony encoder (switch 3 down). The FPGA encoder modes need switch 3 up."},
  composite_sync:{n:"Sync type",g:"analog",d:"1",r:"crt",v:[["1","1 - Composite sync (SCART, PVM, component)"],["0","0 - Separate H and V sync (VGA monitors, RGBHV)"]],t:"SCART, PVMs and component want composite sync; VGA-style monitors want separate sync."},
@@ -1785,6 +1785,7 @@ function vwRender(){const el=$("vWiz");
   ${vwDip(pl.dip)}
   ${pl.notes.map(n=>`<div class="vinfo">${esc(n)}</div>`).join("")}
   ${pl.differ.map(n=>`<div class="vwarn"><span class="pill warn">sources differ</span> ${esc(n)}</div>`).join("")}
+  ${CECNOTE}
   <div class="row" style="margin-top:12px"><span>Write to</span><select onchange="VW.file=this.value">${files.map(f=>`<option value="${esc(f.path)}"${f.path===VW.file?" selected":""}>${esc(f.name)}${f.alt===0?" (used every time the SuperStation starts)":""}${f.active?" (in use now)":""}</option>`).join("")}</select></div>
   <div class="row" style="margin-top:10px"><button class="b p" onclick="vwApply(true)">Try it (goes back by itself in 20 s)</button><button class="b" onclick="vwApply(false)" title="Writes the settings without restarting the display, for example to set up a CRT before connecting it">Save without restarting</button></div>
   <p class="muted" style="margin:8px 0 0">Set the switches before trying an analog setup. A backup of the file is saved on this PC first, and <b>Undo last change</b> under Current settings puts it back.</p>`}
@@ -1805,10 +1806,10 @@ const VFIX=[
  {n:"Controls feel laggy",t:"The most common cause is the TV: turn on Game Mode / PC Mode. Sound through HDMI eARC to a soundbar can lag too - try the TV's own speakers. For controllers, run fast_USB_polling_on from the Scripts menu after Update All. Then:",a:[["Ask the TV for game mode",{hdmi_game_mode:"1"}],["Lowest lag refresh",{vsync_adjust:"2"}]]},
  {n:"No sound over HDMI",t:"DVI mode has no sound, and some TVs and receivers don't play 96 kHz.",a:[["HDMI with 48 kHz sound",{dvi_mode:"0",hdmi_audio_96k:"0"}]]},
  {n:"Left and right sound swapped (SCART)",t:"SuperStation SCART cables sold before June 2026 have left and right swapped, because the mini-DIN's pins are reversed. It's the cable, not a setting: newer cables are fixed, or the two pins can be swapped in the SCART plug.",a:[]},
- {n:"Warnings about Lookahead, VRR or HDMI-CEC after Update All",t:"Newer MiSTer versions dropped or renamed settings that are still in older SuperStation ini files.",a:[["Show unsupported settings","clean"]]},
+ {n:"\"Unknown option\" messages (hdmi_cec, hdmi_off, video_off_logo, lookahead) when a game starts",t:"The settings file has newer settings than the MiSTer program on the SD card knows. This is normal on a fresh card: run Update All (MiSTer-devel distribution) to update MiSTer and the cores to versions that support them (MiSTer 20260603 or newer). Linux updates can stay off. Nothing needs to be removed from the settings files.",a:[["Open Update All","update"]]},
  {n:"Console Mode's picture repeats across an HDMI screen in CRT mode",t:"Fixed in Console Mode 1.1.4.2: update Console Mode from its settings (System > Update Console Mode).",a:[]}];
 function vFixRender(){$("vFixList").innerHTML=VFIX.map((f,i)=>`<details class="vfix"><summary>${esc(f.n)}</summary><p>${esc(f.t)}</p>${f.pal?PALWARN:""}<div class="row">${f.a.map((a,k)=>`<button class="b${typeof a[1]==="object"?" p":""} sm" onclick="vFix(${i},${k})">${esc(a[0])}</button>`).join("")}</div>${f.a.some(a=>typeof a[1]==="object")?`<div class="muted" style="font-size:12px;margin-top:6px">Changes ${esc(VID?VID.file.split("/").pop():"the settings file in use")}; goes back by itself unless you press Keep.</div>`:""}</details>`).join("")}
-function vFix(i,k){const a=VFIX[i].a[k][1];if(a==="wiz")return jumpTo("vwiz");if(a==="clean")return jumpTo("vclean");if(!VID)return toast("Connect to the SuperStation first",true);vTry(a,VID.file)}
+function vFix(i,k){const a=VFIX[i].a[k][1];if(a==="wiz")return jumpTo("vwiz");if(a==="update")return openPart("setup","uaCard");if(!VID)return toast("Connect to the SuperStation first",true);vTry(a,VID.file)}
 // ---------- seasonal mode: "Oi to the world" (falling snow) and "Yer a wizard" (floating candles)
 const FX=(()=>{const cv=$("snow"),ctx=cv.getContext("2d");let flakes=[],candles=[],raf=0,mode="",W=0,H=0,dpr=1,last=0,T=0;
  const reduce=window.matchMedia("(prefers-reduced-motion: reduce)"),R=Math.random;

@@ -38,7 +38,7 @@ It's built around three jobs:
 | **Linux kernel updates breaking cores or front ends** (see [below](#linux-kernel-updates-and-the-stable-lane)) | Installs Update All with `update_linux = false` and the MiSTer-devel distribution, shows whether those settings are in place, and shows the current [Linux update advisory](#linux-update-advisory) |
 | **Broken or mistyped `MiSTer.ini`** | Edit it from your PC with an automatic backup before every change, plus named and timestamped backups you can restore in one click |
 | **No picture, black and white, wrong colours or lag** on HDMI, a CRT, component, S-Video or composite | **Video** explains every video setting, sets the SS1 up for how it's connected (including which switches to flip), fixes common symptoms, and lets you try any change safely: unless you press Keep, the SuperStation puts the old settings back by itself, even when the picture is gone |
-| **HDMI settings the SS1 doesn't support** | The SS1 HDMI fix (in Video) comments out the HDMI-CEC, `hdmi_off` and `video_off_logo` settings and shows the state of each one |
+| **"Unknown option" messages about `hdmi_cec`, `hdmi_off`, `video_off_logo` or `lookahead` on a fresh SD card** | The SuperStation's settings files already contain these newer settings while the MiSTer program on a fresh card is older. Update All (MiSTer-devel distribution, Linux updates can stay off) updates MiSTer and the cores and the messages go away; nothing needs removing. Both wizards say so, and HDMI-CEC can then be turned on in Video |
 | **SD card problems:** corrupted cards, the faulty `fix_sd_overlap` tool, Windows asking to scan the card, failing or fake-capacity cards | Removes the faulty overlap tool, checks the partition table and exFAT health, tests whether Windows will complain, runs deep read/write tests, adds a safe shutdown, and flashes the official SS1 SD Card Installer |
 | **A controller or button that doesn't work** | The controller tester shows every button and stick live on a mock controller, for USB and Bluetooth controllers and the SNAC front port, without loading a core |
 | **Hard-to-explain problems** | One click creates a debug report with versions, configs, storage health and logs, ready to post in the Taki Udon Discord. Passwords, keys, WiFi names and MAC addresses are redacted. |
@@ -204,9 +204,9 @@ Everything in Video is based on the [SuperStation wiki](https://github.com/Takii
 - **Trying is safe.** Every change can be tried: SS1 Tool writes it, restarts MiSTer's menu so it's used straight away, and starts a 20-second countdown on the SuperStation itself. Press **Keep** if it looks right. If you don't, because the picture is gone, the network dropped or SS1 Tool was closed, the SuperStation puts the old file back and restarts the display by itself. **Undo last change** steps back through the last ten changes per file, and every change is also backed up on your PC first
 - **Current settings:** every video setting in the file in use, explained in plain words, with what MiSTer does when it isn't set, settings a core-specific section overrides, and a risk label: Safe, Can blank some screens, HDMI only, CRT / analog only, Never on a TV-style CRT, Can stop HDMI sound. ◀ ▶ step through the values and **Try** applies one
 - **Setup wizard:** HDMI to a TV or monitor, a capture card or scaler, a Direct Video adapter or scaler, a CRT over SCART RGB, PVM/BVM with sync on green, RGB with separate sync, component, S-Video, composite, a VGA PC monitor, or HDMI and a CRT together. Pick NTSC or PAL, the resolution and refresh, and the S-Video/composite encoder, then see every change, the positions of the four switches on the side of the SS1, notes for Console Mode's CRT mode and SCART cables, and where the sources disagree. Choosing PAL warns that every core must be set to PAL as well, or the picture is black and white
-- **Something looks wrong?** No picture over HDMI, blanking when a game starts, black and white, ghosting or banding, green or pink component colours, a rolling picture, edges cut off, shimmering pixels, washed-out or crushed blacks, lag, no HDMI sound, swapped SCART sound, Update All ini warnings: each with the likely cause and fixes to try
+- **Something looks wrong?** No picture over HDMI, blanking when a game starts, black and white, ghosting or banding, green or pink component colours, a rolling picture, edges cut off, shimmering pixels, washed-out or crushed blacks, lag, no HDMI sound, swapped SCART sound, "unknown option" messages on a fresh card: each with the likely cause and fixes to try
 - **Profiles:** MiSTer uses `MiSTer.ini` plus only the first three `MiSTer_*.ini` files it finds. The SS1 ships four, so one is never offered by MiSTer; the page shows which, and which profile is in use, and can switch profiles (with the same automatic undo)
-- **SS1 HDMI fix** (moved here from Setup): shows and comments out the MiSTer.ini settings the SS1 doesn't support (`hdmi_cec`, `hdmi_cec_input_mode`, `hdmi_cec_power_on`, `hdmi_cec_sleep`, `hdmi_cec_wake`, `hdmi_cec_clock`, `hdmi_off`, `video_off_logo`); a backup is made first
+- **HDMI-CEC (TV remote and power):** turn CEC on, let the TV remote work the menu, switch the TV to the SuperStation at power-on, put the TV to sleep and wake it, the CEC clock, the HDMI off timer and the menu's black screen and logo. HDMI-CEC needs MiSTer 20260603 or newer (Console Mode's MiSTer has it too) and a TV with CEC; it's off unless turned on. Games in cores built before May 2026 can't use it while they run
 
 ### Network
 How the SuperStation connects to your network, with Ethernet, WiFi and network shares (Cifs) on one page, and **Jump to** links at the top.
@@ -340,8 +340,8 @@ Uses the same databases as Update All: ajgowans' **BIOS Database** (the exact pa
 
 #### Debug Report
 - One click collects versions, configs, Console Mode and themeconfig files, game library layout, storage health, USB devices and logs into a single text file for Taki and the mods
-- Starts with an automatic **FINDINGS** summary of known problems, including whether the SS1 HDMI fix is applied, video profiles MiSTer can't see, no fixed HDMI resolution, and 31 kHz VGA output that would harm a TV-style CRT
-- A **VIDEO** section lists the profiles in MiSTer's order, the profile in use and the video settings in each file
+- Starts with an automatic **FINDINGS** summary of known problems, including a MiSTer program too old for the settings in MiSTer.ini, video profiles MiSTer can't see, no fixed HDMI resolution, and 31 kHz VGA output that would harm a TV-style CRT
+- A **VIDEO** section lists the profiles in MiSTer's order, the profile in use, the video settings in each file, the HDMI-CEC settings and the MiSTer program's version
 - Passwords, keys, tokens, WiFi names and MAC addresses are redacted
 - A Save As window lets you store it anywhere
 
@@ -437,7 +437,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | Save backups | `backups\saves\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Bluetooth pairing backups | `backups\bluetooth\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Controller mapping backups | `backups\controller-maps\<name>_<date-time>\` next to `SS1Tool.exe` |
-| ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_HDMI_fix_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer` (MiSTer.ini, the `MiSTer_*.ini` video profiles and `yc.txt`), `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
+| ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_video_changes_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer` (MiSTer.ini, the `MiSTer_*.ini` video profiles and `yc.txt`), `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
 | On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/` |
@@ -492,7 +492,7 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `main.go` | Local web server, session token, config |
 | `sshclient.go` | SSH connection, command and upload helpers |
 | `ra.go` | RetroAchievements account: read, check and save the login in `retroachievements.cfg` |
-| `actions.go` | Status, setup, Samba, Update All, scraper, ini editor, HDMI fix, diagnostics, debug report, file manager |
+| `actions.go` | Status, setup, Samba, Update All, scraper, ini editor, diagnostics, debug report, file manager |
 | `video.go` | Video: settings, profiles, try with automatic undo on the SuperStation, undo history |
 | `features2.go` | Remote keyboard and controller, saved devices, drive transfers, ini backups |
 | `pcshare.go`, `pcshare_windows.go` | Sharing a folder from this Windows PC: account, share, firewall and Cifs setup |

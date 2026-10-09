@@ -44,7 +44,6 @@ func registerRoutes(mux *http.ServeMux) {
 	h("/api/update-all", apiUpdateAll)
 	h("/api/scraper", apiScraper)
 	h("/api/ini", apiIni)
-	h("/api/hdmi", apiHDMI)
 	h("/api/targets", apiTargets)
 	h("/api/diag", apiDiag)
 	h("/api/debug-report", apiDebugReport)
@@ -589,130 +588,6 @@ func apiIni(w http.ResponseWriter, r *http.Request) {
 	if bak != "" {
 		msg += "\nBackup: " + bak
 	}
-	writeJSON(w, map[string]any{"ok": true, "message": msg})
-}
-
-// ---------------------------------------------------------------- HDMI fix
-
-// SS1 HDMI fix: these MiSTer.ini settings must be commented out on the SuperStation One.
-var ss1HdmiKeys = []string{
-	"hdmi_cec", "hdmi_cec_input_mode", "hdmi_cec_power_on", "hdmi_cec_sleep",
-	"hdmi_cec_wake", "hdmi_cec_clock", "hdmi_off", "video_off_logo",
-}
-
-const oldHdmiMark = ";ss1tool;" // marker used by SS1 Tool 1.x before 1.6.1
-
-// iniKey returns the lower-case key of an ini line and whether the line is commented out.
-func iniKey(line string) (key string, commented bool, ok bool) {
-	t := strings.TrimSpace(line)
-strip:
-	for {
-		switch {
-		case strings.HasPrefix(t, oldHdmiMark):
-			t = t[len(oldHdmiMark):]
-		case strings.HasPrefix(t, ";"), strings.HasPrefix(t, "#"):
-			t = t[1:]
-		default:
-			break strip
-		}
-		commented = true
-		t = strings.TrimSpace(t)
-	}
-	k, _, found := strings.Cut(t, "=")
-	if !found {
-		return "", commented, false
-	}
-	return strings.ToLower(strings.TrimSpace(k)), commented, true
-}
-
-type hdmiState struct {
-	Key   string `json:"key"`
-	State string `json:"state"` // active | commented | missing
-}
-
-// hdmiScan reports, for each SS1 HDMI fix key, whether MiSTer.ini has it active, commented out or not at all.
-func hdmiScan(text string) []hdmiState {
-	active, commented := map[string]bool{}, map[string]bool{}
-	for _, l := range strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
-		if k, c, ok := iniKey(l); ok {
-			if c {
-				commented[k] = true
-			} else {
-				active[k] = true
-			}
-		}
-	}
-	res := []hdmiState{}
-	for _, k := range ss1HdmiKeys {
-		st := "missing"
-		if active[k] {
-			st = "active"
-		} else if commented[k] {
-			st = "commented"
-		}
-		res = append(res, hdmiState{k, st})
-	}
-	return res
-}
-
-// hdmiApply comments out every active SS1 HDMI fix line with a plain ";" (the rest of the line is kept).
-func hdmiApply(text string) (string, int) {
-	set := map[string]bool{}
-	for _, k := range ss1HdmiKeys {
-		set[k] = true
-	}
-	nl := "\n"
-	if strings.Contains(text, "\r\n") {
-		nl = "\r\n"
-	}
-	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
-	n := 0
-	for i, l := range lines {
-		k, c, ok := iniKey(l)
-		if ok && !c && set[k] {
-			lines[i] = ";" + strings.TrimLeft(l, " \t")
-			n++
-		}
-		if ok && c && strings.HasPrefix(strings.TrimSpace(l), oldHdmiMark) && set[k] { // tidy old marker
-			lines[i] = ";" + strings.TrimPrefix(strings.TrimSpace(l), oldHdmiMark)
-		}
-	}
-	return strings.Join(lines, nl), n
-}
-
-func apiHDMI(w http.ResponseWriter, r *http.Request) {
-	if !needConn(w) {
-		return
-	}
-	p := iniFiles["mister"]
-	text, err := run("cat " + shq(p))
-	if err != nil {
-		fail(w, 404, "MiSTer.ini not found")
-		return
-	}
-	if r.Method == http.MethodGet {
-		writeJSON(w, map[string]any{"keys": hdmiScan(text)})
-		return
-	}
-	newText, n := hdmiApply(text)
-	if n == 0 {
-		writeJSON(w, map[string]any{"ok": true, "message": "The SS1 HDMI fix is already applied - nothing to change."})
-		return
-	}
-	bak, err := backupFile(p)
-	if err != nil {
-		fail(w, 502, err.Error())
-		return
-	}
-	if err := upload(p, strings.NewReader(newText), "644"); err != nil {
-		fail(w, 502, err.Error())
-		return
-	}
-	msg := fmt.Sprintf("Commented out %d line(s) in MiSTer.ini.", n)
-	if bak != "" {
-		msg += "\nBackup: " + bak
-	}
-	msg += "\nReboot the SuperStation to apply."
 	writeJSON(w, map[string]any{"ok": true, "message": msg})
 }
 
