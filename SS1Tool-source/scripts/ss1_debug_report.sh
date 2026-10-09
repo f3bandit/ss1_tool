@@ -175,15 +175,20 @@ collect() {
   sec "MiSTer.ini"
   echo "Sections and main= overrides:"
   grep -nE '^\[|^[[:space:]]*main[[:space:]]*=' "$FAT/MiSTer.ini" 2>/dev/null | redact
-  local hk act=""
+  # HDMI-CEC is supported by MiSTer 20260603 and newer (and Console Mode's MiSTer); off unless hdmi_cec=1.
+  # Older MiSTer programs list these settings as unknown options until Update All updates MiSTer and the cores.
+  local hk cecl=""
   for hk in hdmi_cec hdmi_cec_input_mode hdmi_cec_power_on hdmi_cec_sleep hdmi_cec_wake hdmi_cec_clock hdmi_off video_off_logo; do
-    grep -qiE "^[[:space:]]*${hk}[[:space:]]*=" "$FAT/MiSTer.ini" 2>/dev/null && act="$act $hk"
+    v=$(grep -iE "^[[:space:]]*${hk}[[:space:]]*=" "$FAT/MiSTer.ini" 2>/dev/null | tail -n1 | cut -d= -f2 | sed 's/;.*//' | tr -d ' \r')
+    cecl="$cecl ${hk}=${v:-(not set)}"
   done
-  if [ -n "$act" ]; then
-    echo "SS1 HDMI fix: NOT applied - active:$act"
-    finding "WARN: SS1 HDMI fix not applied - these MiSTer.ini settings should be commented out:$act"
+  echo "HDMI-CEC settings:$cecl"
+  local mv; mv=$(grep -a -o -m1 '\$VER:[0-9][0-9][0-9][0-9][0-9][0-9]' "$FAT/MiSTer" 2>/dev/null | head -n1 | cut -d: -f2)
+  if [ -n "$mv" ]; then
+    echo "MiSTer program: 20$mv (HDMI-CEC needs 20260603 or newer)"
+    [ "$mv" -lt 260603 ] 2>/dev/null && finding "INFO: MiSTer program is 20$mv: it lists newer settings (hdmi_cec, hdmi_off, video_off_logo...) as unknown options until Update All (MiSTer-devel) updates MiSTer and the cores; nothing needs removing from MiSTer.ini"
   else
-    echo "SS1 HDMI fix: applied (no CEC / hdmi_off / video_off_logo settings active)"
+    echo "MiSTer program: version unknown"
   fi
   echo; showfile "$FAT/MiSTer.ini" 600
 
