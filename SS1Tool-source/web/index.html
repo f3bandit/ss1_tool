@@ -643,8 +643,8 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <p class="muted" style="margin:10px 0 0">SS1 Tool checks GitHub when it starts and every 6 hours. Updates come from the <a href="https://github.com/f3bandit/ss1_tool/releases" target="_blank" rel="noopener">f3bandit/ss1_tool releases</a>, are checked against the SHA-256 GitHub lists for the file, and replace SS1Tool.exe in its folder. The app restarts and this window switches to the new version by itself. Updates never start while a backup, restore, copy or SD card flash is running.</p></div>
  <div class="card" id="winCard" style="display:none"><h3>Window</h3><p>SS1 Tool opens in its own window, with its icon on the taskbar like any other program. Closing the window keeps SS1 Tool running, with its icon by the clock, so long jobs like backups can finish and Linux update alerts still reach you. Click the icon to open the window again. Right-click it to turn <b>Start with Windows</b> on or off, or to <b>Exit</b> SS1 Tool completely.</p>
   <div class="row"><select id="openInSel" onchange="setOpenIn(this.value)"><option value="app">Open in its own window (recommended)</option><option value="browser">Open in my default browser</option></select><span class="muted" id="openInNote"></span></div></div>
- <div class="card"><h3>&#10024; Seasonal mode</h3><p>Adds a seasonal touch to the app: floating candles that drift, flicker and come and go, or falling snowflakes. Pick one and choose <b>Always on</b>, or <b>Seasonal</b> to show it only in its months. If animations are turned off in your Windows accessibility settings, this feature won't show.</p>
-  <div class="row"><select id="seasonSel" onchange="setSeasonEffect(this.value)"><option value="candles">Yer a wizard (floating candles)</option><option value="snow">Oi to the world (snow)</option><option value="off">Off</option></select>
+ <div class="card"><h3>&#10024; Seasonal mode</h3><p>Adds a seasonal touch to the app: floating candles that drift, flicker and come and go, falling snowflakes, or a see-through night sky with twinkling stars, the odd meteor shower and, now and then, an aurora. Pick one and choose <b>Always on</b>, or <b>Seasonal</b> to show it only in its months. If animations are turned off in your Windows accessibility settings, this feature won't show.</p>
+  <div class="row"><select id="seasonSel" onchange="setSeasonEffect(this.value)"><option value="candles">Yer a wizard (floating candles)</option><option value="snow">Oi to the world (snow)</option><option value="stars">Wow (night sky: stars, meteor showers, aurora)</option><option value="off">Off</option></select>
    <label class="ck"><input type="checkbox" id="seasonAlways" onchange="setSeasonWhen(this.checked)"> Always on</label>
    <label class="ck"><input type="checkbox" id="seasonSeasonal" onchange="setSeasonWhen(!this.checked)"> Seasonal <span class="muted" id="seasonMonths"></span></label><span id="seasonState"></span></div></div>
 </section>
@@ -1851,20 +1851,79 @@ const FX=(()=>{const cv=$("snow"),ctx=cv.getContext("2d");let flakes=[],candles=
    ctx.globalAlpha=Math.min(1,.55+c.d*.5)*v;const p=Math.ceil(w*.3);ctx.drawImage(c.img,x-w/2-p,y-p/2);
    ctx.globalAlpha=v;ctx.save();ctx.translate(x,y-w*.25);ctx.rotate(sway);const fw=w*2,fh=w*2.3*flick;ctx.drawImage(flame,-fw/2,-fh*1.04,fw,fh*1.1);ctx.restore()}
   ctx.globalAlpha=1}
+ // night sky ("Wow"): a see-through night sky with twinkling stars, now and then a meteor
+ // shower, and more rarely an aurora that fades in for half a minute to a minute
+ let stars=[],meteors=[],nextShower=0,aurStart=-1,aurLen=0,nextAur=0,aurDrawn=-1;
+ const aurC=document.createElement("canvas"),aurX=aurC.getContext("2d"),aurG=document.createElement("canvas"),aurGX=aurG.getContext("2d");
+ const RIB=[
+  {p:s=>[-.03+1.06*s,.70+.04*Math.sin(Math.PI*s*1.3+.2)-.03*s],k:.9,top:[235,60,170],tip:.5,ph:3.4},
+  {p:s=>[-.03+1.06*s,.62+.05*Math.sin(s*3.2+1)-.02*s],k:.9,top:[170,70,230],tip:.35,ph:0},
+  {p:s=>[-.03+1.06*s,.55+.05*Math.sin(s*2.6+2.4)],k:.8,top:[150,80,255],tip:.3,ph:2.1},
+  {p:s=>[-.03+1.06*s,.47+.04*Math.sin(s*3.8+.7)],k:.65,top:[120,90,255],tip:.25,ph:4.6},
+  {p:s=>[-.03+1.06*s,.39+.04*Math.sin(s*3+3.1)],k:.45,top:[60,240,200],tip:.15,ph:1.3}];
+ let holes=[];
+ const mixC=(a,b,k)=>[a[0]+(b[0]-a[0])*k,a[1]+(b[1]-a[1])*k,a[2]+(b[2]-a[2])*k].map(Math.round);
+ function buildStars(){const n=Math.round(Math.max(120,Math.min(420,W*H/3300)));
+  stars=Array.from({length:n},()=>{const big=R()<.06;return{x:R(),y:Math.pow(R(),1.15),r:big?1.4+R()*1.1:.4+R()*.9,big,base:.35+R()*.6,tw:1.5+R()*4,tp:R()*6.28,
+   fade:R()<.35,fp:R()*6.28,fs:.08+R()*.18,col:R()<.15?"#ffe9c4":(R()<.2?"#cfe0ff":"#ffffff")}});
+  holes=Array.from({length:26},()=>({x:R(),y:R()*.72,r:.05+R()*.10,vx:(R()-.5)*.02,vy:(R()-.5)*.01,f:.05+R()*.12,ph:R()*6.28}));
+  meteors=[];nextShower=T+60+R()*120;nextAur=T+150+R()*240;aurStart=-1}
+ function aurAlpha(t){if(aurStart<0)return 0;const e=t-aurStart;if(e<0)return 0;if(e>aurLen){aurStart=-1;nextAur=t+480+R()*420;return 0} // every 8-15 minutes
+  const a=Math.min(1,e/8,(aurLen-e)/10);return a*a*(3-2*a)}
+ function renderAurora(t){const w=Math.max(160,Math.round(W/3)),h=Math.max(100,Math.round(H/3));if(aurC.width!==w||aurC.height!==h){aurC.width=aurG.width=w;aurC.height=aurG.height=h}
+  aurX.clearRect(0,0,w,h);aurX.globalCompositeOperation="lighter";aurX.lineCap="butt";
+  for(const r of RIB){const N=Math.round(w*.85);
+   for(let i=0;i<N;i++){const s=i/N;let [x,y]=r.p(s);
+    const rip=.016*Math.sin(s*16-t*2.4+r.ph)+.010*Math.sin(s*31+t*3.3+r.ph*2),fold=.03*Math.sin(s*4.5-t*.9+r.ph)*Math.sin(t*.35+r.ph);
+    x+=.02*Math.sin(t*.3+r.ph);y+=(rip+fold)*.8;
+    const ray=Math.max(.35,.66+.16*Math.sin(s*170+t*4.2+r.ph)+.13*Math.sin(s*61-t*2.8+Math.sin(s*7+t*1.1)*3)+.10*Math.sin(s*480+t*7));
+    const pulse=Math.pow(.5+.5*Math.sin(s*9-t*2.6+r.ph),3),env=Math.min(1,s/.05,(1-s)/.05)*(.6+.2*Math.sin(s*5+t*.6+r.ph)+.4*pulse);
+    const k=ray*env*r.k*.165;if(k<.008)continue;
+    const L=h*(y+.10+.08*Math.sin(s*13+t*1.2+r.ph)+.05*Math.sin(s*47-t*2.2)+.08*pulse)*(.75+.25*r.k),X=x*w,Y=y*h,g=aurX.createLinearGradient(X,Y,X,Y-L);
+    g.addColorStop(0,"rgba(120,255,150,0)");g.addColorStop(.06,`rgba(150,255,165,${.34*k})`);g.addColorStop(.22,`rgba(70,255,140,${.30*k})`);
+    g.addColorStop(.55,`rgba(${mixC([40,230,170],r.top,r.tip*.6)},${.17*k})`);g.addColorStop(.85,`rgba(${r.top},${.12*k*(.5+r.tip)})`);g.addColorStop(1,`rgba(${r.top},0)`);
+    aurX.strokeStyle=g;aurX.lineWidth=1.6;aurX.beginPath();aurX.moveTo(X,Y+1);aurX.lineTo(X,Y-L);aurX.stroke()}}
+  aurX.globalCompositeOperation="destination-out"; // drifting pockets that fade parts out and back in
+  for(const o of holes){const k=Math.max(0,Math.sin(t*o.f*6.28+o.ph));if(k<.02)continue;
+   const hx=((o.x+o.vx*t)%1+1)%1*w,hy=(o.y+o.vy*t)*h,hr=o.r*w*(.7+.3*Math.sin(t*.7+o.ph)),gr=aurX.createRadialGradient(hx,hy,0,hx,hy,hr);
+   gr.addColorStop(0,`rgba(0,0,0,${.95*k})`);gr.addColorStop(.55,`rgba(0,0,0,${.6*k})`);gr.addColorStop(1,"rgba(0,0,0,0)");
+   aurX.save();aurX.translate(hx,hy);aurX.scale(1.6,.8);aurX.translate(-hx,-hy);aurX.fillStyle=gr;aurX.fillRect(hx-hr,hy-hr,hr*2,hr*2);aurX.restore()}
+  // the soft glow, blurred once per refresh rather than every frame
+  aurGX.clearRect(0,0,w,h);aurGX.filter="blur(10px)";aurGX.drawImage(aurC,0,0);aurGX.filter="blur(2px)";aurGX.globalAlpha=.75;aurGX.drawImage(aurC,0,0);aurGX.globalAlpha=1;aurGX.filter="none"}
+ function drawStars(dt){const t=T;
+  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"rgba(4,8,26,.62)");sky.addColorStop(.6,"rgba(8,14,38,.45)");sky.addColorStop(1,"rgba(10,18,40,.30)");ctx.globalAlpha=1;ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  if(aurStart<0&&t>nextAur){aurStart=t;aurLen=30+R()*30}
+  const aa=aurAlpha(t);
+  if(aa>0){if(t-aurDrawn>1/10||t<aurDrawn){renderAurora(t);aurDrawn=t}
+   ctx.save();ctx.globalCompositeOperation="lighter";ctx.globalAlpha=aa;ctx.imageSmoothingQuality="high";ctx.drawImage(aurG,0,0,W,H);ctx.restore()}
+  for(const s of stars){let v=s.base*(.65+.35*Math.sin(t*s.tw+s.tp));if(s.fade)v*=Math.max(0,Math.sin(t*s.fs*6.28+s.fp))*1.2;if(v<.02)continue;
+   const x=s.x*W,y=s.y*H;ctx.globalAlpha=Math.min(1,v);ctx.fillStyle=s.col;ctx.beginPath();ctx.arc(x,y,s.r,0,6.28);ctx.fill();
+   if(s.big){const k=s.r*4*(.6+.4*Math.sin(t*s.tw*1.3+s.tp));ctx.globalAlpha=Math.min(1,v)*.5;ctx.strokeStyle=s.col;ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(x-k,y);ctx.lineTo(x+k,y);ctx.moveTo(x,y-k);ctx.lineTo(x,y+k);ctx.stroke()}}
+  ctx.globalAlpha=1;
+  if(t>nextShower){const n=8+Math.floor(R()*6);for(let i=0;i<n;i++)meteors.push({t0:t+i*.18+R()*.25,ang:2.45+R()*.35,x:W*(.55+R()*.4),y:H*(R()*.25),len:120+R()*160,sp:900+R()*500,life:.7+R()*.5,w:1+R()*1.4});
+   nextShower=t+180+R()*180} // a shower every 3-6 minutes
+  meteors=meteors.filter(m=>t-m.t0<=m.life);
+  for(const m of meteors){const e=t-m.t0;if(e<0)continue;const d=e*m.sp,dx=Math.cos(m.ang),dy=Math.sin(m.ang),hx=m.x+dx*d,hy=m.y+dy*d,tx=hx-dx*m.len,ty=hy-dy*m.len,fade=1-e/m.life;
+   const g=ctx.createLinearGradient(hx,hy,tx,ty);g.addColorStop(0,`rgba(255,255,255,${.95*fade})`);g.addColorStop(.25,`rgba(200,220,255,${.5*fade})`);g.addColorStop(1,"rgba(160,190,255,0)");
+   ctx.strokeStyle=g;ctx.lineWidth=m.w;ctx.lineCap="round";ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(tx,ty);ctx.stroke();
+   ctx.globalAlpha=fade;ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(hx,hy,m.w*.9,0,6.28);ctx.fill();ctx.globalAlpha=1}}
+ // for a quick look (and for testing): FX.show("meteors") or FX.show("aurora")
+ function show(what){if(mode!=="stars")return;if(what==="meteors")nextShower=T;if(what==="aurora"){aurStart=T;aurLen=45}}
  function draw(t){const dt=Math.min(.05,(t-(last||t))/1000);last=t;T+=dt;ctx.clearRect(0,0,W,H);
-  if(mode==="candles")drawCandles(dt);else drawSnow(dt);
+  if(mode==="candles")drawCandles(dt);else if(mode==="stars")drawStars(dt);else drawSnow(dt);
   ctx.globalAlpha=1;raf=requestAnimationFrame(draw)}
- function build(){if(mode==="snow"){const n=Math.round(Math.min(70,W*H/22000));flakes=Array.from({length:n},()=>mk(false))}
+ function build(){if(mode==="stars"){buildStars();return}if(mode==="snow"){const n=Math.round(Math.min(70,W*H/22000));flakes=Array.from({length:n},()=>mk(false))}
   else{const k=Math.max(.5,Math.min(1.6,W*H/(1280*820)));candles=[];LAYERS.forEach((L,i)=>{for(let j=0;j<Math.round(L[0]*k);j++)candles.push(mkC(i,T))});candles.sort((a,b)=>a.d-b.d)}}
  function start(m){if(reduce.matches){stop();return}if(mode===m)return;const was=!!mode;mode=m;size();build();cv.style.display="block";if(!was){last=0;raf=requestAnimationFrame(draw)}}
  function stop(){mode="";cancelAnimationFrame(raf);ctx.clearRect(0,0,W,H);cv.style.display="none"}
  addEventListener("resize",()=>{if(!mode)return;size();if(mode==="candles")candles.forEach(place)});
  document.addEventListener("visibilitychange",()=>{if(!mode)return;if(document.hidden)cancelAnimationFrame(raf);else{last=0;raf=requestAnimationFrame(draw)}});
  reduce.addEventListener&&reduce.addEventListener("change",()=>{if(reduce.matches)stop();else applySeason()});
- return{start,stop,get mode(){return mode},get reduced(){return reduce.matches}}})();
+ return{start,stop,show,get mode(){return mode},get reduced(){return reduce.matches}}})();
 // which effect, and whether it's always on or only in its months
 const SEASONS={candles:{months:[9,10],when:"October and November",name:"Yer a wizard",on:"&#128367; Candles lit"},
- snow:{months:[10,11,0,1,2],when:"November to March",name:"Oi to the world",on:"&#10052; Snowing"}};
+ snow:{months:[10,11,0,1,2],when:"November to March",name:"Oi to the world",on:"&#10052; Snowing"},
+ stars:{months:[2,3,4,5,6,7],when:"March to August",name:"Wow",on:"&#10024; Stars out"}};
 let SEASON={effect:"snow",always:false};
 function applySeason(){const s=SEASONS[SEASON.effect],m=new Date().getMonth(),want=!!s&&(SEASON.always||s.months.includes(m));
  want?FX.start(SEASON.effect):FX.stop();
