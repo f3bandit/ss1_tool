@@ -1,0 +1,4 @@
+github.com/golang/crypto v0.28.0 h1:sUkSYV6iYqOdmUwZGQNhj6cPZEuUjTabT2+FIbb5Ngk=
+github.com/golang/crypto v0.28.0/go.mod h1:rmgy+3RHxRZMyY0jjAJShp2zgEdOqj2AO7U0pYmeQ7U=
+github.com/golang/image v0.21.0 h1:D6UCfqIQn/DAcopJG4zh+wYet70Mh/NtdWu1GKarQLo=
+github.com/golang/image v0.21.0/go.mod h1:vUbsLavqK/W303ZroQQVKQ+Af3Yl6Uz1Ppu5J/cLz78=
