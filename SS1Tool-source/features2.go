@@ -1092,9 +1092,9 @@ func apiPrefs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		switch req.Seasonal {
-		case "", "candles", "snow", "off":
+		case "", "candles", "snow", "stars", "off":
 		default:
-			fail(w, 400, "seasonal must be candles, snow or off")
+			fail(w, 400, "seasonal must be candles, snow, stars or off")
 			return
 		}
 		switch req.SeasonalWhen {
