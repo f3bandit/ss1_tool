@@ -60,6 +60,21 @@ a.discord:hover{background:#ffe066;border-color:#ffe066}
 .bkact .b{white-space:nowrap}
 #bkBody td:first-child{word-break:break-all;max-width:190px}
 .b.sm{padding:3px 8px;font-size:12px;white-space:nowrap;font-family:"Segoe UI",system-ui,sans-serif}
+.vnote{border-color:#e3b34159}.vnote h3{color:var(--warn)}
+.vtry{position:sticky;top:64px;z-index:6;justify-content:space-between;align-items:center;gap:14px;background:var(--panel2);border:1px solid var(--warn);border-radius:8px;padding:12px 16px;margin-bottom:14px}
+.vgh{margin:16px 0 6px;font-size:13px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,auto);gap:8px 18px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.vrow code,.vplan code{font-family:Consolas,monospace;font-size:12px;color:var(--dim)}.vt{font-size:12.5px;margin-top:3px}.vctl{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.vctl select{max-width:330px}
+.vnow{font-size:12.5px;color:var(--dim)}
+@media(max-width:900px){.vrow{grid-template-columns:1fr}.vctl{align-items:flex-start}}
+.vwarn,.vinfo{border-left:3px solid var(--warn);background:#e3b3410f;padding:8px 12px;margin:8px 0;border-radius:0 6px 6px 0;font-size:13px}.vinfo{border-left-color:var(--acc2,#58a6ff);background:#58a6ff0d}
+.vtiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:10px}
+.vtile{text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px;color:var(--text);font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:4px}.vtile span{color:var(--dim);font-size:12.5px}.vtile:hover,.vtile.on{border-color:var(--acc)}
+.vopt{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}.vopt>b{min-width:150px}
+.vplan{margin-top:4px}.vplan tr.muted td{color:var(--dim)}
+.vdip{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--panel2)}.vdips{display:flex;flex-wrap:wrap;gap:14px 22px;margin:10px 0 6px}.vsw{display:flex;gap:8px;align-items:center;font-size:13px}.vsw.any{opacity:.55}
+.vslot{fill:#11141a;stroke:var(--line)}.vknob{fill:var(--acc)}.vknob.off{fill:#4a5263}
+.vfix{border-bottom:1px dashed var(--line);padding:8px 0}.vfix summary{cursor:pointer;font-weight:600}.vfix p{margin:8px 0;color:var(--dim)}
 #hdmiList{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:4px 28px}
 #hdmiList .kv{gap:12px}
 .sst{margin-top:10px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 18px}
@@ -173,6 +188,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
  <button data-s="connect" class="on">Connect</button>
  <button data-s="dash">Dashboard</button>
  <button data-s="setup">Setup</button>
+ <button data-s="video">Video</button>
  <button data-s="network">Network</button>
  <button data-s="files">Files</button>
  <button data-s="devices">Devices</button>
@@ -285,10 +301,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <div class="bar"><div id="flashBar"></div></div><pre class="out" id="flashOut">Idle.</pre></div>
 </div>
 <div class="subpage" id="settings">
- <h2>MiSTer settings</h2><p class="sub">Edit MiSTer.ini, downloader.ini and the Console Mode settings and theme/section group files. Every save is backed up to this PC first.</p>
- <div class="card"><h3>SS1 HDMI fix</h3><p>Comments out these MiSTer.ini settings, which the SuperStation One doesn't support. An automatic backup is made first; restore it from Backups below to undo.</p>
-  <div id="hdmiList" class="grid"></div>
-  <div class="row" style="margin-top:10px"><button class="b p" onclick="hdmiFix()">Apply SS1 HDMI fix</button><button class="b" onclick="loadHDMI()">Rescan</button><span class="muted" id="hdmiSummary"></span></div></div>
+ <h2>MiSTer settings</h2><p class="sub">Edit MiSTer.ini, the video profiles (MiSTer_*.ini), yc.txt, downloader.ini and the Console Mode settings and theme/section group files. For video settings explained, with safe trying, see <a href="#" onclick="openPage('video');window.scrollTo(0,0);return false">Video</a>. Every save is backed up to this PC first.</p>
  <div class="card"><div class="row"><select id="iniSel" onchange="loadIni()" style="min-width:320px"><option value="/media/fat/MiSTer.ini">MiSTer.ini</option></select><button class="b" onclick="loadIniList()" title="Rescan for Console Mode theme files">Rescan</button>
   <button class="b" onclick="loadIni()">Reload</button><button class="b p" onclick="saveIni()">Save</button><span class="muted" id="iniPath"></span></div>
   <textarea id="iniText" spellcheck="false" style="margin-top:10px"></textarea></div>
@@ -298,6 +311,42 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <table style="margin-top:10px"><thead><tr><th>Backup</th><th>Date</th><th>Files</th><th></th></tr></thead><tbody id="bkBody"></tbody></table></div>
 </div>
 </section>
+<section id="video">
+ <h2>Video</h2><p class="sub">Set the SuperStation up for your TV, monitor, CRT or scaler. Every change can be tried first: if the picture is wrong or gone, it goes back by itself.</p>
+ <div class="card vnote"><h3>&#9888; Before you start</h3><p>Everything in Video is based on the <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki" target="_blank" rel="noopener">SuperStation wiki</a> and <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation" target="_blank" rel="noopener">documentation</a> and on MiSTer's own documentation. For some setups those sources give conflicting settings; those are marked <span class="pill warn">sources differ</span>. They'll be updated as issues are reported on GitHub, so if something doesn't work for your setup, please <a href="https://github.com/f3bandit/ss1_tool/issues" target="_blank" rel="noopener">report it on GitHub</a> with your TV or monitor, how it's connected and what you saw.</p></div>
+ <div class="jump"><span class="muted">On this page:</span><a href="#" onclick="jumpTo('vcur');return false">Current settings</a><a href="#" onclick="jumpTo('vwiz');return false">Setup wizard</a><a href="#" onclick="jumpTo('vfix');return false">Something looks wrong?</a><a href="#" onclick="jumpTo('vprof');return false">Profiles</a><a href="#" onclick="jumpTo('vclean');return false">Unsupported settings</a></div>
+ <div id="vTry" class="vtry" style="display:none"></div>
+
+ <div class="subpage" id="vcur">
+  <h2>Current settings</h2><p class="sub">What the SuperStation uses now, explained. Use &#9664; &#9654; to pick another value and <b>Try</b> it: the display restarts with it, and unless you press <b>Keep</b> within 20 seconds the SuperStation puts the old value back by itself, even if the picture is gone.</p>
+  <div class="card"><div class="row"><span>Settings file</span><select id="vFile" onchange="vLoad(this.value)" style="min-width:260px"></select><button class="b" onclick="vLoad()">Rescan</button><button class="b" onclick="vReload()" title="Restarts MiSTer's menu so it reads the settings again">Restart display</button><button class="b" id="vUndoBtn" onclick="vUndo()" style="display:none">Undo last change</button><span id="vActive"></span></div>
+   <div id="vNotes"></div>
+   <div id="vGroups"></div></div>
+ </div>
+
+ <div class="subpage" id="vwiz">
+  <h2>Setup wizard</h2><p class="sub">Pick how the SuperStation is connected. The wizard shows what it will change, which switches to set on the side of the SuperStation, and what to watch out for.</p>
+  <div class="card" id="vWiz"></div>
+ </div>
+
+ <div class="subpage" id="vfix">
+  <h2>Something looks wrong?</h2><p class="sub">Pick what you see. Each fix can be tried and undone like any other change.</p>
+  <div class="card" id="vFixList"></div>
+ </div>
+
+ <div class="subpage" id="vprof">
+  <h2>Profiles</h2><p class="sub">MiSTer.ini plus up to three alternative settings files (the SuperStation ships RGHV, RGsB, SVID and YPbP). You can also switch between them on the SuperStation from MiSTer's menu (Video / INI) or Console Mode's System Config.</p>
+  <div class="card"><div id="vProfList"></div><p class="muted" style="margin:10px 0 0">MiSTer.ini is used every time the SuperStation starts. A profile picked here stays in use until the SuperStation is switched off, unless Console Mode picks one itself. To use a setup all the time, the wizard can write it into MiSTer.ini.</p></div>
+ </div>
+
+ <div class="subpage" id="vclean">
+  <h2>Unsupported settings</h2><p class="sub">Settings in MiSTer.ini the SuperStation One doesn't support.</p>
+  <div class="card"><h3>SS1 HDMI fix</h3><p>Comments out these MiSTer.ini settings, which the SuperStation One doesn't support. An automatic backup is made first; restore it from Setup &rsaquo; MiSTer settings &rsaquo; Backups to undo. If you see warnings about Lookahead, VRR or HDMI-CEC after running Update All, the SuperStation documentation also suggests replacing the ini files with its current versions.</p>
+   <div id="hdmiList" class="grid"></div>
+   <div class="row" style="margin-top:10px"><button class="b p" onclick="hdmiFix()">Apply SS1 HDMI fix</button><button class="b" onclick="loadHDMI()">Rescan</button><span class="muted" id="hdmiSummary"></span></div></div>
+ </div>
+</section>
+
 <section id="network">
  <h2>Network</h2><p class="sub">How the SuperStation connects to your home network, by cable (Ethernet) or wireless (WiFi), and playing games from a network share (Cifs).</p>
  <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('eth');return false">Ethernet</a><a href="#" onclick="jumpTo('wifi');return false">WiFi</a><a href="#" onclick="jumpTo('cifs');return false">Network share (Cifs)</a></div>
@@ -660,9 +709,9 @@ async function loadSetupStatus(){const ok=t=>`<span class="pill good">&#10003; $
  catch(e){for(const id of ids)$(id).textContent=""}}
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
-const PAGELOAD={dash:dashLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
+const PAGELOAD={dash:dashLoad,video:()=>{vLoad();loadHDMI()},setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
 const SUBLOAD={fm:filesInit,saves:()=>{svLoad();svPoll()},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1()},
- sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList();loadHDMI()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wifiInfo();wifiRemoteState()},
+ sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
 function openPage(s){
@@ -802,7 +851,7 @@ async function loadHDMI(){try{const j=await api("/api/hdmi");
   const lab={active:'<span class="pill bad">active - needs fix</span>',commented:'<span class="pill good">commented out</span>',missing:'<span class="pill muted">not in file</span>'};
   $("hdmiList").innerHTML=j.keys.map(k=>`<div class="kv"><span style="font-family:Consolas,monospace">${esc(k.key)}</span><span>${lab[k.state]}</span></div>`).join("");
   const n=j.keys.filter(k=>k.state==="active").length;$("hdmiSummary").innerHTML=n?`<span class="pill bad">${n} setting(s) still active</span>`:'<span class="pill good">Fix applied</span>'}catch(e){$("hdmiList").innerHTML="";$("hdmiSummary").textContent=""}}
-function hdmiFix(){busy(event.target,async()=>{const j=await api("/api/hdmi",{});toast(j.message);loadHDMI();if($("iniSel").value==="/media/fat/MiSTer.ini")loadIni();else loadBackups()})}
+function hdmiFix(){busy(event.target,async()=>{const j=await api("/api/hdmi",{});toast(j.message);loadHDMI();vLoad();if($("iniSel").value==="/media/fat/MiSTer.ini")loadIni();else loadBackups()})}
 let BKSETS=[];
 async function loadBackups(){try{const j=await api("/api/ini/backups");BKSETS=j.sets;$("bkDir").textContent="Folder: "+j.dir;
   $("bkBody").innerHTML=j.sets.length?j.sets.map((b,i)=>`<tr><td style="vertical-align:top"><b>${esc(b.name)}</b></td><td style="vertical-align:top;white-space:nowrap">${new Date(b.mtime*1000).toLocaleString()}</td>
@@ -1586,6 +1635,180 @@ async function loadOpenIn(){try{const j=await api("/api/prefs");$("winCard").sty
  const q=document.querySelector('header button[onclick="quitApp()"]');if(q)q.style.display=j.tray?"none":""}catch(e){}}
 async function setOpenIn(v){try{await api("/api/prefs",{openin:v});$("openInNote").textContent="Used the next time SS1 Tool opens.";toast(v==="app"?"SS1 Tool will open in its own window.":"SS1 Tool will open in your default browser.")}catch(e){toast(e.message,true)}}
 loadOpenIn();
+// ---------- video: settings, try with automatic undo, setup wizard, symptom fixer, profiles
+// Explanations come from the SuperStation wiki/docs and MiSTer's documentation and source.
+const VRISK={safe:["good","Safe"],blank:["warn","Can blank some screens"],hdmi:["muted","HDMI only"],crt:["muted","CRT / analog only"],never15:["bad","Never on a TV-style CRT"],audio:["warn","Can stop HDMI sound"]};
+const VGROUPS=[["hdmi","HDMI"],["analog","Analog outputs (CRT, SCART, component, S-Video, composite, VGA)"],["other","Other"]];
+const VOPT={
+ video_mode:{n:"HDMI resolution",g:"hdmi",d:"Auto",r:"blank",v:[["","Auto (the TV's preferred mode)"],["0","1280x720 60 Hz (720p)"],["8","1920x1080 60 Hz (1080p)"],["7","1280x720 50 Hz (PAL)"],["9","1920x1080 50 Hz (PAL)"],["2","720x480 60 Hz (480p)"],["3","720x576 50 Hz (576p)"],["6","640x480 60 Hz (VGA)"],["5","800x600 60 Hz"],["1","1024x768 60 Hz"],["4","1280x1024 60 Hz"],["10","1366x768 60 Hz"],["11","1024x600 60 Hz"],["12","1920x1440 60 Hz"],["13","2048x1536 60 Hz"],["14","2560x1440 60 Hz"]],
+  t:"The resolution sent over HDMI. When it isn't set, MiSTer asks the TV for its preferred mode, which through a switch, AV receiver or capture card can be one that doesn't show. 720p and 1080p are the safest fixed choices.",w:"Not every TV or monitor accepts every mode."},
+ video_mode_ntsc:{n:"HDMI resolution for 60 Hz games",g:"hdmi",d:"same as HDMI resolution",r:"blank",v:[["","Not set (same as HDMI resolution)"],["0","1280x720 60 Hz"],["8","1920x1080 60 Hz"]],t:"Optional: a separate resolution while a 60 Hz (NTSC) game runs. Used together with the PAL one below."},
+ video_mode_pal:{n:"HDMI resolution for 50 Hz games",g:"hdmi",d:"same as HDMI resolution",r:"blank",v:[["","Not set (same as HDMI resolution)"],["7","1280x720 50 Hz"],["9","1920x1080 50 Hz"]],t:"Optional: a separate resolution while a 50 Hz (PAL) game runs, so PAL games scroll smoothly."},
+ vsync_adjust:{n:"Refresh rate and lag",g:"hdmi",d:"0",r:"blank",v:[["0","0 - Most compatible (fixed rate, slight judder)"],["1","1 - Match the game's refresh rate (smooth)"],["2","2 - Lowest lag (match refresh, no buffering)"]],
+  t:"How the HDMI picture follows the game's refresh rate. 1 and 2 change the refresh rate per game for smoother scrolling and less lag.",w:"With 1 or 2 some TVs, and most capture cards, blank for a few seconds when a game starts, or don't show the picture at all."},
+ vscale_mode:{n:"Scaling",g:"hdmi",d:"0",r:"safe",v:[["0","0 - Fill the screen height"],["1","1 - Whole-number (integer) scaling, sharpest"],["2","2 - Half steps"],["3","3 - Quarter steps"],["4","4 - Integer resolution, core aspect ratio (advanced)"],["5","5 - Integer resolution, display aspect ratio (advanced)"]],
+  t:"How the game is scaled up. Filling the screen can make pixels uneven (shimmering when scrolling); integer scaling keeps every pixel the same size, with borders."},
+ vscale_border:{n:"Border (picture cut off at the edges)",g:"hdmi",d:"0",r:"safe",v:[["","Not set (no border)"],["0","0 - No border"],["16","16"],["24","24"],["32","32"],["48","48"],["64","64"]],t:"Adds a border in pixels for TVs that cut off the top and bottom of the picture (overscan). Turning off overscan in the TV's picture settings (often called Just Scan, Screen Fit or 1:1) is better when it has one."},
+ hdmi_limited:{n:"HDMI colour range",g:"hdmi",d:"0",r:"safe",v:[["0","0 - Full (0-255)"],["1","1 - Limited (16-235)"],["2","2 - 16-255"]],t:"Washed-out greys instead of black, or crushed dark areas, usually mean the TV expects the other range. Most monitors want full, many TVs want limited.",w:"2 can cause problems with some HDMI-to-analog adapters."},
+ hdmi_game_mode:{n:"Tell the TV this is a game",g:"hdmi",d:"0",r:"safe",v:[["0","0 - Off"],["1","1 - On"]],t:"Marks the HDMI signal as game content, so TVs that support it switch to their low-latency game mode by themselves. TVs that don't support it ignore it."},
+ hdr:{n:"HDR",g:"hdmi",d:"0",r:"blank",v:[["0","0 - Off"],["1","1 - HLG (recommended for most)"],["2","2 - DCI-P3"]],t:"Only for HDR TVs. MiSTer's docs suggest a lower colour saturation (80) with DCI-P3.",w:"On a TV without HDR the colours look wrong."},
+ dvi_mode:{n:"DVI mode",g:"hdmi",d:"0",r:"audio",v:[["0","0 - HDMI (with sound)"],["1","1 - DVI (no sound)"]],t:"For DVI monitors and HDMI-to-DVI adapters. DVI has no sound, so leave it off on a TV."},
+ vrr_mode:{n:"Variable refresh rate (VRR)",g:"hdmi",d:"0",r:"blank",v:[["0","0 - Off"],["1","1 - Automatic"],["2","2 - AMD FreeSync"],["3","3 - VESA (HDMI VRR)"],["4","4 - MiSTer VRR"]],t:"For TVs and monitors with VRR or FreeSync. Not used in the menu."},
+ hdmi_audio_96k:{n:"HDMI sound sample rate",g:"hdmi",d:"0",r:"audio",v:[["0","0 - 48 kHz"],["1","1 - 96 kHz"]],t:"48 kHz works everywhere. Some TVs and receivers have no sound at 96 kHz."},
+ direct_video:{n:"Direct Video (HDMI to analog adapter)",g:"hdmi",d:"0",r:"blank",v:[["0","0 - Off"],["1","1 - On"],["2","2 - Automatic (known adapters)"]],t:"Sends the game's own timing over HDMI for HDMI-to-VGA adapters (AG62xx) and scalers that accept it. MiSTer's docs say it only works with AG62xx adapters.",w:"On a normal TV or monitor there's no picture."},
+ vga_mode:{n:"Analog output",g:"analog",d:"rgb",r:"crt",v:[["rgb","rgb - RGB (SCART, VGA, PVM)"],["ypbpr","ypbpr - Component"],["svideo","svideo - S-Video and composite, FPGA encoder"],["cvbs","cvbs - Composite, FPGA encoder"],["subcarrier","subcarrier - RGB plus S-Video/composite from the Sony encoder (SS1 default)"]],
+  t:"What the analog outputs carry. subcarrier is the SuperStation's default: RGB on VGA, the mini-DIN and the RCA jacks at once, plus S-Video and composite from the Sony encoder (switch 3 down). The FPGA encoder modes need switch 3 up."},
+ composite_sync:{n:"Sync type",g:"analog",d:"1",r:"crt",v:[["1","1 - Composite sync (SCART, PVM, component)"],["0","0 - Separate H and V sync (VGA monitors, RGBHV)"]],t:"SCART, PVMs and component want composite sync; VGA-style monitors want separate sync."},
+ vga_sog:{n:"Sync on green (ini)",g:"analog",d:"0",r:"crt",v:[["0","0 - Off"],["1","1 - On"]],t:"On the SuperStation sync on green is added with switch 4 (down = add). The SuperStation's own profiles leave this at 0.",w:"Sources differ on this one: MiSTer's docs describe it as forcing sync on green, the SuperStation uses its switch."},
+ forced_scandoubler:{n:"31 kHz VGA output",g:"analog",d:"0",r:"never15",v:[["0","0 - Off (15 kHz, TVs)"],["1","1 - On (PC monitors)"]],t:"Doubles the line rate for VGA PC monitors.",w:"Never use it with a TV-style (15 kHz) CRT: the higher rate can stress the TV."},
+ vga_scaler:{n:"VGA uses the HDMI picture",g:"analog",d:"0",r:"never15",v:[["0","0 - Off"],["1","1 - On"]],t:"Sends the scaled HDMI picture to the VGA output, for PC monitors and other 31 kHz screens.",w:"Not for 240p TVs; never on a TV-style (15 kHz) CRT."},
+ menu_pal:{n:"Menu in PAL",g:"analog",d:"0",r:"crt",v:[["0","0 - NTSC"],["1","1 - PAL"]],t:"Runs the menu in PAL, for PAL TVs.",pal:true},
+ ntsc_mode:{n:"NTSC colour system",g:"analog",d:"0",r:"crt",v:[["0","0 - NTSC"],["1","1 - PAL-60"],["2","2 - PAL-M"]],t:"S-Video and composite only. MiSTer's docs note that no cores officially use these yet."},
+ video_info:{n:"Show resolution after a change",g:"other",d:"0",r:"safe",v:[["0","0 - Off"],["2","2 seconds"],["5","5 seconds"],["10","10 seconds"]],t:"Shows the resolution and refresh rate in the corner for a few seconds when they change. Handy while trying settings."},
+ fb_terminal:{n:"Linux screen for scripts",g:"other",d:"1",r:"safe",v:[["1","1 - On"],["0","0 - Off"]],t:"If scripts misbehave on a CRT or analog display, MiSTer's docs suggest turning this off."}
+};
+const PALWARN=`<div class="vwarn"><b>PAL: set your cores to PAL too.</b> The SuperStation's menu and video output will be set for PAL, but each core decides its own region. Cores left on NTSC or Auto will show in black and white on a PAL TV. Open each core's menu (OSD), set its region or video mode to PAL, and save its settings.</div>`;
+let VID=null,VTRY=null,VTIMER=0;
+function vLabel(k,v){const o=VOPT[k];if(!o)return v;const m=o.v.find(x=>x[0]===v);return m?m[1]:v}
+function vCurrent(k){const s=VID&&VID.settings[k];return s&&s.set?s.value:""}
+async function vLoad(file){try{const j=await api("/api/video"+(file?"?file="+encodeURIComponent(file):""));VID=j;vRender()}catch(e){$("vGroups").innerHTML=`<p class="muted">${esc(e.message)}</p>`}
+ if(!$("vWiz").dataset.init){$("vWiz").dataset.init=1;vwRender()}vFixRender()}
+function vRender(){const j=VID;
+ $("vFile").innerHTML=j.files.filter(f=>f.alt>=0||f.path===j.file).map(f=>`<option value="${esc(f.path)}"${f.path===j.file?" selected":""}>${esc(f.name)}${f.active?" (in use now)":""}</option>`).join("");
+ const act=j.files.find(f=>f.active);
+ $("vActive").innerHTML=j.active<0?'<span class="pill muted">In use: unknown</span>':`<span class="pill good">In use: ${esc(act?act.name:"MiSTer.ini")}</span>`;
+ $("vUndoBtn").style.display=(j.undo||[]).includes(j.file.split("/").pop())?"":"none";
+ const notes=[],hid=j.files.filter(f=>f.alt<0);
+ if(hid.length)notes.push(`<div class="vwarn"><b>MiSTer can't see ${hid.map(f=>esc(f.name)).join(", ")}.</b> MiSTer uses MiSTer.ini plus only the first three MiSTer_*.ini files it finds, so ${hid.length>1?"these profiles don't":"this profile doesn't"} appear in its menu. The setup wizard can write that setup into MiSTer.ini instead.</div>`);
+ if(j.core&&j.core.toUpperCase()!=="MENU")notes.push(`<div class="vinfo">A game is running (${esc(j.core)}). Trying a setting restarts the menu, which closes the game.</div>`);
+ if(j.console_mode)notes.push(`<div class="vinfo">Console Mode is installed. CRT mode, its picture position and overscan are Console Mode's own settings: open MiSTer's menu in Console Mode (Start + Select) and press right.</div>`);
+ $("vNotes").innerHTML=notes.join("");
+ $("vGroups").innerHTML=VGROUPS.map(([g,gn])=>`<h4 class="vgh">${gn}</h4>`+Object.entries(VOPT).filter(([k,o])=>o.g===g).map(([k,o])=>{const s=j.settings[k]||{},cur=s.set?s.value:"",rk=VRISK[o.r];
+   let opts=o.v.slice();if(!opts.some(x=>x[0]===""))opts.unshift(["",`Not set (MiSTer default: ${o.d})`]);if(cur&&!opts.some(x=>x[0]===cur))opts.push([cur,cur+" (current)"]);
+   return `<div class="vrow" data-k="${k}"><div class="vname"><b>${esc(o.n)}</b> <code>${k}</code> <span class="pill ${rk[0]}">${rk[1]}</span>${s.overrides&&s.overrides.length?` <span class="pill warn" title="These sections of the file set it for specific cores">also set for: ${s.overrides.map(esc).join(", ")}</span>`:""}
+    <div class="muted vt">${esc(o.t)}${o.w?` <span class="warn">${esc(o.w)}</span>`:""}</div></div>
+    <div class="vctl"><span class="vnow">Now: <b>${esc(cur===""?"not set ("+o.d+")":vLabel(k,cur))}</b></span><div class="row"><button class="b sm" onclick="vStep('${k}',-1)" aria-label="Previous value">&#9664;</button><select id="vs_${k}" onchange="vSel('${k}')">${opts.map(x=>`<option value="${esc(x[0])}"${x[0]===cur?" selected":""}>${esc(x[1])}</option>`).join("")}</select><button class="b sm" onclick="vStep('${k}',1)" aria-label="Next value">&#9654;</button><button class="b p sm" id="vt_${k}" onclick="vTryOne('${k}')" disabled>Try</button></div></div></div>`}).join("")).join("");
+ vProfRender();vTryBanner(j.pending)}
+function vSel(k){const s=$("vs_"+k);$("vt_"+k).disabled=s.value===vCurrent(k)}
+function vStep(k,d){const s=$("vs_"+k);s.selectedIndex=(s.selectedIndex+d+s.options.length)%s.options.length;vSel(k)}
+function vTryOne(k){const v=$("vs_"+k).value,o=VOPT[k];
+ if(o.r==="never15"&&v==="1"&&!confirm("Only for PC monitors and other 31 kHz screens. Never use this with a TV-style (15 kHz) CRT. Continue?"))return;
+ if(o.pal&&v==="1")vToastHTML(PALWARN);
+ vTry({[k]:v},VID.file)}
+function vToastHTML(h){const d=document.createElement("div");d.innerHTML=h;toast(d.textContent)}
+async function vTry(changes,file){if(VTRY)return toast("Keep or undo the change that's being tried first",true);
+ if(VID&&VID.core&&VID.core.toUpperCase()!=="MENU"&&!confirm("A game is running. Trying this restarts the menu and closes the game. Continue?"))return;
+ try{const j=await api("/api/video/apply",{file:file||VID.file,changes,mode:"try",secs:20});vTryBanner({secs_left:j.secs,changes,file});toast(j.message)}catch(e){toast(e.message,true)}}
+async function vSave(changes,file,reload){try{const j=await api("/api/video/apply",{file,changes,mode:"save",reload});toast(j.message);vLoad(file)}catch(e){toast(e.message,true)}}
+function vTryBanner(p){clearInterval(VTIMER);const el=$("vTry");
+ if(!p){VTRY=null;el.style.display="none";return}
+ VTRY={end:Date.now()+p.secs_left*1000,p};el.style.display="flex";
+ let what;if(!p.file){let n=p.profile;if(typeof n==="number"&&VID){const f=VID.files.find(f=>f.alt===n);if(f)n=f.name}what="profile "+esc(String(n))}
+ else what=Object.entries(p.changes||{}).map(([k,v])=>`<code>${esc(k)}=${esc(v===""?"(not set)":v)}</code>`).join(" ");
+ const tick=()=>{if(!VTRY){clearInterval(VTIMER);return}const s=Math.max(0,Math.round((VTRY.end-Date.now())/1000));
+  el.innerHTML=`<div><b>Trying:</b> ${what}<div class="muted">Does the picture look right? If you can't see it, wait: it goes back by itself in <b>${s}</b> s.</div></div><div class="row"><button class="b p" onclick="vKeep()">Keep</button><button class="b" onclick="vRevert()">Undo now</button></div>`;
+  if(s<=0){clearInterval(VTIMER);VTRY=null;el.innerHTML=`<div>Not kept: the SuperStation is putting the previous settings back.</div><button class="b" onclick="this.parentNode.style.display='none'">OK</button>`;setTimeout(()=>vLoad(),12000)}};
+ VTIMER=setInterval(tick,500);tick()}
+async function vKeep(){try{const j=await api("/api/video/keep",{});toast(j.message);vTryBanner(null);vLoad()}catch(e){toast(e.message,true);vTryBanner(null);vLoad()}}
+async function vRevert(){try{const j=await api("/api/video/revert",{});toast(j.message)}catch(e){toast(e.message,true)}vTryBanner(null);setTimeout(()=>vLoad(),3000)}
+async function vUndo(){if(!confirm("Put back "+VID.file.split("/").pop()+" as it was before the last change SS1 Tool made, and restart the display?"))return;
+ try{const j=await api("/api/video/undo",{file:VID.file});toast(j.message);setTimeout(()=>vLoad(),3000)}catch(e){toast(e.message,true)}}
+async function vReload(){try{const j=await api("/api/video/reload",{});toast(j.message)}catch(e){toast(e.message,true)}}
+// ---- profiles
+function vProfRender(){const j=VID;
+ $("vProfList").innerHTML=`<table><thead><tr><th>File</th><th>In MiSTer's menu</th><th></th></tr></thead><tbody>`+j.files.map(f=>`<tr><td><b>${esc(f.name)}</b></td><td>${f.alt<0?'<span class="pill bad">not seen by MiSTer</span>':f.alt===0?"Main":`${esc(f.label)} (alternative ${f.alt})`}${f.active?' <span class="pill good">in use</span>':""}</td>
+  <td style="text-align:right">${f.alt>=0&&!f.active?`<button class="b sm" onclick="vUse(${f.alt})">Try this profile</button>`:""} <button class="b sm" onclick="vLoad('${esc(f.path)}');jumpTo('vcur')">Show settings</button></td></tr>`).join("")+`</tbody></table>`}
+async function vUse(alt){if(VTRY)return toast("Keep or undo the change that's being tried first",true);
+ if(VID.core&&VID.core.toUpperCase()!=="MENU"&&!confirm("A game is running. Switching profiles restarts the menu and closes the game. Continue?"))return;
+ try{const j=await api("/api/video/select",{alt,secs:20});vTryBanner({secs_left:j.secs,profile:VID.files.find(f=>f.alt===alt).name,file:""});toast(j.message)}catch(e){toast(e.message,true)}}
+// ---- setup wizard
+const DIPN=[["1","YC / composite region","PAL","NTSC"],["2","FPGA luma trap","PAL","NTSC"],["3","YC / composite encoder","FPGA","Sony"],["4","Sync on green","Off","Add"]];
+const VSET=[
+ {id:"hdmi_tv",n:"HDMI to a TV",d:"Most setups. A TV, directly or through a receiver or switch.",k:"hdmi"},
+ {id:"hdmi_mon",n:"HDMI to a monitor",d:"A PC or gaming monitor over HDMI.",k:"hdmi"},
+ {id:"scaler_hd",n:"HDMI into a capture card or scaler",d:"Capture cards, OSSC and scalers fed a normal HDMI picture.",k:"hdmi"},
+ {id:"scaler_dv",n:"HDMI into a Direct Video scaler or adapter",d:"An HDMI-to-VGA adapter (AG62xx) or a scaler that accepts MiSTer's Direct Video.",k:"dv"},
+ {id:"scart",n:"CRT TV over SCART RGB",d:"A SCART TV, with the SuperStation SCART cable. Also PVMs with RGB and composite sync.",k:"crt"},
+ {id:"sog",n:"PVM / BVM with sync on green",d:"RGB monitors that take sync on the green wire.",k:"crt"},
+ {id:"rgbhv",n:"RGB with separate H/V sync (15 kHz)",d:"Arcade and broadcast monitors with separate horizontal and vertical sync.",k:"crt"},
+ {id:"component",n:"Component (YPbPr)",d:"TVs with red, green and blue component inputs - most NTSC consumer sets with component.",k:"crt"},
+ {id:"svideo",n:"S-Video",d:"TVs with an S-Video input.",k:"yc"},
+ {id:"composite",n:"Composite",d:"TVs with only the yellow video input.",k:"yc"},
+ {id:"vga31",n:"VGA PC monitor (31 kHz)",d:"A PC CRT or LCD on the VGA output.",k:"vga"},
+ {id:"both",n:"HDMI and a CRT at the same time",d:"A TV or monitor over HDMI plus a CRT on an analog output.",k:"both"}];
+let VW={step:1,setup:"",region:"ntsc",res:"0",lag:"0",enc:"fpga",analog:"scart",vgaMode:"scan",file:""};
+const VANALOG={scart:"CRT over SCART RGB / PVM",sog:"PVM with sync on green",component:"Component",svideo:"S-Video",composite:"Composite"};
+function vwAnalog(id,pal){const c={direct_video:"0",forced_scandoubler:"0",vga_scaler:"0",menu_pal:pal?"1":"0"},dip={};
+ if(id==="scart"){Object.assign(c,{vga_mode:"rgb",composite_sync:"1",vga_sog:"0"});dip[4]="up"}
+ if(id==="sog"){Object.assign(c,{vga_mode:"rgb",composite_sync:"1",vga_sog:"0"});dip[4]="down"}
+ if(id==="rgbhv"){Object.assign(c,{vga_mode:"rgb",composite_sync:"0",vga_sog:"0"});dip[4]="up"}
+ if(id==="component"){Object.assign(c,{vga_mode:"ypbpr",composite_sync:"1",vga_sog:"0"});dip[4]="down"}
+ if(id==="svideo"||id==="composite"){Object.assign(c,{vga_mode:VW.enc==="sony"?"subcarrier":(id==="svideo"?"svideo":"cvbs"),composite_sync:"1",vga_sog:"0",ntsc_mode:"0"});dip[1]=dip[2]=pal?"up":"down";dip[3]=VW.enc==="sony"?"down":"up";dip[4]="up"}
+ return {c,dip}}
+function vwPlan(){const s=VSET.find(x=>x.id===VW.setup);if(!s)return null;const pal=VW.region==="pal";let c={},dip={},notes=[],crt=false,differ=[];
+ const res=pal?({"0":"7","8":"9"}[VW.res]??VW.res):VW.res;
+ if(s.k==="hdmi"||s.k==="both"){Object.assign(c,{video_mode:res,vsync_adjust:VW.lag,direct_video:"0",dvi_mode:"0"});if(s.id==="hdmi_tv")c.hdmi_game_mode="1";if(s.id==="scaler_hd")c.vsync_adjust="0"}
+ if(s.k==="dv"){Object.assign(c,{direct_video:"1",vsync_adjust:"0",menu_pal:pal?"1":"0"});notes.push("Direct Video only works with adapters and scalers that support it. MiSTer's docs name AG62xx-based HDMI-to-VGA adapters; many users also use it with RetroTINK 4K and Morph 4K. With anything else there's no picture: the try goes back by itself.");differ.push("MiSTer's documentation lists only AG62xx adapters for Direct Video; scaler support comes from user reports.")}
+ if(s.k==="crt"||s.k==="yc"){const a=vwAnalog(s.id,pal);Object.assign(c,a.c);dip=a.dip;crt=true}
+ if(s.k==="both"){const a=vwAnalog(VW.analog,pal);Object.assign(c,a.c);dip=a.dip;crt=true}
+ if(s.k==="vga"){Object.assign(c,{vga_mode:"rgb",composite_sync:"0",vga_sog:"0",direct_video:"0"});if(VW.vgaMode==="scaler")Object.assign(c,{vga_scaler:"1",forced_scandoubler:"0",video_mode:"6"});else Object.assign(c,{forced_scandoubler:"1",vga_scaler:"0"});dip[4]="up";
+  notes.push("31 kHz output: only for PC monitors. Never connect a TV-style (15 kHz) CRT while this is set.")}
+ const an=s.k==="both"?VW.analog:s.id;
+ if(an==="sog")differ.push("The SuperStation's RGsB profile leaves vga_sog=0 and adds sync on green with switch 4; MiSTer's docs describe vga_sog as forcing sync on green.");
+ if(an==="component"){differ.push("Component needs sync on the green (Y) wire: here that's switch 4 down. One review describes switch 4 as the component switch. The SuperStation's YPbP profile uses composite_sync=1, which a review also found was needed.");
+  notes.push("If the colours are green or pink, the TV is getting RGB: check the switch and that this setup is in use.")}
+ if(an==="scart")notes.push("SCART cables bought before June 2026 may have left and right sound swapped (the mini-DIN's pins are reversed). That's the cable, not a setting.");
+ if(an==="svideo"||an==="composite"){if(VW.enc==="sony")notes.push("Sony encoder (the SuperStation default): some cores show black and white because they don't support it yet, and there can be ghosting or banding lines. The FPGA encoder avoids both. yc.txt can hide the banding in exchange for dot crawl.");
+  differ.push("The switch table puts the region on switch 1 (switch 2 is the FPGA luma trap), but the documentation's black-and-white fix says to set switch 2 for the TV's region. Setting both to your region covers both readings.")}
+ if(crt)notes.push(VID&&VID.console_mode?"Console Mode: turn its CRT mode on (Start + Select, then right) and set the picture position and overscan there.":"If you use Console Mode: turn its CRT mode on (Start + Select, then right).");
+ else if(VID&&VID.console_mode)notes.push("Console Mode: make sure its CRT mode is off (Start + Select, then right).");
+ return {s,c,dip,notes,differ,pal}}
+function vwDip(dip){if(!Object.keys(dip).length)return"";
+ return `<div class="vdip"><b>Switches on the side of the SuperStation</b> (under the right flap)<div class="vdips">${DIPN.map(([n,lab,up,dn])=>{const p=dip[n];
+  return `<div class="vsw${p?"":" any"}"><svg viewBox="0 0 30 54" width="30" height="54" aria-hidden="true"><rect x="4" y="2" width="22" height="50" rx="3" class="vslot"/><rect x="7" y="${p==="down"?28:5}" width="16" height="21" rx="2" class="vknob${p?"":" off"}"/></svg><div><b>${n}</b> ${esc(lab)}<div class="${p?"good":"muted"}">${p?(p==="up"?"Up: "+up:"Down: "+dn):"Doesn't matter here"}</div></div></div>`}).join("")}</div><div class="muted" style="font-size:12px">For units made after December 2025, as listed in the SuperStation documentation.</div></div>`}
+function vwRender(){const el=$("vWiz");
+ if(VW.step===1){el.innerHTML=`<h3>1. How is the SuperStation connected?</h3><div class="vtiles">${VSET.map(s=>`<button class="vtile${VW.setup===s.id?" on":""}" onclick="VW.setup='${s.id}';VW.step=2;vwRender()"><b>${esc(s.n)}</b><span>${esc(s.d)}</span></button>`).join("")}</div>`;return}
+ const s=VSET.find(x=>x.id===VW.setup),opt=[];
+ const rb=(name,val,cur,lab)=>`<label class="ck"><input type="radio" name="${name}" ${val===cur?"checked":""} onchange="VW.${name}='${val}';vwRender()"> ${lab}</label>`;
+ opt.push(`<div class="vopt"><b>TV / region</b>${rb("region","ntsc",VW.region,"NTSC (60 Hz: North America, Japan)")}${rb("region","pal",VW.region,"PAL (50 Hz: Europe, Australia)")}</div>`);
+ if(s.k==="hdmi"||s.k==="both"){opt.push(`<div class="vopt"><b>Resolution</b>${rb("res","0",VW.res,"720p (safest)")}${rb("res","8",VW.res,"1080p")}${rb("res","",VW.res,"Auto (the TV's preferred mode)")}</div>`);
+  if(s.id!=="scaler_hd")opt.push(`<div class="vopt"><b>Refresh</b>${rb("lag","0",VW.lag,"Most compatible")}${rb("lag","1",VW.lag,"Smooth (matches the game)")}${rb("lag","2",VW.lag,"Lowest lag")}<span class="muted">Smooth and lowest lag change the refresh rate per game; some TVs blank for a moment or don't show it.</span></div>`)}
+ if(s.k==="both")opt.push(`<div class="vopt"><b>The CRT is connected with</b>${Object.entries(VANALOG).map(([k,l])=>rb("analog",k,VW.analog,l)).join("")}</div>`);
+ const an=s.k==="both"?VW.analog:s.id;
+ if(an==="svideo"||an==="composite")opt.push(`<div class="vopt"><b>Encoder</b>${rb("enc","fpga",VW.enc,"FPGA encoder (recommended by the SuperStation docs)")}${rb("enc","sony",VW.enc,"Sony encoder (SuperStation default)")}</div>`);
+ if(s.k==="vga")opt.push(`<div class="vopt"><b>Picture</b>${rb("vgaMode","scan",VW.vgaMode,"Line-doubled game picture (31 kHz)")}${rb("vgaMode","scaler",VW.vgaMode,"Same scaled picture as HDMI, 640x480")}</div>`);
+ const pl=vwPlan(),files=(VID?VID.files:[]).filter(f=>f.alt>=0);if(!VW.file)VW.file="/media/fat/MiSTer.ini";
+ const rows=Object.entries(pl.c).map(([k,v])=>{const cur=VID?vCurrent(k):"";return `<tr class="${cur===v?"muted":""}"><td><code>${k}</code></td><td>${esc(cur===""?"not set":vLabel(k,cur))}</td><td>${cur===v?"no change":"<b>"+esc(v===""?"not set":vLabel(k,v))+"</b>"}</td></tr>`}).join("");
+ el.innerHTML=`<div class="row" style="justify-content:space-between"><h3>2. ${esc(s.n)}</h3><button class="b sm" onclick="VW.step=1;vwRender()">&#9664; Pick another setup</button></div>${opt.join("")}
+  ${pl.pal?PALWARN:""}
+  <h4 class="vgh">What changes</h4><table class="vplan"><thead><tr><th>Setting</th><th>Now</th><th>New</th></tr></thead><tbody>${rows}</tbody></table>
+  ${vwDip(pl.dip)}
+  ${pl.notes.map(n=>`<div class="vinfo">${esc(n)}</div>`).join("")}
+  ${pl.differ.map(n=>`<div class="vwarn"><span class="pill warn">sources differ</span> ${esc(n)}</div>`).join("")}
+  <div class="row" style="margin-top:12px"><span>Write to</span><select onchange="VW.file=this.value">${files.map(f=>`<option value="${esc(f.path)}"${f.path===VW.file?" selected":""}>${esc(f.name)}${f.alt===0?" (used every time the SuperStation starts)":""}${f.active?" (in use now)":""}</option>`).join("")}</select></div>
+  <div class="row" style="margin-top:10px"><button class="b p" onclick="vwApply(true)">Try it (goes back by itself in 20 s)</button><button class="b" onclick="vwApply(false)" title="Writes the settings without restarting the display, for example to set up a CRT before connecting it">Save without restarting</button></div>
+  <p class="muted" style="margin:8px 0 0">Set the switches before trying an analog setup. A backup of the file is saved on this PC first, and <b>Undo last change</b> under Current settings puts it back.</p>`}
+function vwApply(tr){const pl=vwPlan();if(!pl)return;
+ if(pl.s.k==="vga"&&!confirm("31 kHz output is only for PC monitors. Never use it with a TV-style (15 kHz) CRT. Continue?"))return;
+ if(tr)vTry(pl.c,VW.file);else vSave(pl.c,VW.file,false)}
+// ---- symptom fixer
+const VFIX=[
+ {n:"No picture over HDMI",t:"Use the HDMI port on the SuperStation itself: the HDMI-shaped port on the dock is an expansion slot with no video. Connect straight to the TV, without switches, receivers or capture cards, which can change what MiSTer thinks the TV wants. Use a power supply of at least 5V/3A or 9V/3A (not a Switch 1 charger). Then try a fixed resolution.",a:[["Try 720p",{video_mode:"0",direct_video:"0",dvi_mode:"0",vsync_adjust:"0"}],["Try 1080p",{video_mode:"8",direct_video:"0",dvi_mode:"0",vsync_adjust:"0"}]]},
+ {n:"Picture drops out or blanks when a game starts",t:"With refresh matching (vsync_adjust 1 or 2) the refresh rate changes per game, and some TVs and capture cards need a moment or don't accept it.",a:[["Most compatible refresh",{vsync_adjust:"0"}]]},
+ {n:"Black and white picture (S-Video / composite)",t:"On a PAL TV: cores left on NTSC or Auto show in black and white - set each core to PAL. Otherwise the core may not support the Sony encoder yet, or yc.txt has no entry for it. The SuperStation docs suggest the FPGA encoder: switch 3 up and vga_mode=svideo.",a:[["FPGA encoder, S-Video (set switch 3 up)",{vga_mode:"svideo"}],["FPGA encoder, composite (set switch 3 up)",{vga_mode:"cvbs"}],["Set up with the wizard","wiz"]],pal:true},
+ {n:"Ghosting or banding lines (S-Video / composite)",t:"A known issue with the Sony encoder (subcarrier mode). The FPGA encoder avoids it (switch 3 up). Keeping the Sony encoder, a tuned yc.txt hides the banding but adds dot crawl.",a:[["FPGA encoder, S-Video (set switch 3 up)",{vga_mode:"svideo"}],["FPGA encoder, composite (set switch 3 up)",{vga_mode:"cvbs"}]]},
+ {n:"Green or pink colours on component",t:"The TV is getting RGB instead of component. Use the component setup (vga_mode=ypbpr, composite_sync=1) and switch 4 down. If you use the SuperStation's YPbP profile, check MiSTer can see it (Profiles).",a:[["Use component",{vga_mode:"ypbpr",composite_sync:"1"}],["Set up with the wizard","wiz"]]},
+ {n:"Rolling picture or no sync on a CRT",t:"The sync type doesn't match the TV. SCART, PVMs and component want composite sync; VGA-style monitors want separate sync. Sync on green needs switch 4 down; everything else switch 4 up.",a:[["Composite sync",{composite_sync:"1"}],["Separate sync",{composite_sync:"0"}]]},
+ {n:"Picture cut off at the edges",t:"The TV is overscanning. Turn on Just Scan / Screen Fit / 1:1 in the TV's picture settings if it has it, or add a border. On a CRT, Console Mode's own overscan setting moves its menu in.",a:[["Add a 32 pixel border",{vscale_border:"32"}],["No border",{vscale_border:""}]]},
+ {n:"Shimmering or uneven pixels when scrolling",t:"The picture is scaled by an uneven amount. Integer scaling keeps every pixel the same size (with borders).",a:[["Integer scaling",{vscale_mode:"1"}],["Fill the screen",{vscale_mode:"0"}]]},
+ {n:"Washed-out greys or crushed blacks",t:"The TV and the SuperStation disagree on the HDMI colour range.",a:[["Full range",{hdmi_limited:"0"}],["Limited range",{hdmi_limited:"1"}]]},
+ {n:"Controls feel laggy",t:"The most common cause is the TV: turn on Game Mode / PC Mode. Sound through HDMI eARC to a soundbar can lag too - try the TV's own speakers. For controllers, run fast_USB_polling_on from the Scripts menu after Update All. Then:",a:[["Ask the TV for game mode",{hdmi_game_mode:"1"}],["Lowest lag refresh",{vsync_adjust:"2"}]]},
+ {n:"No sound over HDMI",t:"DVI mode has no sound, and some TVs and receivers don't play 96 kHz.",a:[["HDMI with 48 kHz sound",{dvi_mode:"0",hdmi_audio_96k:"0"}]]},
+ {n:"Left and right sound swapped (SCART)",t:"SuperStation SCART cables sold before June 2026 have left and right swapped, because the mini-DIN's pins are reversed. It's the cable, not a setting: newer cables are fixed, or the two pins can be swapped in the SCART plug.",a:[]},
+ {n:"Warnings about Lookahead, VRR or HDMI-CEC after Update All",t:"Newer MiSTer versions dropped or renamed settings that are still in older SuperStation ini files.",a:[["Show unsupported settings","clean"]]},
+ {n:"Console Mode's picture repeats across an HDMI screen in CRT mode",t:"Fixed in Console Mode 1.1.4.2: update Console Mode from its settings (System > Update Console Mode).",a:[]}];
+function vFixRender(){$("vFixList").innerHTML=VFIX.map((f,i)=>`<details class="vfix"><summary>${esc(f.n)}</summary><p>${esc(f.t)}</p>${f.pal?PALWARN:""}<div class="row">${f.a.map((a,k)=>`<button class="b${typeof a[1]==="object"?" p":""} sm" onclick="vFix(${i},${k})">${esc(a[0])}</button>`).join("")}</div>${f.a.some(a=>typeof a[1]==="object")?`<div class="muted" style="font-size:12px;margin-top:6px">Changes ${esc(VID?VID.file.split("/").pop():"the settings file in use")}; goes back by itself unless you press Keep.</div>`:""}</details>`).join("")}
+function vFix(i,k){const a=VFIX[i].a[k][1];if(a==="wiz")return jumpTo("vwiz");if(a==="clean")return jumpTo("vclean");if(!VID)return toast("Connect to the SuperStation first",true);vTry(a,VID.file)}
 // ---------- seasonal mode: "Oi to the world" (falling snow) and "Yer a wizard" (floating candles)
 const FX=(()=>{const cv=$("snow"),ctx=cv.getContext("2d");let flakes=[],candles=[],raf=0,mode="",W=0,H=0,dpr=1,last=0,T=0;
  const reduce=window.matchMedia("(prefers-reduced-motion: reduce)"),R=Math.random;

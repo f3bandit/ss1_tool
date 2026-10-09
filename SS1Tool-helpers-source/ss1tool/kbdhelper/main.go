@@ -306,6 +306,10 @@ func main() {
 		grabTest()
 		return
 	}
+	if len(os.Args) > 1 && os.Args[1] == "-altcfg" {
+		altcfgMain(os.Args[2:])
+		return
+	}
 	if len(os.Args) > 1 && os.Args[1] == "-padmon" {
 		padMon()
 		return
