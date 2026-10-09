@@ -158,7 +158,6 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 .ptpad{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px}
 .ptpad h4{margin:0 0 6px;font-size:14px}.ptpad.idle h4{font-weight:400;color:var(--dim)}.ptpad .pill{margin:0 6px 4px 0}
 .ptpad svg{width:100%;height:auto;display:block;margin:6px 0}
-.ptbody{fill:#262b35;stroke:#3a4150;stroke-width:2}
 .ptc{stroke-width:2.5;transition:fill .05s}.ptc.has{fill:#3fb95033;stroke:#3fb950}.ptc.no{fill:#f8514926;stroke:#f85149;stroke-dasharray:4 3}.ptc.on{fill:#f2cc60;stroke:#f2cc60}
 .ptl{fill:#e6e8ec;font:600 13px "Segoe UI",system-ui,sans-serif;text-anchor:middle;dominant-baseline:central;pointer-events:none}.ptl.sm{font-size:10px}
 .ptfill{fill:#f2cc60}.ptcross.has{fill:none}.ptcross.no{fill:none}.ptdbase{fill:#262b35}.ptarm{fill:transparent}.ptarm.has{fill:#3fb95026}.ptarm.no{fill:#f8514914}.ptarm.on{fill:#f2cc60}.ptpad.idle .ptarm{fill:transparent}.ptknob{fill:#9aa3b2}.ptknob.on{fill:#f2cc60}.ptpad.idle .ptc{fill:#2a2f3a;stroke:#4a5263;stroke-dasharray:none}
@@ -550,8 +549,6 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
  <div class="row" id="biosPills"></div>
  <div class="card" style="margin-top:12px"><h3>Systems</h3><p class="muted" style="margin:0 0 8px">For each system you have games folders for: the folder MiSTer uses (USB and NVMe drives come before the SD card), and its BIOS files. A BIOS in a folder MiSTer doesn't use is never loaded.</p>
   <table><thead><tr><th>System</th><th>BIOS</th><th>Games folder MiSTer uses</th><th></th></tr></thead><tbody id="biosList"><tr><td colspan="4" class="muted">-</td></tr></tbody></table></div>
- <div class="card" id="folderCard" style="display:none"><h3>Folders no installed core uses</h3><p class="muted" style="margin:0 0 8px">No core on this SuperStation is named like these folders, and they aren't official MiSTer system names, so MiSTer won't look in them. That's fine for folders you keep for other things or for cores you don't have installed. The ones marked <b>rename</b> are common naming mistakes.</p>
-  <table><thead><tr><th>Folder</th><th>Where</th><th>Items</th><th>MiSTer looks in</th></tr></thead><tbody id="folderList"></tbody></table></div>
 </div>
 <div class="subpage" id="debug">
  <h2>Debug report</h2><p class="sub">Collects versions, configs, Console Mode files, game library layout, storage health and logs into one text file for Taki and the mods. Passwords, keys, WiFi names and MAC addresses are redacted.</p>
@@ -1235,7 +1232,7 @@ async function findSS1(){const b=$("findBtn"),box=$("findResults");b.disabled=tr
 function useFound(ip){$("host").value=ip;doConnect()}
 // ---------- BIOS and game folders
 const BIOS_LABEL={ready:["good","&#10003; Ready"],different:["warn","&#9888; Different version"],missing:["bad","&#10007; BIOS missing"],elsewhere:["bad","&#10007; BIOS in the wrong folder"],optional:["muted","Optional BIOS not found"],nobios:["muted","No BIOS needed"]};
-let BIOSOPEN={},BIOSDATA=null,BIOSMORE=false,FOLDMORE=false,biosBusy=false;
+let BIOSOPEN={},BIOSDATA=null,BIOSMORE=false,biosBusy=false;
 // Check again fetches; Files and the Show more links only redraw from the last result.
 async function biosLoad(){if(!connectedHost){$("biosList").innerHTML='<tr><td colspan="4"><span class="pill warn">Not connected - connect on the Connect tab first</span></td></tr>';return}
  if(biosBusy)return;biosBusy=true;$("biosTime").textContent="Checking the BIOS files and games folders...";
@@ -1245,8 +1242,8 @@ async function biosLoad(){if(!connectedHost){$("biosList").innerHTML='<tr><td co
  finally{biosBusy=false}}
 function biosToggle(sys){BIOSOPEN[sys]=!BIOSOPEN[sys];biosRender()}
 function biosRender(){const j=BIOSDATA;if(!j)return;
- const c={};j.systems.forEach(s=>c[s.status]=(c[s.status]||0)+1);const mis=j.folders.filter(f=>f.suggest).length;
- $("biosPills").innerHTML=[c.ready?`<span class="pill good">&#10003; ${c.ready} ready</span>`:"",c.elsewhere?`<span class="pill bad">&#10007; ${c.elsewhere} BIOS in the wrong folder</span>`:"",c.missing?`<span class="pill bad">&#10007; ${c.missing} missing a BIOS</span>`:"",c.different?`<span class="pill warn">&#9888; ${c.different} different BIOS version</span>`:"",c.nobios||c.optional?`<span class="pill muted">${(c.nobios||0)+(c.optional||0)} need no BIOS</span>`:"",mis?`<span class="pill warn">&#9888; ${mis} misnamed folder${mis>1?"s":""}</span>`:""].join("");
+ const c={};j.systems.forEach(s=>c[s.status]=(c[s.status]||0)+1);
+ $("biosPills").innerHTML=[c.ready?`<span class="pill good">&#10003; ${c.ready} ready</span>`:"",c.elsewhere?`<span class="pill bad">&#10007; ${c.elsewhere} BIOS in the wrong folder</span>`:"",c.missing?`<span class="pill bad">&#10007; ${c.missing} missing a BIOS</span>`:"",c.different?`<span class="pill warn">&#9888; ${c.different} different BIOS version</span>`:"",c.nobios||c.optional?`<span class="pill muted">${(c.nobios||0)+(c.optional||0)} need no BIOS</span>`:""].join("");
  const fileLabel={ok:'<span class="pill good">&#10003; correct</span>',different:'<span class="pill warn">&#9888; different version</span>',missing:'<span class="pill bad">&#10007; missing</span>',elsewhere:'<span class="pill bad">&#10007; only in a folder MiSTer doesn\'t use</span>'};
  const kindLabel={main:"main BIOS",region:"other region / model",extra:"optional extra"};
  const quiet=s=>s.status==="nobios"||s.status==="optional";
@@ -1258,12 +1255,7 @@ function biosRender(){const j=BIOSDATA;if(!j)return;
   if(BIOSOPEN[s.system]||s.status==="elsewhere")r+=`<tr><td></td><td colspan="3"><table>${s.bios.map(b=>`<tr><td><code>${esc(b.file)}</code><div class="muted">${kindLabel[b.kind]||b.kind}</div></td><td>${b.status==="missing"&&(b.kind!=="main"||s.status==="optional")?'<span class="pill muted">not installed</span>':(fileLabel[b.status]||b.status)}${b.where?`<div class="muted">found in ${esc(b.where)} - move it to the folder MiSTer uses</div>`:""}</td></tr>`).join("")}</table></td></tr>`;
   return r};
  $("biosList").innerHTML=(shown.length?shown.map(row).join(""):'<tr><td colspan="4" class="muted">No games folders found.</td></tr>')
-  +(hidden?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=true;biosRender();return false">Show ${hidden} more system${hidden>1?"s":""} that need no BIOS</a></td></tr>`:BIOSMORE&&j.systems.some(quiet)?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=false;biosRender();return false">Hide systems that need no BIOS</a></td></tr>`:"");
- // folders no installed core uses: misnamed ones first and always shown, the rest after five
- const fl=j.folders.slice().sort((a,b)=>(b.suggest?1:0)-(a.suggest?1:0));const fshow=FOLDMORE?fl:fl.filter((f,i)=>f.suggest||i<5);
- $("folderCard").style.display=fl.length?"block":"none";
- $("folderList").innerHTML=fshow.map(f=>`<tr><td><b>${esc(f.folder)}</b></td><td><code>${esc(f.where)}</code></td><td>${f.items}</td><td>${f.suggest?`<span class="pill warn">rename to <b>${esc(f.suggest)}</b></span>`:'<span class="muted">no installed core uses this name</span>'}</td></tr>`).join("")
-  +(fl.length>fshow.length?`<tr><td colspan="4"><a href="#" onclick="FOLDMORE=true;biosRender();return false">Show ${fl.length-fshow.length} more</a></td></tr>`:"")}
+  +(hidden?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=true;biosRender();return false">Show ${hidden} more system${hidden>1?"s":""} that need no BIOS</a></td></tr>`:BIOSMORE&&j.systems.some(quiet)?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=false;biosRender();return false">Hide systems that need no BIOS</a></td></tr>`:"");}
 // ---------- Reflash and restore
 let RP=null,rsPolling=false,rsSeen=0,rpGen=0;
 async function makeRestorePoint(){if(!connectedHost)return toast("Connect to the SuperStation first",true);
@@ -1622,10 +1614,6 @@ loadWinter();
 // Layouts: [type, control, x, y, a, b, label]. Types: c circle (a=r), r rounded rect (a=w,b=h), t analog trigger,
 // s stick (a=r), d D-pad cross centred on x,y (a=arm), l arcade lever (a=r). A control can be "c|r1": the first one the
 // controller has is used (6-button pads report C and Z under different names).
-const PTB={pad:"M150 80 H450 Q540 80 560 170 L585 285 Q595 335 545 335 Q510 335 480 290 L455 255 H145 L120 290 Q90 335 55 335 Q5 335 15 285 L40 170 Q60 80 150 80 Z",
- bone:"M130 95 H470 A100 100 0 0 1 470 295 H130 A100 100 0 0 1 130 95 Z",brick:"M40 120 H560 Q575 120 575 135 V265 Q575 280 560 280 H40 Q25 280 25 265 V135 Q25 120 40 120 Z",
- box:"M20 60 H580 Q595 60 595 75 V320 Q595 335 580 335 H20 Q5 335 5 320 V75 Q5 60 20 60 Z",
- n64:"M110 90 H490 Q560 90 565 160 L560 250 Q555 300 515 300 Q480 300 470 250 L455 205 H365 L340 315 Q330 335 300 335 Q270 335 260 315 L235 205 H145 L130 250 Q120 300 85 300 Q45 300 40 250 L35 160 Q40 90 110 90 Z"};
 const PSH=[["t","l2",110,22,90,26,"L2"],["t","r2",400,22,90,26,"R2"],["r","l1",105,58,100,20,"L1"],["r","r1",395,58,100,20,"R1"]];
 const PTL={
  generic:{n:"Generic (every input)",g:"Modern",b:"pad",it:[...PSH,["d","",150,160,26],["r","back",234,150,46,16,"Select"],["r","start",320,150,46,16,"Start"],["c","guide",300,112,15,0,"OSD"],
@@ -1679,7 +1667,7 @@ function ptPick(w,d){const v=PT.layout[w];if(v!=="auto"&&PTL[v])return v;if(w===
 function ptCtl(ctl,name){if(!ctl)return{has:false,on:false};const alts=name.split("|");for(const n of alts){let c=ctl[n];
   if(!c&&/^rs[udlr]$/.test(n)){const r=ctl.rs||{};c={has:r.has,on:r.has&&({u:r.y<-.5,d:r.y>.5,l:r.x<-.5,r:r.x>.5})[n[2]]}}
   if(c&&c.has)return c}return{has:false,on:false}}
-function ptSVG(k){const L=PTL[k];let s=`<svg viewBox="0 0 600 345" role="img" aria-label="${esc(L.n)}"><path class="ptbody" d="${PTB[L.b]}"/>`;
+function ptSVG(k){const L=PTL[k];let s=`<svg viewBox="0 0 600 345" role="img" aria-label="${esc(L.n)}">`;
  for(const[t,c,x,y,a,b,lab]of L.it){const sm=(lab||"").length>2?" sm":"";
   if(t==="c")s+=`<circle class="ptc" data-c="${c}" cx="${x}" cy="${y}" r="${a}"/><text class="ptl${sm}" x="${x}" y="${a<14&&(lab||"").length>1?y+a+10:y}">${lab||""}</text>`;
   else if(t==="r")s+=`<rect class="ptc" data-c="${c}" x="${x}" y="${y}" width="${a}" height="${b}" rx="${Math.min(b/2,9)}"/><text class="ptl${sm}" x="${x+a/2}" y="${y+b/2}">${lab||""}</text>`;
