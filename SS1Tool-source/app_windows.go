@@ -6,6 +6,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -232,8 +234,13 @@ func singleInstance() bool {
 	if restart { // the old copy didn't close; run anyway rather than leave the user with nothing
 		return true
 	}
-	var inst struct{ URL string }
+	var inst struct{ URL, Version, Token, Build string }
 	if b, err := os.ReadFile(instanceFile()); err == nil && json.Unmarshal(b, &inst) == nil && strings.HasPrefix(inst.URL, "http://127.0.0.1:") {
+		// A different version was started (a newer download): the running copy closes and this
+		// one takes over, so the user gets the version they just started, not the old one in the tray.
+		if (inst.Version != appVersion || inst.Build != buildID()) && inst.Token != "" && !startedInBackground() && takeOver(inst.URL, inst.Token, inst.Version) {
+			return true
+		}
 		if !startedInBackground() { // a sign-in start never opens a window
 			showApp(inst.URL)
 		}
@@ -242,8 +249,55 @@ func singleInstance() bool {
 	return true // no note from the other copy: start normally
 }
 
+// takeOver asks the running copy to quit (unless it's busy) and waits for it to go.
+func takeOver(url, tok, ver string) bool {
+	c := &http.Client{Timeout: 3 * time.Second}
+	call := func(path string) (map[string]any, error) {
+		req, _ := http.NewRequest("POST", url+path, strings.NewReader("{}"))
+		req.Header.Set("X-Token", tok)
+		resp, err := c.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		var m map[string]any
+		_ = json.NewDecoder(resp.Body).Decode(&m)
+		return m, nil
+	}
+	if st, err := call("api/update"); err == nil {
+		if b, _ := st["busy"].(string); b != "" {
+			msgBox("SS1 Tool", "SS1 Tool "+ver+" is still running and busy with "+b+".\n\nThis copy ("+appVersion+") will start when you open it again after that has finished.", mbOK|mbIconInfo)
+			return false
+		}
+	}
+	if _, err := call("api/quit"); err != nil {
+		return false
+	}
+	for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); time.Sleep(250 * time.Millisecond) {
+		h, _, err := pCreateMutexW.Call(0, 0, uintptr(unsafe.Pointer(u16(appMutexName))))
+		if h != 0 && err != syscall.Errno(183) && err != syscall.Errno(5) {
+			appMutex = h
+			return true
+		}
+		if h != 0 {
+			pCloseHandle.Call(h)
+		}
+	}
+	return false
+}
+
+// buildID tells two copies apart even when they have the same version number (a rebuilt or
+// re-downloaded SS1Tool.exe): the exe's path, size and modification time.
+func buildID() string {
+	p := exePath()
+	if fi, err := os.Stat(p); err == nil {
+		return fmt.Sprintf("%s|%d|%d", strings.ToLower(p), fi.Size(), fi.ModTime().Unix())
+	}
+	return appVersion
+}
+
 func writeInstance(url string) {
-	b, _ := json.Marshal(map[string]any{"url": url, "pid": os.Getpid(), "version": appVersion})
+	b, _ := json.Marshal(map[string]any{"url": url, "pid": os.Getpid(), "version": appVersion, "token": token, "build": buildID()})
 	_ = os.MkdirAll(filepath.Dir(instanceFile()), 0o755)
 	_ = os.WriteFile(instanceFile(), b, 0o600)
 	onExit(func() {
