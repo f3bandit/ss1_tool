@@ -160,7 +160,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 .ptpad svg{width:100%;height:auto;display:block;margin:6px 0}
 .ptc{stroke-width:2.5;transition:fill .05s}.ptc.has{fill:#3fb95033;stroke:#3fb950}.ptc.no{fill:#f8514926;stroke:#f85149;stroke-dasharray:4 3}.ptc.on{fill:#f2cc60;stroke:#f2cc60}
 .ptl{fill:#e6e8ec;font:600 13px "Segoe UI",system-ui,sans-serif;text-anchor:middle;dominant-baseline:central;pointer-events:none}.ptl.sm{font-size:10px}
-.ptfill{fill:#f2cc60}.ptcross.has{fill:none}.ptcross.no{fill:none}.ptdbase{fill:#262b35}.ptarm{fill:transparent}.ptarm.has{fill:#3fb95026}.ptarm.no{fill:#f8514914}.ptarm.on{fill:#f2cc60}.ptpad.idle .ptarm{fill:transparent}.ptknob{fill:#9aa3b2}.ptknob.on{fill:#f2cc60}.ptpad.idle .ptc{fill:#2a2f3a;stroke:#4a5263;stroke-dasharray:none}
+.ptfill{fill:#f2cc60}.ptcross.has{fill:none}.ptcross.no{fill:none}.ptdbase{fill:#262b35}.ptg.gone{display:none}.pthide .ptarm.no{fill:transparent}.ptarm{fill:transparent}.ptarm.has{fill:#3fb95026}.ptarm.no{fill:#f8514914}.ptarm.on{fill:#f2cc60}.ptpad.idle .ptarm{fill:transparent}.ptknob{fill:#9aa3b2}.ptknob.on{fill:#f2cc60}.ptpad.idle .ptc{fill:#2a2f3a;stroke:#4a5263;stroke-dasharray:none}
 .ptx{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.ptx span{font-size:11px;padding:1px 7px;border-radius:9px;border:1px solid #3fb950;color:var(--dim)}.ptx span.on{background:#f2cc60;border-color:#f2cc60;color:#000}
 .ptaxes{font:11px Consolas,monospace;color:var(--dim);margin-top:6px}
 </style>
@@ -1654,21 +1654,31 @@ const PTL={
   ["c","x",310,175,22,0,"X"],["c","y",365,155,22,0,"Y"],["c","r1",420,155,22,0,"RB"],["c","l1",475,165,22,0,"LB"],["c","a",320,230,22,0,"A"],["c","b",375,210,22,0,"B"],["c","r2",430,210,22,0,"RT"],["c","l2",485,220,22,0,"LT"]]},
  stick6:{n:"Arcade stick, 6 buttons (Astro City style)",g:"Fight",b:"box",it:[["l","",150,205,55],["c","back",50,92,10,0,"Sel"],["c","start",85,92,10,0,"St"],["c","guide",120,92,10,0,"Home"],
   ["c","x",335,175,24,0,"X"],["c","y",395,160,24,0,"Y"],["c","r1",455,160,24,0,"RB"],["c","a",345,235,24,0,"A"],["c","b",405,220,24,0,"B"],["c","r2",465,220,24,0,"RT"]]}};
-// Pick a layout from the controller's name when "Automatic" is chosen.
-const PTAUTO=[[/hit ?box|haute|snack ?box|leverless|all.?button/i,"leverless"],[/arcade|fight ?stick|\brap\b|f[35]00|qanba|stick/i,"stick8"],[/m30|saturn/i,"saturn"],[/genesis|mega ?drive|sega/i,"gen6"],
- [/fighting commander|fight ?pad|fusion/i,"fight8"],[/n64|nintendo 64/i,"n64"],[/gamecube|\bgc\b/i,"gamecube"],[/dreamcast/i,"dreamcast"],[/snes|super famicom|sfc/i,"snes"],[/\bnes\b|famicom/i,"nes"],
+// Pick a layout from the controller's name, USB ID or buttons when "Automatic" is chosen.
+const PTAUTO=[[/hit ?box|haute|snack ?box|leverless|all.?button/i,"leverless"],[/arcade|fight ?stick|\brap\b|f[35]00|qanba|\bstick\b/i,"stick8"],[/m30|saturn/i,"saturn"],[/genesis|mega ?drive|sega/i,"gen6"],
+ [/fighting commander|fight ?pad|fusion/i,"fight8"],[/n64|nintendo 64/i,"n64"],[/gamecube|\bgc\b/i,"gamecube"],[/dreamcast/i,"dreamcast"],[/snes|super famicom|sfc|^retro controller$/i,"snes"],[/\bnes\b|famicom/i,"nes"],
  [/pc ?engine|turbo ?grafx/i,"pce"],[/neo ?geo/i,"neogeo"],[/jaguar/i,"jaguar"],[/dual ?shock|dualsense|playstation|ps[345]|sony/i,"dualshock"],[/switch|pro controller|joy-?con|nintendo/i,"switchpro"],[/xbox|x-box|xinput/i,"xbox"]];
 const PT={vis:false,run:false,layout:{usb:"auto",snac:"psx"},last:null,err:0};
 try{const s=JSON.parse(localStorage.getItem("ptLayout")||"{}");if(s.usb)PT.layout.usb=s.usb;if(s.snac)PT.layout.snac=s.snac}catch(e){}
-function ptOptions(){let h='<option value="auto">Automatic (from the controller\'s name)</option>';for(const g of["Modern","Retro","Fight"]){h+=`<optgroup label="${g==="Fight"?"Fight pads and sticks":g}">`;for(const[k,l]of Object.entries(PTL))if(l.g===g)h+=`<option value="${k}">${esc(l.n)}</option>`;h+="</optgroup>"}return h}
+function ptOptions(){let h='<option value="auto">Automatic (from the controller)</option>';for(const g of["Modern","Retro","Fight"]){h+=`<optgroup label="${g==="Fight"?"Fight pads and sticks":g}">`;for(const[k,l]of Object.entries(PTL))if(l.g===g)h+=`<option value="${k}">${esc(l.n)}</option>`;h+="</optgroup>"}return h}
 function ptSetLayout(w,v){PT.layout[w]=v;try{localStorage.setItem("ptLayout",JSON.stringify(PT.layout))}catch(e){}$(w==="usb"?"ptUsb":"ptSnac").innerHTML="";if(PT.last)ptRender(PT.last);else ptIdle()}
-function ptPick(w,d){const v=PT.layout[w];if(v!=="auto"&&PTL[v])return v;if(w==="snac")return "psx";const n=(d&&(d.db_name||d.name))||"";for(const[re,k]of PTAUTO)if(re.test(n))return k;return w==="snac"?"psx":"generic"}
+const PTVID={"045e":"xbox","054c":"dualshock","057e":"switchpro","057e:2017":"snes","057e:2019":"n64","057e:201e":"gen6","057e:0337":"gamecube"};
+function ptPick(w,d){const v=PT.layout[w];if(v!=="auto"&&PTL[v])return v;if(w==="snac"||!d)return w==="snac"?"psx":"generic";
+ for(const n of[d.db_name,d.name])if(n)for(const[re,k]of PTAUTO)if(re.test(n))return k;
+ const vp=(d.vidpid||"").toLowerCase();if(PTVID[vp])return PTVID[vp];if(PTVID[vp.slice(0,4)])return PTVID[vp.slice(0,4)];
+ const h=n=>!!(d.ctl&&d.ctl[n]&&d.ctl[n].has),face=["a","b","x","y"].filter(h).length;
+ if(h("ls")||h("rs"))return "xbox"; // sticks: a modern pad
+ if(h("c")||h("z"))return "gen6";
+ if(face<=2&&!h("l1")&&!h("r1"))return "nes";
+ if(h("l2")&&h("r2"))return "fight8";
+ if(face>=4&&(h("l1")||h("r1")))return "snes";
+ return "generic"}
 // state of a layout control, including N64 C-buttons (right stick directions) and alternatives like "c|r1"
 function ptCtl(ctl,name){if(!ctl)return{has:false,on:false};const alts=name.split("|");for(const n of alts){let c=ctl[n];
   if(!c&&/^rs[udlr]$/.test(n)){const r=ctl.rs||{};c={has:r.has,on:r.has&&({u:r.y<-.5,d:r.y>.5,l:r.x<-.5,r:r.x>.5})[n[2]]}}
   if(c&&c.has)return c}return{has:false,on:false}}
 function ptSVG(k){const L=PTL[k];let s=`<svg viewBox="0 0 600 345" role="img" aria-label="${esc(L.n)}">`;
- for(const[t,c,x,y,a,b,lab]of L.it){const sm=(lab||"").length>2?" sm":"";
+ for(const[t,c,x,y,a,b,lab]of L.it){const sm=(lab||"").length>2?" sm":"";s+=`<g class="ptg">`;
   if(t==="c")s+=`<circle class="ptc" data-c="${c}" cx="${x}" cy="${y}" r="${a}"/><text class="ptl${sm}" x="${x}" y="${a<14&&(lab||"").length>1?y+a+10:y}">${lab||""}</text>`;
   else if(t==="r")s+=`<rect class="ptc" data-c="${c}" x="${x}" y="${y}" width="${a}" height="${b}" rx="${Math.min(b/2,9)}"/><text class="ptl${sm}" x="${x+a/2}" y="${y+b/2}">${lab||""}</text>`;
   else if(t==="t")s+=`<rect class="ptc" data-c="${c}" x="${x}" y="${y}" width="${a}" height="${b}" rx="8"/><rect class="ptfill" data-f="${c}" x="${x+3}" y="${y+3}" width="0" height="${b-6}" rx="5"/><text class="ptl" x="${x+a/2}" y="${y+b/2}">${lab}</text>`;
@@ -1679,15 +1689,23 @@ function ptSVG(k){const L=PTL[k];let s=`<svg viewBox="0 0 600 345" role="img" ar
     +`<rect class="ptarm" data-c="up" x="${x-h}" y="${y-e}" width="${w}" height="${e-h}"/><rect class="ptarm" data-c="down" x="${x-h}" y="${y+h}" width="${w}" height="${e-h}"/>`
     +`<rect class="ptarm" data-c="left" x="${x-e}" y="${y-h}" width="${e-h}" height="${w}"/><rect class="ptarm" data-c="right" x="${x+h}" y="${y-h}" width="${e-h}" height="${w}"/>`
     +`<polygon class="ptc ptcross" data-c="dpad" points="${[P(-h,-e),P(h,-e),P(h,-h),P(e,-h),P(e,h),P(h,h),P(h,e),P(-h,e),P(-h,h),P(-e,h),P(-e,-h),P(-h,-h)].join(" ")}" stroke-linejoin="round"/>`}
-  else if(t==="l")s+=`<circle class="ptc" data-c="lever" cx="${x}" cy="${y}" r="${a}"/><circle class="ptknob" data-k="lever" data-x="${x}" data-y="${y}" data-r="${a*.5}" cx="${x}" cy="${y}" r="${a*.38}"/>`}
+  else if(t==="l")s+=`<circle class="ptc" data-c="lever" cx="${x}" cy="${y}" r="${a}"/><circle class="ptknob" data-k="lever" data-x="${x}" data-y="${y}" data-r="${a*.5}" cx="${x}" cy="${y}" r="${a*.38}"/>`;
+  s+="</g>"}
  return s+"</svg>"}
-function ptPaint(el,ctl){
+function ptPaint(el,ctl,hide){
  el.querySelectorAll("[data-c]").forEach(e=>{let st;const c=e.dataset.c;
   if(c==="dpad"){const d=["up","down","left","right"].map(n=>ptCtl(ctl,n));st={has:d.some(x=>x.has),on:false}}
   else if(c==="lever"){const d=["up","down","left","right"].map(n=>ptCtl(ctl,n)),ls=ptCtl(ctl,"ls");st={has:d.some(x=>x.has)||ls.has,on:false}} // the knob shows the movement
   else if(c==="ls"||c==="rs"){const k=ptCtl(ctl,c);st={has:k.has,on:k.has&&ptCtl(ctl,c==="ls"?"l3":"r3").on}} // ring: stick press; knob: movement
   else st=ptCtl(ctl,c);
   e.classList.toggle("has",!!st.has&&!st.on);e.classList.toggle("no",!st.has);e.classList.toggle("on",!!st.on)});
+ el.classList.toggle("pthide",!!hide);
+ el.querySelectorAll(".ptg").forEach(g=>{const cs=[...g.querySelectorAll(".ptc")];g.classList.toggle("gone",!!hide&&cs.length>0&&cs.every(e=>e.classList.contains("no")))});
+ // fit the drawing to the inputs left, at the same scale
+ const sv=el.querySelector("svg"),gk=[...el.querySelectorAll(".ptg")].map(g=>g.classList.contains("gone")?0:1).join("");
+ if(sv&&sv.dataset.gk!==gk){sv.dataset.gk=gk;sv.removeAttribute("style");sv.setAttribute("viewBox","0 0 600 345");
+  if(hide&&gk.includes("1")){try{const b=sv.getBBox();if(!b.width)throw 0;const p=18,x=Math.max(0,b.x-p),y=Math.max(0,b.y-p),w=Math.min(600,b.x+b.width+p)-x,h=Math.min(345,b.y+b.height+p)-y;
+   if(w>0&&h>0){sv.setAttribute("viewBox",`${x} ${y} ${w} ${h}`);sv.style.width=(w/6)+"%";sv.style.margin="10px auto"}}catch(e){delete sv.dataset.gk}}}
  el.querySelectorAll("[data-f]").forEach(e=>{const c=ptCtl(ctl,e.dataset.f),full=+e.parentNode.querySelector(`[data-c="${e.dataset.f}"]`).getAttribute("width")-6;e.setAttribute("width",Math.max(0,Math.min(1,c.v||(c.on?1:0)))*full)});
  el.querySelectorAll("[data-k]").forEach(e=>{const k=e.dataset.k,r=+e.dataset.r;let x=0,y=0,on=false;
   if(k==="lever"){const g=n=>ptCtl(ctl,n).on;x=(g("right")?1:0)-(g("left")?1:0);y=(g("down")?1:0)-(g("up")?1:0);const ls=ptCtl(ctl,"ls");if(!x&&!y&&ls.has){x=ls.x||0;y=ls.y||0}on=Math.hypot(x,y)>.3}
@@ -1707,7 +1725,7 @@ function ptFill(w,list,box){const seen=new Set();
    :`<span class="pill muted">${ptKind[d.kind]||d.kind}</span><span class="pill muted">${esc(d.vidpid)}</span>`
    +(d.db_name?`<span class="pill good">In the controller database${d.db_user?" (your own entry)":""}</span>`:`<span class="pill warn">Not in the controller database - standard Linux button names</span>`)
    +(d.db_name&&d.name&&d.name!==d.db_name?`<span class="pill muted">Reports itself as ${esc(d.name)}</span>`:"")+`<span class="pill muted">Shown as ${esc(L.n)}</span>`;
-  ptPaint(el,d.ctl);
+  ptPaint(el,d.ctl,w==="usb");
   el.querySelector(".ptx").innerHTML=(d.extra||[]).map(x=>`<span class="${x.on?"on":""}">${esc(x.name)}</span>`).join("");
   el.querySelector(".ptaxes").textContent=((d.axes||[]).length?"Axes: "+d.axes.map(a=>a.name+" "+(a.v>=0?"+":"")+a.v.toFixed(2)).join("  ")+"   ":"")+"Held (Linux codes): "+((d.held||[]).join(", ")||"none")}
  box.querySelectorAll(".ptpad").forEach(e=>{if(!seen.has(e.id))e.remove()})}
