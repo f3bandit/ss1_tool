@@ -238,10 +238,20 @@ func padMon() {
 	scan()
 	lastScan, lastOut, lastLine := time.Now(), time.Time{}, ""
 	core, cm := readCore(), consoleModeUp()
+	// In MiSTer menu mode the front port only lives inside MiSTer_ConsoleMode (see snacmem.go).
+	snacOn := func() bool { return !cm && (core == "" || strings.EqualFold(core, "MENU")) }
+	if snacOn() {
+		snacReader.open()
+	}
 	for {
 		if time.Since(lastScan) > 1500*time.Millisecond {
 			scan()
 			core, cm = readCore(), consoleModeUp()
+			if snacOn() {
+				snacReader.open()
+			} else {
+				snacReader.close()
+			}
 			lastScan = time.Now()
 		}
 		names := make([]string, 0, len(devs))
@@ -258,7 +268,16 @@ func padMon() {
 		for _, n := range names {
 			list = append(list, devs[n])
 		}
-		b, _ := json.Marshal(map[string]any{"core": core, "cm": cm, "devs": list})
+		out := map[string]any{"core": core, "cm": cm, "devs": list}
+		if snacOn() {
+			if btn, ok := snacReader.read(); ok {
+				list = append(list, snacDevice(btn))
+				out["devs"] = list
+			} else {
+				out["snacmem_err"] = snacReader.bad
+			}
+		}
+		b, _ := json.Marshal(out)
 		if line := string(b); line != lastLine || time.Since(lastOut) > time.Second {
 			fmt.Println(line)
 			lastLine, lastOut = line, time.Now()
