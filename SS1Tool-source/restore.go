@@ -32,7 +32,7 @@ var restoreCats = []restoreCat{
 	{"config", "Core settings and controller mappings", "config folder", []string{"config/"}, true},
 	{"bluetooth", "Bluetooth pairings", "Bluetooth restarts afterwards", []string{"linux/bluetooth/"}, true},
 	{"wifi", "WiFi", "used after a restart", []string{"linux/wpa_supplicant.conf"}, true},
-	{"misterini", "MiSTer settings", "MiSTer.ini and alternative inis", []string{"MiSTer.ini", "MiSTer_alt_1.ini", "MiSTer_alt_2.ini", "MiSTer_alt_3.ini"}, true},
+	{"misterini", "MiSTer settings", "MiSTer.ini, the video profiles and yc.txt", []string{"MiSTer.ini", "MiSTer_alt_1.ini", "MiSTer_alt_2.ini", "MiSTer_alt_3.ini", "MiSTer_RGHV.ini", "MiSTer_RGsB.ini", "MiSTer_SVID.ini", "MiSTer_YPbP.ini", "yc.txt"}, true},
 	{"cifs", "Network share (Cifs)", "share settings; mounting at startup is set up again", []string{"Scripts/cifs_mount.ini"}, true},
 	{"ra", "RetroAchievements login", "retroachievements.cfg", []string{"retroachievements.cfg"}, true},
 	{"consolemode", "Console Mode settings and scraper logins", "settings only, never the Console Mode program", []string{"ConsoleMode/config.ini", "ConsoleMode/screenscraper.txt", "ConsoleMode/tgdb_apikey.txt", "ConsoleMode/themeconfig/"}, true},

@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.28.5"
+const appVersion = "1.28.6"
 
 //go:embed web/index.html
 var webFS embed.FS
@@ -170,6 +170,7 @@ func main() {
 	registerWizardRoutes(mux)
 	registerShotRoutes(mux)
 	registerPadRoutes(mux)
+	registerVideoRoutes(mux)
 
 	url := fmt.Sprintf("http://%s/", srvAddr)
 	fmt.Println("SS1 Tool", appVersion, "running at", url)

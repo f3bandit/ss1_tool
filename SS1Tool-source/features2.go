@@ -394,6 +394,9 @@ type iniInfo struct {
 	Folder string `json:"folder"`
 }
 
+// The SuperStation's video profiles (MiSTer_RGHV.ini, MiSTer_SVID.ini, ...) and MiSTer's alternative inis.
+var misterAltRe = regexp.MustCompile(`^/media/fat/(MiSTer_[A-Za-z0-9_.()+-]+\.ini)$`)
+
 var themeIniRe = regexp.MustCompile(`^/media/fat/ConsoleMode/themeconfig/(section_groups/)?[A-Za-z0-9 _.()&+-]+\.ini$`)
 
 // resolveIni accepts a remote path (or the legacy keys mister/downloader/cmconfig).
@@ -408,6 +411,11 @@ func resolveIni(id string) (iniInfo, bool) {
 		return iniInfo{id, "downloader.ini", "downloader.ini"}, true
 	case cmDir + "/config.ini":
 		return iniInfo{id, "Console Mode settings (config.ini)", "ConsoleMode.ini"}, true
+	case fat + "/yc.txt":
+		return iniInfo{id, "yc.txt (S-Video / composite colour tuning)", "yc.txt"}, true
+	}
+	if m := misterAltRe.FindStringSubmatch(id); m != nil && !strings.Contains(id, "..") && !strings.EqualFold(m[1], "MiSTer.ini") {
+		return iniInfo{id, m[1] + " (video profile)", m[1]}, true
 	}
 	if themeIniRe.MatchString(id) && !strings.Contains(id, "..") {
 		rel := strings.TrimPrefix(id, cmDir+"/themeconfig/")
@@ -449,8 +457,13 @@ func relForRemote(p string) (string, bool) {
 		return "MiSTer/MiSTer.ini", true
 	case fat + "/downloader.ini":
 		return "Downloader/downloader.ini", true
+	case fat + "/yc.txt":
+		return "MiSTer/yc.txt", true
 	case cmDir + "/config.ini":
 		return "ConsoleMode/config.ini", true
+	}
+	if misterAltRe.MatchString(p) {
+		return "MiSTer/" + strings.TrimPrefix(p, fat+"/"), true
 	}
 	return "ConsoleMode/" + strings.TrimPrefix(p, cmDir+"/"), true // themeconfig/..., themeconfig/section_groups/...
 }
@@ -467,6 +480,8 @@ func remoteForRel(rel string) (string, bool) {
 		p = fat + "/MiSTer.ini"
 	case rel == "Downloader/downloader.ini":
 		p = fat + "/downloader.ini"
+	case strings.HasPrefix(rel, "MiSTer/") && !strings.Contains(strings.TrimPrefix(rel, "MiSTer/"), "/"):
+		p = fat + "/" + strings.TrimPrefix(rel, "MiSTer/") // MiSTer_*.ini profiles and yc.txt
 	case strings.HasPrefix(rel, "ConsoleMode/"):
 		p = cmDir + "/" + strings.TrimPrefix(rel, "ConsoleMode/")
 	default:
@@ -568,7 +583,7 @@ func listInis() []iniInfo {
 		info, _ := resolveIni(p)
 		res = append(res, info)
 	}
-	out, _ := run(`for f in /media/fat/ConsoleMode/themeconfig/*.ini /media/fat/ConsoleMode/themeconfig/section_groups/*.ini; do [ -f "$f" ] && echo "$f"; done`)
+	out, _ := run(`for f in /media/fat/MiSTer_*.ini /media/fat/yc.txt /media/fat/ConsoleMode/themeconfig/*.ini /media/fat/ConsoleMode/themeconfig/section_groups/*.ini; do [ -f "$f" ] && echo "$f"; done`)
 	for _, l := range strings.Split(strings.TrimSpace(out), "\n") {
 		if info, ok := resolveIni(strings.TrimSpace(l)); ok {
 			res = append(res, info)
@@ -593,7 +608,7 @@ type setFile struct {
 func setFiles(dir string) []setFile {
 	var res []setFile
 	_ = filepath.WalkDir(dir, func(p string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() || !strings.HasSuffix(strings.ToLower(d.Name()), ".ini") {
+		if err != nil || d.IsDir() || !(strings.HasSuffix(strings.ToLower(d.Name()), ".ini") || strings.EqualFold(d.Name(), "yc.txt")) {
 			return nil
 		}
 		rel, _ := filepath.Rel(dir, p)
