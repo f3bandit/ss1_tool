@@ -1,0 +1,28 @@
+name: Android app problem
+description: SS1 Tool for Android doesn't fit the screen, is hard to read, won't connect, closes, or a setting doesn't work
+title: "[Android] "
+labels: ["android-app"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Easiest: in SS1 Tool for Android open **About › Report a problem with the app**, build the report, tap **Save the report file**, then **Open a GitHub issue**. The report below is filled in for you.
+        Problems with the SuperStation itself go in a normal **Bug report** with a Debug Report instead.
+  - type: textarea
+    id: report
+    attributes:
+      label: Report
+      description: Filled in by the app. IP and MAC addresses, network names, passwords and accounts are removed.
+    validations:
+      required: true
+  - type: textarea
+    id: file
+    attributes:
+      label: Report file
+      description: Tap "Paste, drop, or click to add files" here and pick SS1Tool-Android-report-….zip from your Downloads. It has the layout data and screenshots (with addresses and names hidden) that show what you see.
+      placeholder: Attach the .zip here
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else?
+      description: Optional. Extra screenshots or details.
