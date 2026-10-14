@@ -317,6 +317,7 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
 - On-screen controller: D-pad, A/B/X/Y, Select, Start and OSD, with hold-to-press
 - Remote keyboard: on-screen keys and live key capture
 - Reload the menu, reboot, safe shutdown, open an SSH terminal or the Samba share
+- **Reboot** flushes storage first, then restarts the SuperStation the same way MiSTer's own Reboot does (the FPGA core is reset too), so it comes back up instead of sitting on a black screen
 - **Safe shutdown** shows the same **Shutting down** and **SAFE TO POWER OFF** screens on the TV whichever front end is running:
   - **Console Mode:** the screens are drawn over the Console Mode UI, which is paused so it can't draw over them
   - **MiSTer mode:** SS1 Tool switches the TV to MiSTer's Linux screen first (going back to the menu core if a game is running, then pressing F9) and checks the switch worked before the screens are drawn. It checks this through the SS1 Tool virtual keyboard: MiSTer releases keyboards only while its Linux screen is showing
@@ -326,7 +327,7 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
 SD card diagnostics, the BIOS and game folder check, the debug report and the controller tester on one page.
 
 #### SD Diagnostics
-- Quick check: partition table and overlap, exFAT boot region checksums, kernel I/O errors. USB resets only count as errors when they hit a storage device (NVMe dock, USB drive, card reader); a reset of WiFi, Bluetooth or a controller during start-up is normal and shown as information. Real USB power or cable trouble (over-current, failed enumeration) is shown as a warning
+- Quick check: partition table and overlap (GPT drives, such as an NVMe formatted on Windows, are checked through their GPT header), exFAT boot region checksums, kernel I/O errors. USB resets only count as errors when they hit a storage device (NVMe dock, USB drive, card reader); a reset of WiFi, Bluetooth or a controller during start-up is normal and shown as information. Real USB power or cable trouble (over-current, failed enumeration) is shown as a warning
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
 

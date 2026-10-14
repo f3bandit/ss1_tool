@@ -118,7 +118,7 @@ func apiCommunityInstall(w http.ResponseWriter, r *http.Request) {
 
 // ================================================================ SD card backup to this PC
 
-func sdBackupRoot() string { return filepath.Join(exeDir(), "backup", "sdcard") }
+func sdBackupRoot() string { return filepath.Join(dataDir(), "backup", "sdcard") }
 
 type sdBackupJob struct {
 	Running  bool   `json:"running"`
@@ -215,7 +215,7 @@ func apiSDBackupStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	dst := filepath.Join(sdBackupRoot(), name)
-	if free := freeBytes(exeDir()); free > 0 && free < uint64(total)+200<<20 {
+	if free := freeBytes(dataDir()); free > 0 && free < uint64(total)+200<<20 {
 		sbSet(func(j *sdBackupJob) { j.Running, j.Finished, j.Error = false, true, "not enough free space on this PC" })
 		fail(w, 507, fmt.Sprintf("not enough free space on this PC: the backup needs about %s, %s is free", humanBytes(total), humanBytes(int64(free))))
 		return

@@ -20,7 +20,7 @@ import (
 
 const ss1ShotDir = fat + "/screenshots"
 
-func pcShotDir() string { return filepath.Join(exeDir(), "backups", "screenshots") }
+func pcShotDir() string { return filepath.Join(dataDir(), "backups", "screenshots") }
 
 type shot struct {
 	Path  string `json:"path"` // relative to the screenshots folder, with forward slashes

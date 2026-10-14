@@ -150,7 +150,7 @@ func attachMappings(res map[string]any) {
 
 const userDB = fat + "/linux/gamecontrollerdb/gamecontrollerdb_user.txt"
 
-func ctrlBackupRoot() string { return filepath.Join(exeDir(), "backups", "controller-maps") }
+func ctrlBackupRoot() string { return filepath.Join(dataDir(), "backups", "controller-maps") }
 
 var ctrlSetRe = regexp.MustCompile(`^[A-Za-z0-9_.-]{1,120}$`)
 

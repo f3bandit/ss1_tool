@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-platform="{{PLATFORM}}" data-store="{{STORE}}">
 <head>
 <meta charset="utf-8">
 <title>SS1 Tool</title>
@@ -153,7 +153,7 @@ section > .subpage > h2{font-size:19px}
 .ethgrid span:first-child{color:var(--dim)}
 #updCard p a,.updnotes a,.card p a:not(.b),.card .muted a:not(.b),.card td a:not(.b){color:#79c0ff}#updPage{text-decoration:none;display:inline-block}
 .updbanner{position:sticky;top:var(--hdr,53px);z-index:24;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#e3b3411f;border-bottom:1px solid #e3b34159;color:var(--text)}
-.updbanner b{color:var(--warn)}
+.updbanner b{color:var(--warn)}.updbanner a.b{text-decoration:none}
 .updnotes{margin-top:12px;border:1px solid var(--line);border-radius:6px;padding:10px 14px;max-height:340px;overflow:auto;font-size:13px;background:var(--panel2)}
 .updnotes h2,.updnotes h3,.updnotes h4{margin:10px 0 6px;font-size:14px}.updnotes ul{margin:4px 0 8px 18px;padding:0}.updnotes li{margin:2px 0}
 .updnotes table{margin:6px 0;font-size:12.5px}.updnotes code{background:var(--bg);padding:0 4px;border-radius:3px}
@@ -176,15 +176,237 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 .ptfill{fill:#f2cc60}.ptcross.has{fill:none}.ptcross.no{fill:none}.ptdbase{fill:#262b35}.ptg.gone{display:none}.pthide .ptarm.no{fill:transparent}.ptarm{fill:transparent}.ptarm.has{fill:#3fb95026}.ptarm.no{fill:#f8514914}.ptarm.on{fill:#f2cc60}.ptpad.idle .ptarm{fill:transparent}.ptknob{fill:#9aa3b2}.ptknob.on{fill:#f2cc60}.ptpad.idle .ptc{fill:#2a2f3a;stroke:#4a5263;stroke-dasharray:none}
 .ptx{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.ptx span{font-size:11px;padding:1px 7px;border-radius:9px;border:1px solid #3fb950;color:var(--dim)}.ptx span.on{background:#f2cc60;border-color:#f2cc60;color:#000}
 .ptaxes{font:11px Consolas,monospace;color:var(--dim);margin-top:6px}
+
+/* ---- SS1 Tool for Android, phones and narrow windows */
+html[data-platform=android] .pc-only{display:none!important}
+.android-only{display:none!important}html[data-platform=android] .android-only{display:revert!important}
+/* Linux (Steam): features that need Windows (SD flashing and backup, WiFi scan, sharing a folder from this PC) */
+html[data-platform=linux] .win-only{display:none!important}
+/* Steam: Steam installs updates; no seasonal extras */
+.steam-only{display:none!important}html[data-store=steam] .steam-only{display:revert!important}
+html[data-store=steam] .no-steam{display:none!important}
+html[data-contrast=high]{--dim:#cfd6e0;--line:#55607a;--text:#fff;--panel2:#262b36}
+html[data-contrast=high] .muted{color:#cfd6e0}
+html[data-motion=reduce] *,html[data-motion=reduce] *::before,html[data-motion=reduce] *::after{transition:none!important;animation:none!important}
+html[data-bold=1] body{font-weight:600}html[data-bold=1] b,html[data-bold=1] h1,html[data-bold=1] h2,html[data-bold=1] h3{font-weight:800}
+html[data-form=tablet] .b{min-height:44px}
+#toTop{position:fixed;right:16px;bottom:18px;z-index:23;width:52px;height:52px;border-radius:50%;padding:0;font-size:22px;line-height:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);box-shadow:0 4px 16px #000a;opacity:0;visibility:hidden;pointer-events:none;transition-property:opacity,visibility;transition-duration:500ms}
+#toTop.show{opacity:.92;visibility:visible;pointer-events:auto;transition-duration:150ms}
+body.navopen #toTop{display:none}
+.privacy li{margin:4px 0}.reptypes{display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0 10px}
+#repOut{width:100%;min-height:260px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.devtbl td{vertical-align:top}.devtbl td:first-child{color:var(--dim);padding-right:14px;width:34%}
+.navtog{display:none;padding:6px 11px;font-size:18px;line-height:1}
+@media (max-width:820px){
+ header{padding:10px 12px;gap:10px;position:sticky;top:0;z-index:30}header h1{font-size:16px}#conn{font-size:12px;max-width:45vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .navtog{display:inline-block}
+ .wrap{display:block}
+ nav{position:fixed;top:var(--hh,49px);left:0;bottom:0;width:250px;z-index:25;transform:translateX(-105%);transition:transform .18s ease;overflow-y:auto;box-shadow:4px 0 24px #000a}
+ body.navopen nav{transform:none}
+ body.navopen::after{content:"";position:fixed;inset:var(--hh,49px) 0 0 0;background:#0007;z-index:24}
+ main{padding:14px 12px;max-width:none}
+ .card{padding:12px 13px}
+ h2{font-size:18px}
+ /* nothing on a phone should need sideways scrolling */
+ html{overflow-x:hidden}body{overflow-x:clip}
+ main{overflow-wrap:break-word}
+ main *{max-width:100%}
+ main [style*="min-width"]{min-width:0!important}
+ input:not([type=checkbox]):not([type=radio]),select,textarea{min-width:0!important;max-width:100%;box-sizing:border-box}
+ .row>input:not([type=checkbox]):not([type=radio]),.row>select{flex:1 1 140px}
+ code,b,a,kbd,.muted,td,th,label,span{overflow-wrap:anywhere}
+ pre,.out{white-space:pre-wrap!important;overflow-wrap:anywhere;overflow-x:hidden!important}
+ .b{white-space:normal!important;max-width:100%}
+ .row,.jump,.bkact{flex-wrap:wrap}
+ .cfgrid,.shgrid,.vrow,.ways,.dashwrap,.ptlist{grid-template-columns:minmax(0,1fr)!important}
+ .kbdgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ img,svg,canvas,video{max-width:100%;height:auto}
+ table{width:100%;max-width:100%}
+ /* wide tables turn into one card per row (labels from the header, see tblFit) */
+ table.cards,table.cards tbody,table.cards tr,table.cards td{display:block;width:auto!important}
+ table.cards thead{display:none}
+ table.cards tr{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:0 0 8px;background:var(--panel2)}
+ table.cards td{border:0!important;padding:3px 0!important;text-align:left!important}
+ table.cards td:empty{display:none}
+ table.cards td[data-label]::before{content:attr(data-label);display:block;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.04em}
+ header{flex-wrap:nowrap;min-width:0}header>.muted{white-space:nowrap}header h1{white-space:nowrap}
+ textarea{min-height:300px}
+ #toast{left:12px;right:80px;bottom:16px;max-width:none}
+ .jump{flex-wrap:wrap}
+ .gp{flex-wrap:wrap;justify-content:center;gap:14px;border-radius:24px;padding:14px}
+ .vtry{top:calc(var(--hh,49px) + 4px)}
+ .panes{flex-direction:column}.mid{flex-direction:row;flex-wrap:wrap;width:auto;justify-content:center}
+ #credit{display:none}
+}
+@media (pointer:coarse){
+ .b{min-height:42px}nav button{padding:14px 20px}
+ input,select,textarea{font-size:16px}input,select{min-height:42px}
+ label.ck{min-height:36px}
+}
+
+/* ===================== Android app look (only inside SS1 Tool for Android) =====================
+   Material-style dark theme: top app bar with the page title, bottom navigation on phones,
+   a navigation rail on tablets, section chips, rounded cards and pill buttons. */
+html[data-platform=android]{--bg:#111318;--panel:#1c1f26;--panel2:#272b33;--line:#363b45;--text:#e3e4ea;--dim:#a3aab6;--ab:#191c22;--abh:56px;--bnh:72px;--rail:88px;--chip:#272b33}
+html[data-platform=android] body{background:var(--bg);font-size:16px;-webkit-tap-highlight-color:transparent}
+html[data-platform=android] header{height:var(--abh);padding:0 8px 0 16px!important;gap:10px!important;background:var(--ab)!important;border:0!important;box-shadow:0 1px 0 #0006;position:sticky;top:0;z-index:30}
+html[data-platform=android] header .navtog,html[data-platform=android] header h1,html[data-platform=android] header>.muted{display:none!important}
+html[data-platform=android] #apTitle{flex:1;min-width:0;font-size:20px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.1px}
+html[data-platform=android] #conn{max-width:52vw!important;font-size:13px!important;padding:6px 12px;border-radius:16px;background:var(--panel2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-platform=android] nav#nav{display:none!important}
+html[data-platform=android] #credit{display:none!important}
+html[data-platform=android] body.navopen::after{display:none}
+html[data-platform=android] .wrap{display:block!important;min-height:0}
+html[data-platform=android] main{padding:12px 12px calc(var(--bnh) + 24px)!important;max-width:none!important}
+html[data-platform=android] main>section>h2:first-child{display:none}
+html[data-platform=android] .sub{font-size:15px;margin:2px 4px 12px}
+/* section chips */
+html[data-platform=android] .jump{position:sticky;top:var(--abh);z-index:20;display:flex!important;flex-wrap:nowrap!important;overflow-x:auto;gap:8px;margin:0 -12px 12px!important;padding:8px 12px;background:var(--bg);scrollbar-width:none}
+html[data-platform=android] .jump::-webkit-scrollbar{display:none}
+html[data-platform=android] .jump>.muted{display:none}
+html[data-platform=android] .jump a{flex:0 0 auto;white-space:nowrap;text-decoration:none;color:var(--text);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:14px}
+/* cards, buttons, inputs */
+html[data-platform=android] .card{border:0!important;border-radius:16px!important;background:var(--panel)!important;padding:16px!important;margin-bottom:12px}
+html[data-platform=android] .card h3{font-size:18px;font-weight:500}
+html[data-platform=android] .b{border-radius:20px!important;min-height:44px;padding:10px 20px;border:0!important;background:var(--panel2);font-weight:500}
+html[data-platform=android] .b.p{background:var(--acc);color:#fff}
+html[data-platform=android] .b.d{background:#3a1d1f;color:#ffb4ab}
+html[data-platform=android] .b:active{filter:brightness(1.25)}
+html[data-platform=android] input:not([type=checkbox]):not([type=radio]),html[data-platform=android] select,html[data-platform=android] textarea{border-radius:12px!important;background:var(--panel2)!important;border:1px solid transparent!important;min-height:48px;padding:10px 14px!important}
+html[data-platform=android] input:focus,html[data-platform=android] select:focus,html[data-platform=android] textarea:focus{border-color:var(--acc)!important;outline:none}
+html[data-platform=android] table.cards tr{border-radius:12px;border:0;background:var(--panel2)}
+html[data-platform=android] .pill{border-radius:8px}
+/* bottom navigation (phones) */
+#anav{display:none}
+html[data-platform=android] #anav{display:flex;position:fixed;left:0;right:0;bottom:0;height:var(--bnh);z-index:40;background:var(--ab);box-shadow:0 -1px 0 #0006;justify-content:space-around;align-items:stretch;padding:0 4px}
+#anav button{flex:1;background:none;border:0;color:var(--dim);font:inherit;font-size:12px;font-weight:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0;min-width:0}
+#anav button i{display:flex;align-items:center;justify-content:center;width:56px;height:30px;border-radius:15px;transition:background .15s}
+#anav button svg{width:22px;height:22px}
+#anav button.on{color:var(--text)}#anav button.on i{background:#4a2a2a;color:#ffb4a8}
+#anav button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+/* "More" sheet */
+#amore{display:none}
+html[data-platform=android] #amore.open{display:block;position:fixed;inset:0;z-index:50}
+#amore .scrim{position:absolute;inset:0;background:#0009}
+#amore .sheet{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-radius:28px 28px 0 0;padding:8px 0 calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto;animation:sheetUp .18s ease-out}
+#amore .grab{width:32px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 12px}
+#amore button{display:flex;align-items:center;gap:16px;width:100%;padding:14px 24px;background:none;border:0;color:var(--text);font:inherit;font-size:16px;text-align:left}
+#amore button:active{background:var(--panel2)}
+#amore button svg{width:24px;height:24px;color:var(--dim);flex:0 0 24px}
+#amore button small{display:block;color:var(--dim);font-size:13px;margin-top:2px}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+html[data-platform=android][data-motion=reduce] #amore .sheet{animation:none}
+/* floating bits sit above the bottom bar */
+html[data-platform=android] #toast{bottom:calc(var(--bnh) + 12px)!important;left:12px!important;right:12px!important;border-radius:8px;max-width:none!important}
+html[data-platform=android] #toTop{bottom:calc(var(--bnh) + 16px);right:16px;width:56px;height:56px;border-radius:16px;background:var(--panel2)}
+/* phones: a native two-column layout instead of web-style wrapping.
+   .row = grid of two equal cells: buttons, checkboxes and short pills take one cell,
+   inputs, text and anything else take the whole row. Status pills are grouped
+   (aLayout() wraps runs of them in .pgrid) into equal tiles, two per row; long ones span. */
+@media (max-width:599px){
+ html[data-platform=android] .b{padding:10px 12px;font-size:15px;line-height:1.25}
+ html[data-platform=android] .b,html[data-platform=android] .pill,html[data-platform=android] .pill *{overflow-wrap:normal!important;word-break:normal;hyphens:none}
+ html[data-platform=android] main .row:not(label):not(.ptlegend){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px!important;align-items:stretch}
+ html[data-platform=android] main .row:not(label):not(.ptlegend)>*{grid-column:1/-1;margin:0!important;min-width:0}
+ html[data-platform=android] main .row:not(label):not(.ptlegend)>:is(.b:not(.sm),a.b,label.ck,.pill):not(.span2){grid-column:auto}
+ html[data-platform=android] main .row>.b,html[data-platform=android] main .row>a.b{width:100%;justify-content:center;text-align:center;display:flex;align-items:center}
+ html[data-platform=android] main .row>label.ck{display:flex;align-items:center;gap:8px;min-height:44px}
+ html[data-platform=android] main .row>input:not([type=checkbox]):not([type=radio]),html[data-platform=android] main .row>select,html[data-platform=android] main .row>textarea{width:100%}
+ html[data-platform=android] main .row>span:not(.pill){align-self:center}
+ html[data-platform=android] label.row{display:flex!important;flex-wrap:nowrap!important;white-space:nowrap;gap:8px!important;align-items:center}
+ html[data-platform=android] label.row>select{flex:1 1 auto!important;width:auto}
+ html[data-platform=android] .card>.b,html[data-platform=android] .card>a.b{width:100%;justify-content:center}
+ /* status tiles */
+ html[data-platform=android] .pill{font-size:13px;line-height:1.3;padding:5px 10px;white-space:normal;text-align:left;max-width:100%;box-sizing:border-box}
+ html[data-platform=android] :is(.pgrid,.sst,.st){display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px!important;margin:10px 0 0;align-items:stretch}
+ html[data-platform=android] :is(.pgrid,.sst,.st)>*{grid-column:1/-1;margin:0!important}
+ html[data-platform=android] :is(.pgrid,.sst,.st)>.pill:not(.span2){grid-column:auto}
+ html[data-platform=android] :is(.pgrid,.sst,.st)>.pill{display:block;width:100%;min-height:40px;border-radius:10px;padding:6px 10px}
+ html[data-platform=android] :is(.pgrid,.sst,.st,#commList td)>.pill:not(:has(b,a,code,i,span,br)){display:flex;align-items:center}
+ html[data-platform=android] .st:empty,html[data-platform=android] .sst:empty{display:none!important}
+ html[data-platform=android] .advline{display:block}
+ html[data-platform=android] .advline .pill{display:block;width:100%;border-radius:10px;padding:8px 10px}
+ /* community scripts: name on top, status | button below */
+ html[data-platform=android] #commList,html[data-platform=android] #commList td{display:block;width:auto!important;text-align:left!important;border:0!important;padding:0!important}
+ html[data-platform=android] #commList tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 8px;align-items:stretch;background:var(--panel2);border-radius:12px;padding:12px;margin:0 0 10px}
+ html[data-platform=android] #commList td:first-child{grid-column:1/-1}
+ html[data-platform=android] #commList td .pill{display:block;width:100%;height:100%;border-radius:10px}
+ html[data-platform=android] #commList .b{width:100%;height:100%}
+ /* video settings: ◀ [setting] ▶ on one line, Try under it */
+ html[data-platform=android] .vctl{align-items:stretch!important}
+ html[data-platform=android] .vctl .row{grid-template-columns:44px minmax(0,1fr) 44px!important}
+ html[data-platform=android] .vctl .row>*{grid-column:auto!important}
+ html[data-platform=android] .vctl .row .b.sm{padding:0;min-width:44px;width:44px}
+ html[data-platform=android] .vctl .row select{max-width:none!important;width:100%}
+ html[data-platform=android] .vctl .row>.b.p{grid-column:1/-1!important;width:100%}
+ html[data-platform=android] .vname .pill{margin:4px 4px 0 0}
+ html[data-platform=android] .vrow{padding:14px 0}
+ html[data-platform=android] :is(.grid,.vtiles,.dgrid,.ethgrid,.ptlist,.dashwrap .dgrid){grid-template-columns:minmax(0,1fr)!important}
+ html[data-platform=android] .ethgrid>div{display:flex;flex-wrap:wrap;gap:2px 12px}
+ html[data-platform=android] .ethgrid>div>span:last-child{margin-left:auto;text-align:right;max-width:100%}
+ /* remote keypad: keys grow with the text instead of overflowing */
+ html[data-platform=android] .kbdgrid{gap:8px}
+ html[data-platform=android] .kbdgrid .b{height:auto!important;min-height:52px;padding:6px 4px;line-height:1.15}
+ html[data-platform=android] :is(.ways>*,.ud,#commList tr,.adv,.ucard) .b:not(.p):not(.d){background:#3a3f4a}
+}
+/* layout helpers the Android layout pass (aLayout) switches on where needed, at any width */
+ html[data-platform=android] :is(table.acards tr,.ways>*,.ud,#commList tr,.adv,.ucard) .b:not(.p):not(.d){background:#3a3f4a}
+ /* list tables with 3+ columns (saved devices, etc.): one card per row, buttons in a 2-column grid */
+ html[data-platform=android] table.acards,html[data-platform=android] table.acards tbody,html[data-platform=android] table.acards td{display:block;width:auto!important;text-align:left!important;border:0!important;padding:0!important;white-space:normal!important}
+ html[data-platform=android] table.acards tr{display:block;background:var(--panel2);border-radius:12px;padding:12px;margin:0 0 10px}
+ html[data-platform=android] table.acards td+td{margin-top:6px}
+ html[data-platform=android] table.acards td.acell{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:10px}
+ html[data-platform=android] table.acards td.acell>*{grid-column:auto;margin:0!important;width:100%;min-width:0}
+ html[data-platform=android] table.acards td.acell>.span2{grid-column:1/-1}
+ html[data-platform=android] table.acards td.acell>.pill{display:flex;align-items:center;border-radius:10px}
+ html[data-platform=android] table.acards td.acell>.b{justify-content:center;display:flex;align-items:center;text-align:center}
+ html[data-platform=android] table.acards td.acell>.pill{grid-column:1/-1!important;justify-content:flex-start}
+ /* two-column info tables (System status, Ethernet...) when the card is too narrow: label above value */
+ html[data-platform=android] table.akv,html[data-platform=android] table.akv tbody,html[data-platform=android] table.akv tr,html[data-platform=android] table.akv td,html[data-platform=android] table.akv th{display:block;width:auto!important;text-align:left!important}
+ html[data-platform=android] table.akv tr{padding:8px 0;border-bottom:1px dashed var(--line)}
+ html[data-platform=android] table.akv td,html[data-platform=android] table.akv th{border:0!important;padding:0!important}
+ html[data-platform=android] table.akv td:first-child{font-size:13px;color:var(--dim)}
+ html[data-platform=android] table.akv td+td{margin-top:2px}
+ /* label/value lines (System status, Dashboard): the value drops under the label when both don't fit */
+ html[data-platform=android] .kv{flex-wrap:wrap;gap:2px 12px;padding:8px 0;align-items:center}
+ html[data-platform=android] .kv>span{flex:0 1 auto;max-width:100%;min-width:0}
+ html[data-platform=android] .kv>span:first-child{flex:1 0 auto}
+ html[data-platform=android] .kv>span:last-child{margin-left:auto;text-align:right}
+ html[data-platform=android] .kv .pill{white-space:normal}
+ /* safety net: set by aGuard() on any box whose content still didn't fit */
+ html[data-platform=android] .a1col{grid-template-columns:minmax(0,1fr)!important;flex-direction:column!important;flex-wrap:nowrap!important;align-items:stretch!important}
+ html[data-platform=android] .a1col>*{grid-column:1/-1!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;width:auto}
+ html[data-platform=android] .afit{max-width:100%!important;min-width:0!important;white-space:normal!important;overflow-wrap:anywhere!important;height:auto!important}
+@media (max-width:320px){
+ html[data-platform=android] #conn{max-width:42vw!important;font-size:12px!important;padding:6px 10px}
+ html[data-platform=android] #apTitle{font-size:18px}
+ html[data-platform=android] #anav button{font-size:11px;letter-spacing:0}
+ html[data-platform=android] #anav button i{width:44px}
+ html[data-platform=android] .card{padding:12px!important}
+ html[data-platform=android] main{padding-left:8px!important;padding-right:8px!important}
+}
+/* tablets: navigation rail on the left instead of the bottom bar */
+@media (min-width:600px){
+ html[data-platform=android] #anav{top:var(--abh);bottom:0;right:auto;width:var(--rail);height:auto;flex-direction:column;justify-content:flex-start;gap:4px;padding:12px 0;overflow-y:auto;box-shadow:1px 0 0 #0006}
+ html[data-platform=android] #anav button{flex:0 0 auto;padding:6px 0}
+ html[data-platform=android] #anav .more{display:none}
+ html[data-platform=android] main{margin-left:var(--rail);padding:16px 24px 32px!important}
+ html[data-platform=android] main>section{max-width:960px;margin:0 auto}
+ html[data-platform=android] .jump{margin:0 -24px 12px!important;padding:8px 24px}
+ html[data-platform=android] #toast{bottom:16px!important;left:calc(var(--rail) + 16px)!important;right:auto!important;max-width:560px!important}
+ html[data-platform=android] #toTop{bottom:24px}
+}
+body.repshot #toast,body.repshot #toTop{display:none!important}
 </style>
 </head>
 <body>
-<header><h1>SS1 <span>Tool</span></h1><span class="muted">v{{VERSION}}</span><span id="updPill"></span><div id="conn">Not connected</div><button class="b" onclick="quitApp()">Quit</button></header>
-<div id="updBanner" class="updbanner" style="display:none"><span id="updBannerText"></span><button class="b p" id="updBannerGo" onclick="updInstall()">Restart now</button><button class="b" id="updBannerNotes" style="display:none" onclick="updShowNotes()">What's new</button><button class="b" onclick="updSnooze()">Not now</button></div>
+<header><button class="b navtog" onclick="navToggle()" aria-label="Menu">&#9776;</button><h1>SS1 <span>Tool</span></h1><span class="muted">v{{VERSION}}</span><span id="updPill" class="pc-only no-steam"></span><div id="conn">Not connected</div><button class="b pc-only" onclick="quitApp()">Quit</button></header>
+<div id="aUpd" class="updbanner" style="display:none"></div>
+<div id="updBanner" class="updbanner no-steam" style="display:none"><span id="updBannerText"></span><button class="b p" id="updBannerGo" onclick="updInstall()">Restart now</button><button class="b" id="updBannerNotes" style="display:none" onclick="updShowNotes()">What's new</button><button class="b" onclick="updSnooze()">Not now</button></div>
 <div class="wrap">
 <nav id="nav">
  <button data-s="connect" class="on">Connect</button>
- <button data-s="dash">Dashboard</button>
+ <button data-s="dash" class="pc-only">Dashboard</button>
  <button data-s="setup">Setup</button>
  <button data-s="video">Video</button>
  <button data-s="network">Network</button>
@@ -193,7 +415,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
  <button data-s="remote">Remote</button>
  <button data-s="diag">Diag</button>
  <button data-s="about">About</button>
- <button data-s="wizard" class="wizlink">&#9733; Wizard</button>
+ <button data-s="wizard" class="wizlink pc-only win-only">&#9733; Wizard</button>
 </nav>
 <main>
 
@@ -268,10 +490,10 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   </div>
   <div class="row" style="margin-top:10px"><button class="b" onclick="raTest()">Test login</button><button class="b p" onclick="raSave()">Save</button><button class="b d" id="raClear" style="display:none" onclick="raClearLogin()">Remove login</button><span id="raResult"></span></div>
   <p class="muted" style="margin:8px 0 0">Save checks the login with RetroAchievements first, so a typo isn't saved. The build stores the password in plain text on the SD card; SS1 Tool doesn't keep a copy. No account yet? <a href="https://retroachievements.org/createaccount.php" target="_blank" rel="noopener">Create one for free</a>.</p></div>
- <div class="jump" style="margin-top:18px"><span class="muted">Further down:</span><a href="#" onclick="jumpTo('flash');return false">Flash SD card</a><a href="#" onclick="jumpTo('settings');return false">MiSTer settings</a></div>
-<div class="subpage" id="flash">
+ <div class="jump" style="margin-top:18px"><span class="muted">Further down:</span><a href="#" class="win-only" onclick="jumpTo('flash');return false">Flash SD card</a><a href="#" onclick="jumpTo('settings');return false">MiSTer settings</a></div>
+<div class="subpage pc-only win-only" id="flash">
  <h2>Flash SD card (SuperStation One)</h2><p class="sub">Writes the official SuperStation One SD Card Installer image. <b class="bad">Everything on the selected card is erased.</b></p>
- <div class="card" id="reflashCard"><h3>Reflash without losing anything</h3>
+ <div class="card pc-only" id="reflashCard"><h3>Reflash without losing anything</h3>
   <p class="muted" style="margin:0 0 10px">Reflashing erases the SD card. These three steps keep your saves, settings, pairings and logins: your games aren't on the backup, so keep them on the NVMe drive, a network share or this PC.</p>
   <div class="rfstep"><span class="rfnum">1</span><div><b>Make a restore point</b> while the SuperStation is connected. It copies everything on the SD card except the games folder to this PC.
    <div class="row" style="margin-top:8px"><button class="b p" id="rpBtn" onclick="makeRestorePoint()">Make a restore point</button><span class="muted" id="rpStatus"></span></div>
@@ -288,7 +510,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
     <div class="row" id="rsDone" style="margin-top:10px;display:none"><button class="b p" onclick="restartSS1()">Restart the SuperStation now</button></div></div>
   </div>
  </div>
- <div class="card" id="adminCard" style="display:none"><h3 class="warn">Administrator rights needed</h3><p>Writing to an SD card requires running SS1 Tool as administrator.</p><button class="b p" onclick="elevate()">Restart as administrator</button></div>
+ <div class="card pc-only" id="adminCard" style="display:none"><h3 class="warn">Administrator rights needed</h3><p>Writing to an SD card requires running SS1 Tool as administrator.</p><button class="b p" onclick="elevate()">Restart as administrator</button></div>
  <div class="card"><h3>1. Image</h3><p>Both are the official SuperStation One installer from Retro Remake's GitHub. The newest release is used automatically.</p>
   <div id="imgList"><span class="muted">Checking the latest release...</span></div>
   <div class="row" style="margin-top:10px"><button class="b p" onclick="getLatest()">Download selected image</button><button class="b" onclick="loadImages(true)">Check again</button></div>
@@ -351,15 +573,15 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
  <h2>WiFi setup</h2><p class="sub">Create the WiFi settings file the SuperStation One uses (<code>linux/wpa_supplicant.conf</code> on its SD card), so it joins your wireless network when it starts.</p>
  <div class="card"><h3>Choose how to set it up</h3>
   <div class="ways">
-   <div class="way"><h4>Option A: SD card in this PC</h4>
+   <div class="way pc-only win-only"><h4>Option A: SD card in this PC</h4>
     <p>Use this if the SuperStation isn't on your network yet.</p>
     <ol><li>Switch off the SuperStation and take out its SD card.</li><li>Put the card in this PC's card reader.</li><li>Pick your network and enter the password below, choose the card, and click <b>Save to SD card</b>.</li><li>Safely eject the card in Windows, put it back in the SuperStation and switch it on. It joins WiFi as it starts.</li></ol></div>
    <div class="way"><h4>Option B: over the network (temporary Ethernet)</h4>
     <p>Use this if you can plug the SuperStation into your router with an Ethernet cable for a few minutes.</p>
     <ol><li>Connect the SuperStation to your router with an Ethernet cable and switch it on.</li><li>Connect to it on the <b>Connect</b> tab, using the IP shown on its screen.</li><li>Pick your network and enter the password below, then click <b>Send to SuperStation</b>.</li><li>Click <b>Restart SuperStation</b>. When it's back, it's on WiFi. Note its new WiFi IP from its screen (or the status below), unplug the Ethernet cable, and reconnect SS1 Tool with that IP.</li></ol></div>
   </div></div>
- <div class="card"><h3>1. Network</h3><p>Scans with this PC's WiFi adapter. If your router has separate 2.4 GHz and 5 GHz networks and the SuperStation won't connect, try the 2.4 GHz one.</p>
-  <div class="row"><button class="b p" onclick="wifiScan()">Scan for networks</button><span class="muted" id="wifiScanState"></span></div>
+ <div class="card"><h3>1. Network</h3><p class="pc-only win-only">Scans with this PC's WiFi adapter. If your router has separate 2.4 GHz and 5 GHz networks and the SuperStation won't connect, try the 2.4 GHz one.</p><p class="android-only">Type your network's name. If your router has separate 2.4 GHz and 5 GHz networks and the SuperStation won't connect, try the 2.4 GHz one.</p>
+  <div class="row pc-only win-only"><button class="b p" onclick="wifiScan()">Scan for networks</button><span class="muted" id="wifiScanState"></span></div>
   <table style="margin-top:10px"><tbody id="wifiList"></tbody></table>
   <div class="row" style="margin-top:12px"><span>Network name (SSID):</span><input id="wSsid" size="32" maxlength="32" placeholder="pick above or type it"><label class="ck"><input type="checkbox" id="wHidden"> Hidden network</label></div></div>
  <div class="card"><h3>2. Password and country</h3>
@@ -368,7 +590,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <p class="muted" style="margin:8px 0 0">Leave the password empty only for an open network. The password isn't stored by SS1 Tool; it's written only to the SuperStation's SD card, in plain text, the way MiSTer requires. The country sets which WiFi channels are allowed.</p></div>
  <div class="card"><h3>3. Save</h3>
   <div class="ways">
-   <div class="way"><h4>Option A: SD card in this PC</h4>
+   <div class="way pc-only win-only"><h4>Option A: SD card in this PC</h4>
     <div class="row"><select id="wDrive" style="min-width:260px"></select><button class="b" onclick="wifiInfo()">Refresh</button></div>
     <div class="row" style="margin-top:10px"><button class="b p" onclick="wifiSave('card')">Save to SD card</button></div></div>
    <div class="way"><h4>Option B: over the network</h4>
@@ -378,6 +600,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 </div>
 <div class="subpage" id="cifs">
  <h2>Network share (Cifs)</h2><p class="sub">Play games straight from a shared folder on your NAS or PC, using MiSTer's own <code>cifs_mount.sh</code> and <code>cifs_umount.sh</code> scripts (MiSTer-devel/Scripts_MiSTer). The settings are kept in <code>Scripts/cifs_mount.ini</code> on the SD card.</p>
+ <div class="card android-only" style="border-color:var(--warn)"><h3 class="warn" style="margin-top:0">&#9888; You need a share on a PC or NAS</h3><p style="margin:0">SS1 Tool for Android can't create a network share on this phone or tablet. Set one up first, then enter its details below:</p><ul style="margin:8px 0 0;padding-left:18px"><li>a Windows PC share, made with <b>SS1 Tool for Windows</b> (Network › Network share (Cifs) › <i class="keep-pc">No NAS? Share a folder from this PC</i>), or</li><li>a Cifs/SMB share you set up on your NAS.</li></ul></div>
  <div class="row cfctl" style="margin-bottom:12px"><button class="b p" onclick="cfLoad()">Refresh</button><span class="muted" id="cfTime"></span></div>
  <div class="card btjob" id="cfJob" style="display:none"><div class="row" style="justify-content:space-between"><h3 id="cfJobTitle" style="margin:0">-</h3><span class="muted" id="cfJobPct"></span></div>
   <div class="bar"><div id="cfJobBar"></div></div><div id="cfJobStep" style="margin-top:8px"></div>
@@ -385,7 +608,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
  <div class="card cfctl"><h3>Status</h3><div class="row" id="cfPills"><span class="muted">-</span></div>
   <div class="row" style="margin-top:12px"><button class="b p" onclick="cfRun('/api/cifs/mount')">Mount now</button><button class="b" onclick="cfRun('/api/cifs/unmount',{all:false})">Unmount</button><button class="b d" onclick="if(confirm('Unmount every CIFS share on the SuperStation, including ones cifs_mount.sh didn\'t make?'))cfRun('/api/cifs/unmount',{all:true})">Unmount all CIFS</button><button class="b" id="cfInstallBtn" onclick="cfRun('/api/cifs/install')">Install scripts</button></div>
   <table style="margin-top:12px"><thead><tr><th>Share</th><th>Mounted on</th></tr></thead><tbody id="cfMounts"></tbody></table></div>
- <div class="card cfctl" id="pcCard" style="display:none"><h3>No NAS? Share a folder from this PC</h3>
+ <div class="card cfctl pc-only win-only" id="pcCard" style="display:none"><h3>No NAS? Share a folder from this PC</h3>
   <p class="muted" style="margin:0 0 10px">Keep your games on this PC instead of the SD card, so a failed or reflashed SD card never costs you your collection. SS1 Tool shares a folder over your home network and sets the SuperStation up to play from it. Windows asks for permission once.</p>
   <div class="row" id="pcPills"></div>
   <div class="cfgrid" style="margin-top:12px">
@@ -427,7 +650,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 </section>
 <section id="files">
  <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, and take and browse screenshots.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a></div>
 <div class="subpage" id="fm">
  <h2>File manager</h2><p class="sub">Pick a drive on each side to move or copy files between the SD card and the NVMe/USB drive. Tick files, then use the arrows in the middle.</p>
  <div class="panes">
@@ -474,7 +697,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <table style="margin-top:10px"><thead><tr><th>Backup</th><th>Date</th><th>Systems</th><th>Files</th><th>Size</th><th></th></tr></thead><tbody id="svBackups"></tbody></table>
   <p class="muted" style="margin:10px 0 0">Restoring replaces saves with the same name and leaves every other save alone. The current saves for those systems are backed up on this PC first. Leave the game and go back to the menu before restoring: a running game can write over its save when it exits.</p></div>
 </div>
-<div class="subpage" id="sdbackup">
+<div class="subpage pc-only win-only" id="sdbackup">
  <h2>SD card backup</h2><p class="sub">Copies everything on the SuperStation's SD card <b>except the games folder</b> to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on.</p>
  <div class="card"><h3>New backup</h3><p>Backups are saved in <code>backup\sdcard\&lt;name&gt;_&lt;date-time&gt;</code> next to SS1Tool.exe, with the same folders and file names as on the card. The SuperStation stays usable while it runs, but avoid saving games or changing settings until it finishes.</p>
   <div class="row"><input id="sbName" size="34" placeholder="Backup name (optional), e.g. before update"><button class="b p" onclick="sdBackupStart()">Back up SD card</button><button class="b d" id="sbCancel" style="display:none" onclick="sdBackupCancel()">Cancel</button><button class="b" onclick="sdBackupOpen('')">Open backups folder</button></div>
@@ -532,7 +755,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 </div>
 </section>
 <section id="remote">
- <h2>Remote</h2><p class="sub">Control the SuperStation from your PC.</p>
+ <h2>Remote</h2><p class="sub">Control the SuperStation from <span class="pc-only">your PC</span><span class="android-only">this phone or tablet</span>.</p>
  <div class="card"><div class="row">
   <button class="b" onclick="remote('menu')">Reload menu core</button>
   <button class="b" onclick="remote('reboot')">Reboot</button>
@@ -570,7 +793,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 </section>
 <section id="diag">
  <h2>Diag</h2><p class="sub">Check the SD card, the BIOS files and games folders, collect a debug report when something isn't right, and test controllers.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('sddiag');return false">SD diagnostics</a><a href="#" onclick="jumpTo('bioscheck');return false">BIOS and game folders</a><a href="#" onclick="jumpTo('debug');return false">Debug report</a><a href="#" onclick="jumpTo('padtest');return false">Controller tester</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('sddiag');return false">SD diagnostics</a><a href="#" onclick="jumpTo('bioscheck');return false">BIOS and game folders</a><a href="#" onclick="jumpTo('debug');return false">Debug report</a><a href="#" onclick="jumpTo('padtest');return false">Controller tester</a><a href="#" class="android-only" onclick="openPage('about');setTimeout(()=>jumpTo('appReport'),50);return false">App problem report</a></div>
 <div class="subpage" id="sddiag">
  <h2>SD diagnostics</h2><p class="sub">Runs the sd_integrity checks on the SuperStation (read-only). Results are also logged to /media/fat/sd_integrity.log.</p>
  <div class="card"><div class="row"><span>Drive:</span><select id="diagTarget"></select><button class="b" onclick="loadTargets()">Refresh drives</button></div>
@@ -625,7 +848,70 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <hr class="abouthr">
   <p style="margin:0">Retroblast81 here's your special <a href="#" class="gift" onclick="toggleGift();return false">&#127873;&#128405;</a></p>
  </div>
- <div class="card" id="updCard"><h3>Updates</h3>
+ <div class="card android-only" id="appReport"><h3>Report a problem with the app</h3>
+  <p style="margin-top:0">For problems with SS1 Tool for Android itself on your phone or tablet: something doesn't fit the screen, text that's hard to read, a button, setting or control you can't reach, or an Android permission problem. For problems with the SuperStation, use <a href="#" onclick="openPage('diag');setTimeout(()=>jumpTo('debug'),50);return false">Diag › Debug report</a>.</p>
+  <label for="repWhere"><b>Where is the problem?</b></label>
+  <div class="row" style="margin:6px 0 10px"><select id="repWhere"><option value="">Whole app / not sure</option><option>Starting the app</option><option>Connect</option><option>Setup</option><option>Video</option><option>Network</option><option>Files</option><option>Devices</option><option>Remote</option><option>Diag</option><option>About</option></select></div>
+  <b>What kind of problem?</b>
+  <div class="reptypes" id="repTypes"><label class="ck"><input type="checkbox" value="Doesn't fit the screen"> Doesn't fit the screen</label><label class="ck"><input type="checkbox" value="Hard to read"> Hard to read</label><label class="ck"><input type="checkbox" value="Can't reach a button, setting or control"> Can't reach a button, setting or control</label><label class="ck"><input type="checkbox" value="Setting doesn't save or apply"> Setting doesn't save or apply</label><label class="ck"><input type="checkbox" value="Android permission"> Android permission</label><label class="ck"><input type="checkbox" value="Can't connect or find the SuperStation"> Can't connect or find the SuperStation</label><label class="ck"><input type="checkbox" value="App closes or freezes"> App closes or freezes</label><label class="ck"><input type="checkbox" value="Other"> Other</label></div>
+  <label for="repText"><b>What happened?</b></label>
+  <textarea id="repText" rows="4" style="width:100%;min-height:110px;margin-top:6px" placeholder="What did you do, what happened, and what did you expect? Please don't include passwords, names or other personal details."></textarea>
+  <label class="ck" style="margin:8px 0 4px"><input type="checkbox" id="repAudit" checked onchange="$('repShots').disabled=!this.checked"> Check the layout of every page (takes a few seconds; the pages flick past)</label>
+  <label class="ck" style="margin:0 0 8px"><input type="checkbox" id="repShots" checked> Include a screenshot of each page. IP and MAC addresses, device names, user names and network names are hidden first.</label>
+  <div class="row"><button class="b p" onclick="repBuild(this)">Build report</button></div>
+  <div id="repDone" style="display:none;margin-top:12px">
+   <p class="muted" style="margin:0 0 6px">This is everything in the report. Nothing has been sent; you choose where it goes.</p>
+   <textarea id="repOut" readonly></textarea>
+   <p style="margin:10px 0 6px"><b>1.</b> Save the report file. It has this report, the layout data of each page and the screenshots, so the problem can be seen and fixed.</p>
+   <div class="row"><button class="b p" onclick="repSave(this)">Save the report file</button></div>
+   <p style="margin:10px 0 6px"><b>2.</b> Open a GitHub issue (the text is filled in for you) and attach the file from step 1.</p>
+   <div class="row"><button class="b p" onclick="repIssue()">Open a GitHub issue</button><button class="b" onclick="repCopy()">Copy the text</button></div>
+   <p class="muted" style="margin:8px 0 0">Problems with the app go to SS1 Tool's own GitHub (f3bandit/ss1_tool), where the app is maintained, and not to the Taki Udon Discord: the Discord is only for SuperStation problems. GitHub issues are public, and you need a free GitHub account to open one. Nothing is sent until you post it, and you can open the file to check it first.</p>
+  </div>
+ </div>
+ <div class="card android-only privacy" id="privacyCard"><h3>Your privacy</h3><ul style="margin:0;padding-left:18px">
+  <li><b>We will never sell, rent or trade your data.</b></li>
+  <li><b>SS1 Tool will never collect personal data from your phone.</b> It has no ads, no analytics and no tracking, and it doesn't read your contacts, photos, files, location, phone number, accounts or device IDs.</li>
+  <li>SS1 Tool talks to your SuperStation over your own network. It only goes to the internet for features you use: GitHub (the Linux update advisory, Update All and scripts), and RetroAchievements and TheGamesDB when you test a login or key you entered.</li>
+  <li>Your SuperStation login and SS1 Tool's settings stay on this device.</li>
+  <li>A problem report is never sent automatically. You see all of it first, and you decide whether to post it on SS1 Tool's GitHub. It holds only what's needed to make SS1 Tool work on your device: no addresses, network names, passwords, accounts or anything else personal.</li></ul></div>
+ <div class="card android-only" id="supportCard"><h3>Supported Android versions</h3>
+  <p style="margin-top:0">SS1 Tool for Android supports <b>Android 8.0 (Oreo) and newer</b>, and is tested up to Android 16. It can't be installed on Android versions older than 8.0.</p>
+  <p style="margin-bottom:0">As Android moves on, a future update may raise the minimum version. Android versions below the new minimum won't be supported from then on: the version of SS1 Tool you have keeps working, but it won't get updates or fixes for them. A change to the minimum is listed in the release notes.</p>
+  <p class="muted" id="supportThis" style="margin-bottom:0"></p></div>
+ <div class="card android-only" id="devCard"><h3>This device</h3><p class="muted" style="margin-top:0">SS1 Tool adjusts its layout to your screen, text size and accessibility settings. If something doesn't fit, include this when you report it.</p><div id="devInfo" class="muted">-</div></div>
+ <div class="card android-only"><h3>SS1 Tool for Android</h3><p>Version {{VERSION}}. An unofficial tool for the SuperStation One; it isn't made, endorsed or supported by Taki Udon or Retro Remake. Sold by F3 Digital Systems (f3bandit).</p>
+  <p id="licInfo" class="muted"></p>
+  <div class="row" style="margin-bottom:10px"><button class="b" onclick="location.href='ss1app://update/check'">Check for updates</button><button class="b" onclick="location.href='ss1app://eula/view'">License Agreement</button><a class="b" href="https://ss1-tools.github.io/legal/privacy.html" target="_blank" rel="noopener">Privacy policy</a><button class="b" id="licRemove" style="display:none" onclick="licRemove()">Remove license from this device</button></div>
+  <details><summary>Open-source licenses</summary><p class="muted" style="margin-top:8px">SS1 Tool for Android includes the Go programming language's standard library and the Go projects golang.org/x/crypto, golang.org/x/sys and golang.org/x/image, under this license:</p>
+<pre class="out">Copyright 2009 The Go Authors.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google LLC nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</pre></details></div>
+ <div class="card pc-only no-steam" id="updCard"><h3>Updates</h3>
   <div class="row" id="updPills"><span class="pill muted">checking...</span></div>
   <div class="card btjob" id="uJob" style="display:none;margin:12px 0 0"><div class="row" style="justify-content:space-between"><h3 id="uJobTitle" style="margin:0">-</h3><span class="muted" id="uJobPct"></span></div>
    <div class="bar"><div id="uJobBar"></div></div><div id="uJobStep" style="margin-top:8px"></div><pre class="out" id="uJobLog" style="max-height:150px"></pre></div>
@@ -633,9 +919,10 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <div class="row" style="margin-top:12px"><button class="b" onclick="updCheck()">Check for updates</button><button class="b p" id="updBtn" style="display:none" onclick="updInstall()">Update and restart</button><a class="b" id="updPage" href="https://github.com/f3bandit/ss1_tool/releases" target="_blank" rel="noopener">Release page</a></div>
   <div class="row" style="margin-top:12px"><span>Automatic updates:</span><select id="updMode" onchange="updSetMode(this.value)"><option value="auto">Install updates automatically</option><option value="notify">Tell me when there's an update</option><option value="off">Don't check for updates</option></select></div>
   <p class="muted" style="margin:10px 0 0">SS1 Tool checks GitHub when it starts and every 6 hours. Updates come from the <a href="https://github.com/f3bandit/ss1_tool/releases" target="_blank" rel="noopener">f3bandit/ss1_tool releases</a>, are checked against the SHA-256 GitHub lists for the file, and replace SS1Tool.exe in its folder. The app restarts and this window switches to the new version by itself. Updates never start while a backup, restore, copy or SD card flash is running.</p></div>
- <div class="card" id="winCard" style="display:none"><h3>Window</h3><p>SS1 Tool opens in its own window, with its icon on the taskbar like any other program. Closing the window keeps SS1 Tool running, with its icon by the clock, so long jobs like backups can finish and Linux update alerts still reach you. Click the icon to open the window again. Right-click it to turn <b>Start with Windows</b> on or off, or to <b>Exit</b> SS1 Tool completely.</p>
+ <div class="card pc-only win-only" id="winCard" style="display:none"><h3>Window</h3><p>SS1 Tool opens in its own window, with its icon on the taskbar like any other program. Closing the window keeps SS1 Tool running, with its icon by the clock, so long jobs like backups can finish and Linux update alerts still reach you. Click the icon to open the window again. Right-click it to turn <b>Start with Windows</b> on or off, or to <b>Exit</b> SS1 Tool completely.</p>
   <div class="row"><select id="openInSel" onchange="setOpenIn(this.value)"><option value="app">Open in its own window (recommended)</option><option value="browser">Open in my default browser</option></select><span class="muted" id="openInNote"></span></div></div>
- <div class="card"><h3>&#10024; Seasonal mode</h3><p>Adds a seasonal touch to the app: floating candles that drift, flicker and come and go, falling snowflakes, or a see-through night sky with twinkling stars, the odd meteor shower and, now and then, an aurora. Pick one and choose <b>Always on</b>, or <b>Seasonal</b> to show it only in its months. If animations are turned off in your Windows accessibility settings, this feature won't show.</p>
+ <div class="card pc-only steam-only"><h3>Updates</h3><p style="margin-bottom:0">Steam keeps SS1 Tool up to date: updates download and install by themselves, like your games. Backups, saves and exports are kept in your Documents folder, in <b>SS1 Tool</b>.</p></div>
+ <div class="card pc-only no-steam"><h3>&#10024; Seasonal mode</h3><p>Adds a seasonal touch to the app: floating candles that drift, flicker and come and go, falling snowflakes, or a see-through night sky with twinkling stars, the odd meteor shower and, now and then, an aurora. Pick one and choose <b>Always on</b>, or <b>Seasonal</b> to show it only in its months. If animations are turned off in your Windows accessibility settings, this feature won't show.</p>
   <div class="row"><select id="seasonSel" onchange="setSeasonEffect(this.value)"><option value="candles">Yer a wizard (floating candles)</option><option value="snow">Oi to the world (snow)</option><option value="stars">Wow (night sky: stars, meteor showers, aurora)</option><option value="off">Off</option></select>
    <label class="ck"><input type="checkbox" id="seasonAlways" onchange="setSeasonWhen(this.checked)"> Always on</label>
    <label class="ck"><input type="checkbox" id="seasonSeasonal" onchange="setSeasonWhen(!this.checked)"> Seasonal <span class="muted" id="seasonMonths"></span></label><span id="seasonState"></span></div></div>
@@ -655,6 +942,31 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 <div id="toast"></div>
 <div id="credit">f3bandit<span>v{{VERSION}}</span></div>
 <script>
+// Recent app errors, kept for the app problem report (addresses and other identifying details removed).
+const APPLOG=[];
+function redact(t){return String(t)
+ .replace(/\b(?:\d{1,3}\.){3}\d{1,3}(?::\d+)?\b/g,"<ip>")
+ .replace(/\b(?:[0-9a-f]{2}[:-]){5}[0-9a-f]{2}\b/gi,"<mac>")
+ .replace(/[0-9a-f:]*:[0-9a-f:]*:[0-9a-f:]*/gi,m=>m.includes("::")||m.split(":").length>5?"<ip6>":m)
+ .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g,"<email>")
+ .replace(/\\\\[^\s\\]+/g,"\\\\<server>")}
+function appLog(kind,msg){APPLOG.push(new Date().toISOString().slice(11,19)+" "+kind+": "+redact(msg).slice(0,300));if(APPLOG.length>40)APPLOG.shift()}
+addEventListener("error",e=>appLog("page",(e.message||"error")+" ("+String(e.filename||"").split("/").pop()+":"+e.lineno+")"));
+addEventListener("unhandledrejection",e=>appLog("page",e.reason&&e.reason.message||e.reason));
+// ---- for the app problem report: screenshots and the layout snapshot never show addresses or names
+function privWords(){const w=new Set();(typeof DEVICES!=="undefined"?DEVICES:[]).forEach(d=>{if(d.name)w.add(d.name);if(d.user&&d.user!=="root")w.add(d.user)});
+ document.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=password])").forEach(i=>{if(i.value&&i.value.length>2)w.add(i.value)});
+ const keep=new Set(["root","admin","guest","mister","MiSTer","sdcard","SuperStation","SuperStation One","SuperStation 1","SS1","MiSTer FPGA"]);return [...w].filter(x=>x&&x.length>2&&!keep.has(x)).sort((a,b)=>b.length-a.length)}
+function maskText(t,words){t=redact(t);for(const w of words)for(const v of new Set([w,esc(w),w.replace(/'/g,"&#39;"),w.replace(/'/g,"&apos;")]))t=t.split(v).join("•••");return t}
+function maskPage(root){const words=privWords(),undo=[];document.body.classList.add("repshot");undo.push(()=>document.body.classList.remove("repshot"));
+ const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.parentElement&&!n.parentElement.closest("script,style")?1:2});
+ for(let n;(n=tw.nextNode());){const v=n.nodeValue,m=maskText(v,words);if(m!==v){undo.push(()=>{n.nodeValue=v});n.nodeValue=m}}
+ root.querySelectorAll("input:not([type=checkbox]):not([type=radio]),textarea").forEach(i=>{if(i.value){const v=i.value;undo.push(()=>{i.value=v});i.value=i.type==="password"?"":"•••"}});
+ return()=>undo.reverse().forEach(f=>f())}
+// screenshots come from the app (ss1app://report/shot), as JPEG base64
+const SHOTQ={};let shotN=0;
+function ss1ShotDone(id,b64){const f=SHOTQ[id];delete SHOTQ[id];if(f)f(b64||"")}
+function shoot(){return new Promise(res=>{if(typeof ANDROID==="undefined"||!ANDROID){res("");return}const id=++shotN;SHOTQ[id]=res;location.href="ss1app://report/shot?id="+id;setTimeout(()=>{if(SHOTQ[id]){delete SHOTQ[id];res("")}},6000)})}
 // shown in both wizards: settings-file messages on a fresh card go away after Update All
 const CECNOTE=`<div class="vinfo"><b>Messages about hdmi_cec, hdmi_off, video_off_logo or lookahead when a game starts?</b> On a fresh SD card the SuperStation's settings files already contain these newer settings, but the MiSTer program on the card is older and doesn't know them yet, so it lists them as unknown. They go away once Update All (MiSTer-devel distribution) has updated MiSTer itself and the cores to versions that support HDMI-CEC (MiSTer 20260603 or newer). Keeping Linux updates off doesn't matter for this. Nothing needs to be removed from the settings files.</div>`;
 
@@ -664,8 +976,9 @@ let lastReport="";
 async function api(url,body,method){
   const opt={method:method||(body!==undefined?"POST":"GET"),headers:{"X-Token":TOKEN}};
   if(body!==undefined){opt.headers["Content-Type"]="application/json";opt.body=JSON.stringify(body)}
-  const r=await fetch(url,opt);let j={};try{j=await r.json()}catch(e){}
-  if(!r.ok)throw new Error(j.error||("HTTP "+r.status));return j;
+  let r;try{r=await fetch(url,opt)}catch(e){appLog("api",url.split("?")[0]+" "+e.message);throw e}
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok){if(!/^not connected/.test(j.error||""))appLog("api",url.split("?")[0]+" "+(j.error||"HTTP "+r.status));throw new Error(j.error||("HTTP "+r.status))}return j;
 }
 function toast(msg,err){const t=$("toast");t.textContent=msg;t.className=err?"err":"";t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",err?9000:6000)}
 async function busy(btn,fn){const b=btn instanceof HTMLElement?btn:null;if(b)b.disabled=true;try{return await fn()}catch(e){toast(e.message,true)}finally{if(b)b.disabled=false}}
@@ -710,17 +1023,18 @@ const SUBLOAD={fm:filesInit,saves:()=>{svLoad();svPoll()},sdbackup:()=>{sdBackup
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
 function openPage(s){
-  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x.dataset.s===s));
+  document.querySelectorAll("nav#nav button").forEach(x=>x.classList.toggle("on",x.dataset.s===s));
+  if(window.anavSync)anavSync(s);if(window.aLayoutKick)setTimeout(aLayoutKick,0);
   document.querySelectorAll("main > section").forEach(x=>x.classList.toggle("on",x.id===s));
   if(PAGELOAD[s])PAGELOAD[s]();
   if(subObs)subObs.disconnect();
   const parts=[...document.querySelectorAll(`#${s} .subpage`)].filter(d=>SUBLOAD[d.id]);
   if(parts.length){subObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){subObs.unobserve(e.target);SUBLOAD[e.target.id]()}}),{rootMargin:"300px 0px"});parts.forEach(d=>subObs.observe(d))}
 }
-function jumpTo(id){const el=$(id);if(!el)return;const h=document.querySelector("header").offsetHeight;window.scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-h-12),behavior:"smooth"})}
+function jumpTo(id){const el=$(id);if(!el)return;const h=document.querySelector("header").offsetHeight+(ANDROID?((el.closest("section")||document).querySelector(".jump")?.offsetHeight||0):0);window.scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-h-12),behavior:"smooth"})}
 // Open a part of a page from anywhere (for example the update pill -> About).
 function openPart(page,part){openPage(page);if(part)setTimeout(()=>jumpTo(part),60)}
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{openPage(b.dataset.s);window.scrollTo(0,0)});
+document.querySelectorAll("nav#nav button").forEach(b=>b.onclick=()=>{openPage(b.dataset.s);window.scrollTo(0,0)});
 // ---------- connect
 async function init(){const c=await api("/api/config");$("host").value=c.host||"";$("user").value=c.user||"root";loadDevices();if(c.connected){connectedHost=c.host;setConn(true);loadStatus()}}
 function setConn(on){$("conn").innerHTML=on?"Connected to <b>"+$("host").value+"</b>":"Not connected";$("statusCard").style.display=on?"block":"none"}
@@ -1337,7 +1651,7 @@ async function diskReport(target){const box=$(target);if(!box)return;box.innerHT
  const gb=x=>x?(x/1e9).toFixed(1)+" GB":"-";
  box.innerHTML=`<table style="margin-top:10px"><thead><tr><th>Disk</th><th>Name</th><th>Size</th><th>Connected as</th><th>Drive</th><th></th></tr></thead><tbody>${d.map(x=>`<tr><td>${x.number}</td><td>${esc(x.name)}<div class="muted">${esc(x.media||"")}</div></td><td>${gb(x.size)}</td><td>${esc(x.bus)}</td><td>${esc(x.letters||"-")}</td>
   <td>${x.offered?'<span class="pill good">&#10003; Offered</span>':`<span class="muted">${esc(x.reason)}</span>`}</td></tr>`).join("")}</tbody></table>
-  <p class="muted" style="margin:8px 0 0">${d.some(x=>x.offered)?"Offered cards appear in the list above; click Refresh.":"If your card reader isn't in this table at all, Windows doesn't see a card in it: reseat the card or try another reader. If it's listed with a reason, send a screenshot of this table to the SS1 Tool GitHub issues or the Discord, so the reader can be supported."}</p>`}
+  <p class="muted" style="margin:8px 0 0">${d.some(x=>x.offered)?"Offered cards appear in the list above; click Refresh.":"If your card reader isn't in this table at all, Windows doesn't see a card in it: reseat the card or try another reader. If it's listed with a reason, send a screenshot of this table to the SS1 Tool GitHub issues, so the reader can be supported."}</p>`}
 // ---------- About: Retroblast81 gift
 function toggleGift(){const w=$("giftWrap"),c=$("giftCat");if(w.classList.toggle("open")){c.src="/api/gift.gif?t="+TOKEN+"&r="+Date.now()}else{setTimeout(()=>{if(!w.classList.contains("open"))c.removeAttribute("src")},450)}}
 async function ctrlLoad(){ctrlBackupsLoad();if(!connectedHost){$("ctrlList").innerHTML='<span class="pill warn">Not connected - connect on the Connect tab first</span>';$("ctrlFiles").innerHTML="";return}
@@ -1810,6 +2124,260 @@ const VFIX=[
  {n:"Console Mode's picture repeats across an HDMI screen in CRT mode",t:"Fixed in Console Mode 1.1.4.2: update Console Mode from its settings (System > Update Console Mode).",a:[]}];
 function vFixRender(){$("vFixList").innerHTML=VFIX.map((f,i)=>`<details class="vfix"><summary>${esc(f.n)}</summary><p>${esc(f.t)}</p>${f.pal?PALWARN:""}<div class="row">${f.a.map((a,k)=>`<button class="b${typeof a[1]==="object"?" p":""} sm" onclick="vFix(${i},${k})">${esc(a[0])}</button>`).join("")}</div>${f.a.some(a=>typeof a[1]==="object")?`<div class="muted" style="font-size:12px;margin-top:6px">Changes ${esc(VID?VID.file.split("/").pop():"the settings file in use")}; goes back by itself unless you press Keep.</div>`:""}</details>`).join("")}
 function vFix(i,k){const a=VFIX[i].a[k][1];if(a==="wiz")return jumpTo("vwiz");if(a==="update")return openPart("setup","uaCard");if(!VID)return toast("Connect to the SuperStation first",true);vTry(a,VID.file)}
+
+// ---------- phones, tablets and SS1 Tool for Android
+const ANDROID=document.documentElement.dataset.platform==="android";
+const STEAM=document.documentElement.dataset.store==="steam",LINUX=document.documentElement.dataset.platform==="linux";
+// Android: the app tells the page about the device (form factor, screen, text size, accessibility)
+let DEV=null;
+// Android: a newer version is listed on ss1-tools.github.io (see MainActivity.checkForUpdate)
+function ss1Update(u){const b=$("aUpd");if(!b||!u||!u.versionName)return;
+ const notes=(u.notes||[]).map(n=>`<li>${esc(n)}</li>`).join("");
+ b.innerHTML=`<span><b>Update available:</b> SS1 Tool ${esc(u.versionName)}</span>`+
+  `<a class="b p" href="${esc(u.download||"https://app.lemonsqueezy.com/my-orders")}" target="_blank" rel="noopener">Download</a>`+
+  (notes?`<button class="b" onclick="const l=$('aUpdNotes');l.style.display=l.style.display==='none'?'block':'none'">What's new</button>`:"")+
+  `<button class="b" onclick="$('aUpd').style.display='none';location.href='ss1app://update/skip?code=${+u.versionCode||0}'">Not now</button>`+
+  (notes?`<ul id="aUpdNotes" style="display:none;flex-basis:100%;margin:4px 0 0;padding-left:20px;text-align:left">${notes}</ul>`:"")+
+  `<span class="muted" style="flex-basis:100%;text-align:center;font-size:13px">Download it from your order (the button opens Lemon Squeezy's My Orders), then install it over this version. Your settings and license stay.</span>`;
+ b.style.display="flex"}
+const TOTOP={delay:1500,fade:500};let topT=0;
+// The back-to-top button shows while you scroll and fades out with the scroll bar.
+function topCheck(){const b=$("toTop");if(!b)return;
+ const on=(ANDROID||NARROW.matches)&&scrollY>innerHeight*.6&&!$("remote")?.classList.contains("on");
+ b.style.transitionDuration=on?"150ms":TOTOP.fade+"ms";b.classList.toggle("show",on);clearTimeout(topT);
+ if(on)topT=setTimeout(()=>{b.style.transitionDuration=TOTOP.fade+"ms";b.classList.remove("show")},TOTOP.delay)}
+addEventListener("scroll",topCheck,{passive:true});
+function goTop(){const b=$("toTop");b.classList.remove("show");window.scrollTo({top:0,behavior:DEV&&DEV.reduce_motion?"auto":"smooth"})}
+// ---------- app problem report (Android)
+const SDK_MIN=26,SDK_TESTED=36;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function repDesc(e){const c=typeof e.className==="string"&&e.className.trim()?"."+e.className.trim().split(/\s+/)[0]:"";
+ const t=redact((e.textContent||e.value||e.placeholder||"").trim().replace(/\s+/g," ")).slice(0,28);return e.tagName.toLowerCase()+(e.id?"#"+e.id:"")+c+(t?` "${t}"`:"")}
+let REPSNAP=null;
+function cssPath(e){const p=[];for(;e&&e.nodeType===1&&e.tagName!=="MAIN";e=e.parentElement){let s=e.tagName.toLowerCase();if(e.id){p.unshift(s+"#"+e.id);break}const sib=e.parentElement?[...e.parentElement.children].filter(x=>x.tagName===e.tagName):[];if(sib.length>1)s+=`:nth-of-type(${sib.indexOf(e)+1})`;p.unshift(s)}return p.join(">")}
+function pageSnap(sec,words){const vw=document.documentElement.clientWidth,probs=[];
+ sec.querySelectorAll("*").forEach(e=>{if(!e.offsetParent||e.closest(".jump,pre,.out,textarea,.capture,.gp,#anav"))return;const r=e.getBoundingClientRect();if(!r.width)return;
+  const over=r.right>vw+1&&e.parentElement.getBoundingClientRect().right<=vw+1,clip=e.matches(".b,.pill,input,select")&&e.scrollWidth>e.clientWidth+2;
+  const tiny=e.matches("button,a.b,select,input:not([type=checkbox]):not([type=radio])")&&(r.width<32||r.height<32);
+  if((over||clip||tiny)&&probs.length<40)probs.push({what:over?"past the edge":clip?"clipped":"small touch target",el:maskText(repDesc(e),words),path:cssPath(e),box:[r.left,r.top+scrollY,r.width,r.height].map(Math.round),font:getComputedStyle(e).fontSize,scroll:[e.scrollWidth,e.clientWidth]})});
+ return {page:sec.id,height:document.documentElement.scrollHeight,problems:probs,html:maskText(sec.outerHTML,words).replace(/\svalue="[^"]*"/g,' value=""').slice(0,300000)}}
+async function layoutAudit(shots){const cur=document.querySelector("main > section.on")?.id||"connect",y=scrollY,res=[];REPSNAP={pages:[],shots:[]};
+ const vw=document.documentElement.clientWidth;
+ const pages=[...document.querySelectorAll("nav#nav button")].filter(b=>!(ANDROID&&b.classList.contains("pc-only"))&&(ANDROID||getComputedStyle(b).display!=="none")).map(b=>b.dataset.s);
+ for(const pg of pages){openPage(pg);await sleep(700);const sec=$(pg),r={page:pg,wide:[],tiny:[],tinyN:0,small:0,pageWidth:document.documentElement.scrollWidth};
+  for(const e of sec.querySelectorAll("*")){if(!e.offsetParent)continue;const b=e.getBoundingClientRect();if(!b.width)continue;
+   if(b.right>vw+2&&e.parentElement.getBoundingClientRect().right<=vw+2)r.wide.push(repDesc(e)+` ${Math.round(b.right-vw)}px past the edge`);
+   if(e.matches("button,a.b,select,textarea,input:not([type=checkbox]):not([type=radio])")&&(b.width<32||b.height<32)){r.tinyN++;if(r.tiny.length<4)r.tiny.push(repDesc(e)+` ${Math.round(b.width)}x${Math.round(b.height)}`)}
+   if(!e.children.length&&e.textContent.trim()&&parseFloat(getComputedStyle(e).fontSize)<11)r.small++}
+  res.push(r);
+  // what's really on this screen, with addresses and names hidden
+  scrollTo(0,0);await sleep(60);const undo=maskPage(document.body);
+  try{REPSNAP.pages.push(pageSnap(sec,privWords()));if(shots){await sleep(150);const b=await shoot();if(b)REPSNAP.shots.push({name:`${String(REPSNAP.shots.length+1).padStart(2,"0")}-${pg}.jpg`,data:b})}}
+  finally{undo()}}
+ openPage(cur);await sleep(50);scrollTo(0,y);return res}
+function onOff(v){return v?"on":"off"}
+let REPORT="",REPLAYOUT="";
+async function repBuild(btn){const d=DEV||{};btn.disabled=true;const old=btn.textContent;btn.textContent="Building…";
+ try{const where=$("repWhere").value||"Whole app / not sure",types=[...document.querySelectorAll("#repTypes input:checked")].map(c=>c.value);
+  const audit=$("repAudit").checked?await layoutAudit($("repShots").checked):null;if(!audit)REPSNAP=null;
+  const L=[];const add=(k,v)=>{if(v!==undefined&&v!==""&&v!==null)L.push(`- **${k}:** ${v}`)};
+  L.push("## SS1 Tool for Android: app problem report","");
+  add("Where",where);add("Problem",types.join(", ")||"not given");
+  L.push("","### What happened","",maskText($("repText").value.trim(),privWords())||"(not described)","","### App");
+  add("SS1 Tool",(d.app_version||"{{VERSION}}")+(d.abi?" ("+d.abi+")":""));add("WebView",d.webview);add("Connected to a SuperStation",connectedHost?"yes":"no");
+  L.push("","### Device");
+  add("Model",d.model);add("Android",d.android?`${d.android} (API ${d.sdk})`:"");add("Type",d.form&&`${d.form}, ${d.orientation}`);
+  add("Screen",d.px&&`${d.px} px, ${d.dp} dp, ${d.dpi} dpi`);add("Page size",`${document.documentElement.clientWidth}x${innerHeight} CSS px at ${devicePixelRatio}x`);
+  add("Display size",d.display_size&&d.display_size+"%");add("Font size",d.font_scale&&`${d.font_scale}% (page text ${d.text_zoom}%)`);
+  add("Language",d.language);add("Navigation",d.navigation);add("System bars",d.system_bars);add("Split screen",d.multi_window!==undefined?onOff(d.multi_window):"");add("Dark theme",d.dark_theme!==undefined?onOff(d.dark_theme):"");
+  L.push("","### Accessibility");
+  for(const[k,n]of[["talkback","TalkBack"],["magnification","Magnification"],["color_inversion","Color inversion"],["color_correction","Color correction"],["high_contrast_text","High contrast text"],["bold_text","Bold text"],["reduce_motion","Remove animations"]])if(d[k]!==undefined)add(n,onOff(d[k]));
+  L.push("","### Android settings that can affect SS1 Tool");
+  add("Connection",d.network);if(d.private_dns!==undefined)add("Private DNS",d.private_dns?"active":"off");if(d.data_saver!==undefined)add("Data saver",onOff(d.data_saver));
+  if(d.power_saver!==undefined)add("Battery saver",onOff(d.power_saver));if(d.battery_unrestricted!==undefined)add("Battery use",d.battery_unrestricted?"unrestricted":"optimized");
+  if(d.permissions){L.push("","### Permissions");for(const[k,v]of Object.entries(d.permissions))add(k,v?"granted":"NOT granted")}
+  L.push("","### Supported versions");
+  add("This device",!d.sdk?"unknown":d.sdk<SDK_MIN?"below the supported range":d.sdk>SDK_TESTED?`newer than tested (tested up to API ${SDK_TESTED})`:"within the supported range");
+  if(audit){L.push("","### Layout check");
+   for(const r of audit){const p=[];if(r.pageWidth>document.documentElement.clientWidth+2)p.push(`page is ${r.pageWidth}px wide`);if(r.wide.length)p.push(`${r.wide.length} item(s) past the right edge: ${r.wide.slice(0,4).join("; ")}`);if(r.tinyN)p.push(`${r.tinyN} small touch target(s): ${r.tiny.join("; ")}`);if(r.small)p.push(`${r.small} text item(s) under 11px`);
+    L.push(`- **${r.page}:** ${p.length?p.join(" · "):"OK"}`)}
+   if((window.AFIXED||[]).length)L.push(`- **Fixed automatically on this screen:** ${AFIXED.slice(0,10).join("; ")}`)}
+  L.push("","### Recent app errors","",APPLOG.length?"```\n"+APPLOG.join("\n")+"\n```":"none");
+  L.push("","---","_No personal data: no IP or MAC addresses, network names, passwords, accounts, device IDs or location._");
+  REPORT=L.join("\n");
+  const bs=getComputedStyle(document.body);
+  REPLAYOUT=JSON.stringify({format:1,app:d.app_version||"{{VERSION}}",store:d.store||"",made:new Date().toISOString(),where,types,
+   viewport:{w:document.documentElement.clientWidth,h:innerHeight,dpr:devicePixelRatio},font:{body:bs.fontSize,family:bs.fontFamily},
+   device:{model:d.model,android:d.android,sdk:d.sdk,form:d.form,orientation:d.orientation,px:d.px,dp:d.dp,dpi:d.dpi,display_size:d.display_size,font_scale:d.font_scale,text_zoom:d.text_zoom,bold_text:d.bold_text,high_contrast_text:d.high_contrast_text,magnification:d.magnification,webview:d.webview,navigation:d.navigation,multi_window:d.multi_window},
+   autoFixed:window.AFIXED||[],log:APPLOG,pages:REPSNAP?REPSNAP.pages:[]});
+  if(REPSNAP&&REPSNAP.shots.length)L.push("",`_The report file also has ${REPSNAP.shots.length} screenshot(s), with addresses and names hidden._`);
+  REPORT=L.join("\n");$("repOut").value=REPORT;$("repDone").style.display="block";$("repDone").scrollIntoView({block:"start"})}
+ catch(e){toast(e.message,true)}finally{btn.disabled=false;btn.textContent=old}}
+async function repCopy(quiet){try{await navigator.clipboard.writeText(REPORT)}catch(e){const t=$("repOut");t.focus();t.select();document.execCommand("copy");t.setSelectionRange(0,0);t.blur()}if(!quiet)toast("Report copied")}
+function repIssue(){if(!REPORT)return;const where=$("repWhere").value||"app",types=[...document.querySelectorAll("#repTypes input:checked")].map(c=>c.value);
+ const title=`[Android] ${types[0]||"Problem"} - ${where} (${DEV&&DEV.model||"Android"})`;
+ const note="";
+ let body=note+REPORT;const base="https://github.com/f3bandit/ss1_tool/issues/new?template=android_app.yml&title="+encodeURIComponent(title)+"&report=";
+ if((base+encodeURIComponent(body)).length>7500){repCopy(true);body="_The full report is on your clipboard: paste it here (long-press, Paste). It's also in the report file._\n\n"+REPORT.split("### Layout check")[0].slice(0,3000);toast("The report is long: it's on your clipboard, paste it into the issue")}
+ const a=document.createElement("a");a.href=base+encodeURIComponent(body);a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove()}
+function repSave(btn){if(!REPORT)return;busy(btn,async()=>{await api("/api/appreport/save",{text:REPORT,layout:REPLAYOUT,shots:REPSNAP?REPSNAP.shots:[]});location.href="/api/appreport/file?t="+encodeURIComponent(TOKEN)})}
+function licRemove(){if(confirm("Remove the license from this device? SS1 Tool asks for a key again here, and the freed slot can be used on another phone or tablet."))location.href="ss1app://license/deactivate"}
+function ss1Device(d){DEV=d;const h=document.documentElement.dataset;
+ const li=$("licInfo");if(li)li.textContent=[d.store==="play"?"Bought on Google Play. Updates come from the Play Store.":d.licensing?(d.license?`License key ${d.license}, activated on this device.`:""):"Test build: no license key needed.",d.eula_version?`License Agreement ${d.eula_version} accepted.`:""].filter(Boolean).join(" ");
+ const lr=$("licRemove");if(lr)lr.style.display=d.licensing&&d.license?"":"none";
+ if(d.scroll_fade_delay)TOTOP.delay=d.scroll_fade_delay;if(d.scroll_fade_ms)TOTOP.fade=d.scroll_fade_ms;
+ const st=$("supportThis");if(st&&d.sdk)st.textContent=`This device: Android ${d.android} (API ${d.sdk}) - `+(d.sdk>SDK_TESTED?"newer than SS1 Tool has been tested on; please report anything that doesn't work.":"supported.");
+ h.form=d.form;h.contrast=d.high_contrast_text?"high":"";h.motion=d.reduce_motion?"reduce":"";h.bold=d.bold_text?"1":"";
+ if(d.reduce_motion&&typeof fxStop==="function")try{fxStop()}catch(e){}
+ const notes=[];
+ if(d.font_scale>d.text_zoom)notes.push(`Font size is ${d.font_scale}%; SS1 Tool shows its text at ${d.text_zoom}% so the pages still fit the screen.`);
+ if(d.display_size>110&&d.form==="phone")notes.push(`Display size is enlarged (${d.display_size}%), so the screen is ${d.dp.split("x")[0]} units wide: tables are shown as cards.`);
+ if(d.color_inversion)notes.push("Color inversion is on: SS1 Tool's dark colors will look light, and the status colors (green, red) will look wrong.");
+ if(d.color_correction)notes.push("Color correction is on: the green/yellow/red status colors may look different; every status also has a symbol and text.");
+ if(d.magnification)notes.push("Magnification is on: if the page looks cut off, zoom back out with the magnification shortcut.");
+ if(d.talkback)notes.push("TalkBack is on: double-tap to press buttons; the menu is the ☰ button at the top left.");
+ if(d.high_contrast_text)notes.push("High contrast text is on: SS1 Tool uses brighter text and borders.");
+ if(d.reduce_motion)notes.push("Animations are off: SS1 Tool's animations are off too.");
+ const rows=[["Device",`${d.model} (${d.form}, ${d.orientation})`],["Android",`${d.android} (API ${d.sdk})`],["Screen",`${d.px} pixels, ${d.dp} units, ${d.dpi} dpi`],["Display size",d.display_size+"%"],["Font size",`${d.font_scale}% (page text ${d.text_zoom}%)`],["Bold text",d.bold_text?"On":"Off"],["Accessibility",[d.talkback&&"TalkBack",d.magnification&&"Magnification",d.color_inversion&&"Color inversion",d.color_correction&&"Color correction",d.high_contrast_text&&"High contrast text",d.reduce_motion&&"Remove animations"].filter(Boolean).join(", ")||"None that affect SS1 Tool"]];
+ const el=$("devInfo");if(el)el.innerHTML=`<table class="devtbl"><tbody>${rows.map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])}</td></tr>`).join("")}</tbody></table>`+(notes.length?`<ul style="margin:8px 0 0;padding-left:18px">${notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul>`:"");
+ tblSoon()}
+function navToggle(){document.body.classList.toggle("navopen")}
+// Phones: a table wider than the screen becomes one card per row, each value labelled
+// with its column header, so nothing needs sideways scrolling.
+const NARROW=matchMedia("(max-width:820px)");let tblQ=0;
+function tblLabel(t){const hs=[];t.querySelectorAll("thead th").forEach(th=>{for(let i=0;i<(th.colSpan||1);i++)hs.push(th.textContent.trim())});
+ t.querySelectorAll("tbody tr").forEach(tr=>{let i=0;for(const td of tr.children){const sp=td.colSpan||1;if(sp===1&&hs[i]&&!td.hasAttribute("data-label"))td.setAttribute("data-label",hs[i]);i+=sp}})}
+function tblFit(){tblQ=0;const m=document.querySelector("main");if(!m)return;
+ for(const t of m.querySelectorAll("table")){
+  if(!NARROW.matches){t.classList.remove("cards");continue}
+  if(t.classList.contains("cards")){tblLabel(t);continue}
+  const p=t.parentElement;if(!t.offsetParent||!p||!t.tHead)continue; // a table without a header just wraps
+  const cols=t.querySelectorAll("thead th").length;
+  if((cols>=(ANDROID?3:4)&&innerWidth<600)||t.scrollWidth>p.clientWidth+2||t.getBoundingClientRect().right>document.documentElement.clientWidth+2){t.classList.add("cards");tblLabel(t)}}}
+function tblSoon(){if(!tblQ)tblQ=requestAnimationFrame(tblFit)}
+new MutationObserver(tblSoon).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+addEventListener("resize",tblSoon);NARROW.addEventListener?.("change",tblSoon);
+function setHH(){const h=document.querySelector("header");if(h)document.documentElement.style.setProperty("--hh",h.offsetHeight+"px")}
+addEventListener("resize",setHH);setHH();
+document.querySelectorAll("nav#nav button").forEach(b=>b.addEventListener("click",()=>document.body.classList.remove("navopen")));
+document.addEventListener("click",e=>{if(document.body.classList.contains("navopen")&&!e.target.closest("nav")&&!e.target.closest(".navtog"))document.body.classList.remove("navopen")});
+if(ANDROID){
+ // buttons that open things on the PC (folders, terminals, the Samba share in Explorer, the Windows WiFi scan)
+ const PCONLY=/\bterm\(|bkShow\(|wifiScan\(|open-share|\/api\/(saves|bt|controllers)\/open|\/api\/shots\/pc\/open',\{\}\)|sdBackupOpen|jumpTo\('(flash|sdbackup)'\)|quitApp\(/;
+ const WORDS=[[/\bthis PC's\b/g,"this device's"],[/\bthis PC\b/g,"this device"],[/\bon your PC\b/g,"on this device"],[/\bfrom your PC\b/g,"from this device"]];
+ const fix=root=>{
+  root.querySelectorAll&&root.querySelectorAll("[onclick]").forEach(el=>{if(PCONLY.test(el.getAttribute("onclick")))el.style.display="none"});
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
+  while((n=w.nextNode())){const t=n.nodeValue;if(t.indexOf("PC")<0||n.parentElement?.closest(".keep-pc"))continue;let v=t;for(const[re,r]of WORDS)v=v.replace(re,r);if(v!==t)n.nodeValue=v}};
+ fix(document.body);
+ new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1)fix(n)}).observe(document.body,{childList:true,subtree:true});
+}
+
+// ---------- Android: app bar title, bottom navigation / rail, "More" sheet and the back button
+if(ANDROID){
+ const ICON={
+  connect:'<path d="M12 18.5a1.5 1.5 0 1 0 0 .01"/><path d="M8.5 15a5 5 0 0 1 7 0"/><path d="M5.5 12a9 9 0 0 1 13 0"/><path d="M2.5 9a13 13 0 0 1 19 0"/>',
+  setup:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
+  video:'<rect x="3" y="4.5" width="18" height="12" rx="2"/><path d="M8 20.5h8M12 16.5v4"/>',
+  network:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/>',
+  files:'<path d="M3 6.5a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  devices:'<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3.5v3.5M14 3.5v3.5M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"/>',
+  remote:'<path d="M7 7h10a5 5 0 0 1 5 5v1.5a3.5 3.5 0 0 1-6.2 2.2L14.5 14h-5l-1.3 1.7A3.5 3.5 0 0 1 2 13.5V12a5 5 0 0 1 5-5z"/><path d="M7.5 9.5v4M5.5 11.5h4"/><circle cx="16" cy="10.6" r=".6"/><circle cx="18" cy="12.6" r=".6"/>',
+  diag:'<path d="M2.5 12h4l2.5-6 4 12 2.5-6h6"/>',
+  about:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',
+  more:'<circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/>'};
+ const DESC={network:"Ethernet, WiFi and network shares",files:"File manager, saves and screenshots",devices:"USB, Bluetooth and controllers",diag:"SD card, BIOS, debug report, controller tester",about:"Version, license, privacy and problem reports",setup:"Scripts, Update All and settings",video:"Picture settings for your TV or CRT",remote:"On-screen controller and keyboard",connect:"Find and connect to your SuperStation"};
+ const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]||ICON.about}</svg>`;
+ const PAGES=[...document.querySelectorAll("nav button")].filter(b=>!b.classList.contains("pc-only")).map(b=>({s:b.dataset.s,name:b.textContent.trim()}));
+ const PRIMARY=["connect","setup","video","remote"];
+ const head=document.querySelector("header");const t=document.createElement("div");t.id="apTitle";head.insertBefore(t,$("conn"));
+ const nav=document.createElement("div");nav.id="anav";nav.setAttribute("role","navigation");nav.setAttribute("aria-label","Sections");
+ nav.innerHTML=PAGES.map(p=>`<button data-s="${p.s}" class="${PRIMARY.includes(p.s)?"prim":"sec"}"><i>${svg(p.s)}</i><span>${esc(p.name)}</span></button>`).join("")+`<button class="more" data-more="1"><i>${svg("more")}</i><span>More</span></button>`;
+ document.body.appendChild(nav);
+ const more=document.createElement("div");more.id="amore";
+ more.innerHTML=`<div class="scrim"></div><div class="sheet" role="dialog" aria-label="More sections"><div class="grab"></div>${PAGES.filter(p=>!PRIMARY.includes(p.s)).map(p=>`<button data-s="${p.s}">${svg(p.s)}<span>${esc(p.name)}<small>${esc(DESC[p.s]||"")}</small></span></button>`).join("")}</div>`;
+ document.body.appendChild(more);
+ const style=document.createElement("style");document.head.appendChild(style);
+ // phones show the 4 main sections + More; tablets (rail) show every section
+ style.textContent='@media (max-width:599px){html[data-platform=android] #anav .sec{display:none}}';
+ const HIST=[];let going=false;
+ const go=s=>{more.classList.remove("open");openPage(s);window.scrollTo(0,0)};
+ nav.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.more){more.classList.toggle("open");return}go(b.dataset.s)});
+ more.addEventListener("click",e=>{const b=e.target.closest("button");if(b)go(b.dataset.s);else if(e.target.classList.contains("scrim"))more.classList.remove("open")});
+ window.anavSync=s=>{const p=PAGES.find(x=>x.s===s);t.textContent=p?p.name:"SS1 Tool";
+  nav.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s===s||(!!b.dataset.more&&!PRIMARY.includes(s)&&innerWidth<600)));
+  if(!going&&HIST[HIST.length-1]!==s){HIST.push(s);if(HIST.length>30)HIST.shift()}};
+ // the Android back button: close the sheet, then go back through the pages you opened
+ window.ss1Back=()=>{if(more.classList.contains("open")){more.classList.remove("open");return true}
+  if(HIST.length>1){HIST.pop();going=true;openPage(HIST[HIST.length-1]);going=false;window.scrollTo(0,0);return true}return false};
+ anavSync(document.querySelector("main > section.on")?.id||"connect");
+}
+// ---------- Android phones: two-column layout pass
+// Wraps runs of status pills in .pgrid, and marks a half-width item that would sit
+// alone in its row (odd last button, a long pill) as .span2 so it fills the row.
+if(ANDROID){
+ const PHONE=matchMedia("(max-width:599px)");let lastResize=0;
+ const HALF=el=>(el.matches(".b:not(.sm),a.b,label.ck")&&!el.closest(".vctl"))||(el.classList.contains("pill")&&!el.parentElement.matches("td.acell"));
+ const vis=el=>el.offsetParent!==null||getComputedStyle(el).display!=="none";
+ function aGroupPills(root){
+  root.querySelectorAll("main .pill").forEach(p=>{
+   const par=p.parentElement;if(!par||par.closest(".pgrid,.sst,.st,.row,.advline,.kv,span,td,th,.vname,.vctl,p,h3,h4,label,li,.ptpad,.wz-pills,.pills,#updPill,#conn,.muted"))return;
+   if(getComputedStyle(par).display.startsWith("inline"))return;
+   // run of consecutive pills, only whitespace/<br> between
+   let first=p;for(let n=p.previousSibling;n;n=n.previousSibling){if(n.nodeType===3&&!n.textContent.trim())continue;if(n.nodeName==="BR")continue;if(n.nodeType===1&&n.classList.contains("pill")){first=n;continue}break}
+   if(first!==p)return;
+   const run=[];let txtBefore=p.previousSibling&&p.previousSibling.nodeType===3&&p.previousSibling.textContent.trim();if(txtBefore)return;
+   for(let n=p;n;n=n.nextSibling){if(n.nodeType===3&&!n.textContent.trim())continue;if(n.nodeName==="BR"){continue}if(n.nodeType===1&&n.classList.contains("pill")){run.push(n);continue}if(n.nodeType===3)return;break}
+   const g=document.createElement("div");g.className="pgrid";par.insertBefore(g,p);
+   run.forEach(x=>g.appendChild(x));
+   for(let n=g.nextSibling;n&&n.nodeName==="BR";){const nx=n.nextSibling;n.remove();n=nx}
+  })}
+ function aSpan(c){const w=c.clientWidth/2;const cpl=Math.max(8,Math.floor((w-26)/7.2));
+  let col=0,prevHalf=null;const kids=[...c.children].filter(vis);
+  kids.forEach(k=>k.classList.remove("span2"));
+  kids.forEach(k=>{let half=HALF(k);
+   if(half&&k.classList.contains("pill")&&k.textContent.trim().length>cpl*2)half=false,k.classList.add("span2");
+   if(half){col=col?0:1;prevHalf=col?k:null}else{if(col===1&&prevHalf)prevHalf.classList.add("span2");col=0;prevHalf=null}});
+  if(col===1&&prevHalf)prevHalf.classList.add("span2")}
+ let aQ=0;function aLayout(){aQ=0;const m=document.querySelector("main");if(!m)return;const phone=PHONE.matches;
+  // the safety-net fixes are re-decided on every pass (rotation, split screen, font changes)
+  m.querySelectorAll(".a1col").forEach(e=>e.classList.remove("a1col"));m.querySelectorAll(".afit").forEach(e=>e.classList.remove("afit"));
+  m.querySelectorAll('.b[style*="font-size"]').forEach(b=>b.style.fontSize="");
+  if(phone)aGroupPills(m);aTables(m,phone);
+  if(phone){m.querySelectorAll(".row:not(label):not(.ptlegend),.pgrid,.sst,.st,td.acell").forEach(c=>{if(c.clientWidth&&!c.closest(".vctl"))aSpan(c)});aFit(m)}
+  aGuard(m)}
+ // safety net: anything still past the screen edge or clipped gets its box switched to one column
+ // (or itself allowed to wrap), and is noted in the app log for problem reports
+ window.AFIXED=window.AFIXED||[];const SKIP="pre,.out,textarea,.jump,.capture,.gp,#anav,.kbdgrid,.ptpad,svg,canvas,video,code";
+ function aGuard(m){const sec=m.querySelector("main > section.on");if(!sec)return;
+  for(let pass=0;pass<3;pass++){const vw=document.documentElement.clientWidth;let bad=0;
+   for(const e of sec.querySelectorAll("*")){if(!e.offsetParent||e.closest(SKIP))continue;const r=e.getBoundingClientRect();if(!r.width)continue;
+    const over=r.right>vw+1&&e.parentElement.getBoundingClientRect().right<=vw+1;
+    const clip=e.matches(".b,.pill")&&e.scrollWidth>e.clientWidth+2;if(!over&&!clip)continue;
+    let box=e.parentElement;while(box&&box!==sec){const d=getComputedStyle(box).display;if((d.includes("flex")||d.includes("grid"))&&!box.classList.contains("a1col"))break;box=box.parentElement}
+    if(box&&box!==sec&&!over)box=null;
+    if(box&&box!==sec){box.classList.add("a1col")}else e.classList.add("afit");bad++;
+    const d=(typeof repDesc==="function"?repDesc(e):e.tagName)+(over?" past the edge":" clipped");
+    if(Date.now()-lastResize>1000&&!AFIXED.includes(d)&&AFIXED.length<30){AFIXED.push(d);appLog("layout",sec.id+": "+d+" (fixed)")}}
+   if(!bad)break}}
+ // tables whose rows have 3+ cells become cards; a cell of only buttons/pills becomes a 2-column grid
+ function aTables(m,phone){m.querySelectorAll("table").forEach(t=>{if(t.classList.contains("cards")||t.closest(".vctl"))return;
+  let many=[...t.rows].some(r=>r.cells.length>=3);
+  if(many&&!phone&&t.offsetParent){ // tablets: cards only when the columns are squeezed
+   t.classList.remove("acards");const pw=t.parentElement.clientWidth;
+   many=t.scrollWidth>pw+2||[...t.querySelectorAll("td")].some(td=>td.textContent.trim()&&td.clientWidth<90)}
+  else if(many&&!phone)many=t.classList.contains("acards");
+  t.classList.toggle("acards",many);
+  if(!many){const two=[...t.rows].some(r=>r.cells.length===2);const pw=t.parentElement?t.parentElement.clientWidth:0;
+   if(two&&pw)t.classList.toggle("akv",pw<300||(!t.classList.contains("akv")&&t.scrollWidth>pw+2));return}
+  t.querySelectorAll("td").forEach(td=>{const els=[...td.children];const onlyCtl=els.length>1&&els.every(e=>e.matches(".b,a.b,.pill"))&&[...td.childNodes].every(n=>n.nodeType!==3||!n.textContent.trim());td.classList.toggle("acell",onlyCtl)})})}
+ // shrink a button's text a little when a word doesn't fit (big font / text size settings)
+ function aFit(m){m.querySelectorAll(".b").forEach(b=>{if(!b.offsetParent||b.closest("#anav"))return;b.style.fontSize="";
+  let fs=parseFloat(getComputedStyle(b).fontSize),min=fs*0.7;let n=0;while(b.scrollWidth>b.clientWidth+1&&fs>min&&n++<12){fs-=1;b.style.fontSize=fs+"px"}})}
+ const aKick=()=>{if(!aQ)aQ=requestAnimationFrame(aLayout)};
+ new MutationObserver(aKick).observe(document.querySelector("main"),{childList:true,subtree:true});
+ let aRT=0;addEventListener("resize",()=>{lastResize=Date.now();clearTimeout(aRT);aRT=setTimeout(aKick,200)});window.aLayoutKick=aKick;aKick();
+}
 // ---------- seasonal mode: "Oi to the world" (falling snow) and "Yer a wizard" (floating candles)
 const FX=(()=>{const cv=$("snow"),ctx=cv.getContext("2d");let flakes=[],candles=[],raf=0,mode="",W=0,H=0,dpr=1,last=0,T=0;
  const reduce=window.matchMedia("(prefers-reduced-motion: reduce)"),R=Math.random;
@@ -1926,7 +2494,7 @@ const SEASONS={candles:{months:[9,10],when:"October and November",name:"Yer a wi
  snow:{months:[10,11,0,1,2],when:"November to March",name:"Oi to the world",on:"&#10052; Snowing"},
  stars:{months:[2,3,4,5,6,7],when:"March to August",name:"Wow",on:"&#10024; Stars out"}};
 let SEASON={effect:"snow",always:false};
-function applySeason(){const s=SEASONS[SEASON.effect],m=new Date().getMonth(),want=!!s&&(SEASON.always||s.months.includes(m));
+function applySeason(){if(ANDROID||STEAM){FX.stop();return}const s=SEASONS[SEASON.effect],m=new Date().getMonth(),want=!!s&&(SEASON.always||s.months.includes(m));
  want?FX.start(SEASON.effect):FX.stop();
  const al=$("seasonAlways"),se=$("seasonSeasonal");if(al){al.checked=SEASON.always;se.checked=!SEASON.always;al.disabled=se.disabled=!s;$("seasonMonths").textContent=s?`(${s.when})`:""}
  const st=$("seasonState");if(!st)return;
@@ -2077,5 +2645,6 @@ function ptInit(){if(PT.init)return;PT.init=true;$("ptLayoutUsb").innerHTML=ptOp
  new IntersectionObserver(es=>{PT.vis=es[0].isIntersecting;if(PT.vis)ptLoop()}).observe($("padtest"));
  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&PT.vis)ptLoop()})}
 </script>
+<button id="toTop" class="b" onclick="goTop()" aria-label="Back to the top" title="Back to the top">&#8593;</button>
 </body>
 </html>

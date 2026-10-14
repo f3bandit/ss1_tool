@@ -248,8 +248,19 @@ func apiRemote(w http.ResponseWriter, r *http.Request) {
 	_ = readJSON(r, &req)
 	switch req.Action {
 	case "reboot":
-		go func() { _, _ = run("sync; reboot"); disconnect() }()
-		writeJSON(w, map[string]any{"ok": true, "message": "Rebooting. Reconnect in about 30 seconds."})
+		// A plain "reboot" leaves the FPGA core running and the SS1 on a black screen.
+		// shutdown.sh flushes storage and restarts the way MiSTer's own Reboot does.
+		if _, err := ensureScripts(false); err != nil {
+			fail(w, 502, err.Error())
+			return
+		}
+		kbdStop()
+		if _, err := run("NODIALOG=1 nohup bash " + scriptsDir + "/shutdown.sh reboot >/dev/null 2>&1 &"); err != nil {
+			fail(w, 502, err.Error())
+			return
+		}
+		go func() { time.Sleep(2 * time.Second); disconnect() }()
+		writeJSON(w, map[string]any{"ok": true, "message": "Restarting. Reconnect in about 30 seconds."})
 	case "shutdown":
 		if _, err := ensureScripts(false); err != nil {
 			fail(w, 502, err.Error())
@@ -267,7 +278,7 @@ func apiRemote(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, map[string]any{"ok": true, "message": msg, "warn": note != ""})
 	case "menu":
-		out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core /media/fat/menu.rbf" > /dev/MiSTer_cmd' && echo ok`)
+		out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core menu.rbf" > /dev/MiSTer_cmd' && echo ok`)
 		if err != nil {
 			fail(w, 502, "MiSTer did not accept the command (is the menu busy?) "+strings.TrimSpace(out))
 			return

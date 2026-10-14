@@ -557,7 +557,7 @@ func cifsSaveSettings(f cifsForm) (string, int, error) {
 	}
 	// Back up the previous ini on this PC (it holds the password, so it stays on the user's PC).
 	if raw, _ := run("[ -f " + shq(cifsIniPath) + " ] && cat " + shq(cifsIniPath) + "; true"); strings.TrimSpace(raw) != "" {
-		dir := filepath.Join(exeDir(), "backups", "cifs")
+		dir := filepath.Join(dataDir(), "backups", "cifs")
 		_ = os.MkdirAll(dir, 0o755)
 		_ = os.WriteFile(filepath.Join(dir, "cifs_mount_"+time.Now().Format("2006-01-02_15-04-05")+".ini"), []byte(raw), 0o600)
 	}

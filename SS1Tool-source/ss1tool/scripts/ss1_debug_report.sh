@@ -175,17 +175,60 @@ collect() {
   sec "MiSTer.ini"
   echo "Sections and main= overrides:"
   grep -nE '^\[|^[[:space:]]*main[[:space:]]*=' "$FAT/MiSTer.ini" 2>/dev/null | redact
-  local hk act=""
+  # HDMI-CEC is supported by MiSTer 20260603 and newer (and Console Mode's MiSTer); off unless hdmi_cec=1.
+  # Older MiSTer programs list these settings as unknown options until Update All updates MiSTer and the cores.
+  local hk cecl=""
   for hk in hdmi_cec hdmi_cec_input_mode hdmi_cec_power_on hdmi_cec_sleep hdmi_cec_wake hdmi_cec_clock hdmi_off video_off_logo; do
-    grep -qiE "^[[:space:]]*${hk}[[:space:]]*=" "$FAT/MiSTer.ini" 2>/dev/null && act="$act $hk"
+    v=$(grep -iE "^[[:space:]]*${hk}[[:space:]]*=" "$FAT/MiSTer.ini" 2>/dev/null | tail -n1 | cut -d= -f2 | sed 's/;.*//' | tr -d ' \r')
+    cecl="$cecl ${hk}=${v:-(not set)}"
   done
-  if [ -n "$act" ]; then
-    echo "SS1 HDMI fix: NOT applied - active:$act"
-    finding "WARN: SS1 HDMI fix not applied - these MiSTer.ini settings should be commented out:$act"
+  echo "HDMI-CEC settings:$cecl"
+  local mv; mv=$(grep -a -o -m1 '\$VER:[0-9][0-9][0-9][0-9][0-9][0-9]' "$FAT/MiSTer" 2>/dev/null | head -n1 | cut -d: -f2)
+  if [ -n "$mv" ]; then
+    echo "MiSTer program: 20$mv (HDMI-CEC needs 20260603 or newer)"
+    [ "$mv" -lt 260603 ] 2>/dev/null && finding "INFO: MiSTer program is 20$mv: it lists newer settings (hdmi_cec, hdmi_off, video_off_logo...) as unknown options until Update All (MiSTer-devel) updates MiSTer and the cores; nothing needs removing from MiSTer.ini"
   else
-    echo "SS1 HDMI fix: applied (no CEC / hdmi_off / video_off_logo settings active)"
+    echo "MiSTer program: version unknown"
   fi
   echo; showfile "$FAT/MiSTer.ini" 600
+
+  # ---------------------------------------------------------------- 4b
+  progress "Video settings"
+  sec "VIDEO"
+  local vkeys='video_mode|video_mode_ntsc|video_mode_pal|vsync_adjust|vscale_mode|vscale_border|hdmi_limited|dvi_mode|hdmi_game_mode|hdr|vrr_mode|hdmi_audio_96k|direct_video|vga_mode|composite_sync|vga_sog|forced_scandoubler|vga_scaler|menu_pal|ntsc_mode|fb_terminal'
+  local alts seen=0 notseen="" f n
+  # MiSTer uses MiSTer.ini plus the first three MiSTer_*.ini files in directory order
+  alts=$(cd "$FAT" 2>/dev/null && ls -1f 2>/dev/null | grep -iE '^MiSTer_.+\.ini$')
+  echo "Video profiles (directory order; MiSTer uses only the first three):"
+  for n in $alts; do
+    seen=$((seen+1))
+    if [ $seen -le 3 ]; then echo "  $n"; else echo "  $n  <- not seen by MiSTer"; notseen="$notseen $n"; fi
+  done
+  [ -n "$notseen" ] && finding "WARN: MiSTer only uses three alternative ini files; not available in its menu:$notseen (SS1 Tool > Video > Profiles)"
+  if command -v devmem >/dev/null 2>&1; then
+    local w; w=$(devmem 0x1FFFFF04 32 2>/dev/null)
+    case "$w" in
+      0x??BA9934|0x??ba9934) echo "Active profile: alternative $(( ($w >> 24) & 255 )) (0 = MiSTer.ini)";;
+      *) echo "Active profile: MiSTer.ini (no alternative chosen)";;
+    esac
+  fi
+  [ -f "$FAT/ConsoleMode/last_ini" ] && echo "Console Mode last_ini: $(head -c 100 "$FAT/ConsoleMode/last_ini")"
+  for f in "$FAT/MiSTer.ini" $(for n in $alts; do echo "$FAT/$n"; done); do
+    [ -f "$f" ] || continue
+    echo; echo "--- video settings in $(basename "$f") ([MiSTer] section) ---"
+    awk -v keys="^($vkeys)[[:space:]]*=" 'BEGIN{IGNORECASE=1;g=1} /^[[:space:]]*\[/{g=(tolower($0)~/^[[:space:]]*\[mister\]/)} g && tolower($0)~keys{sub(/\r$/,"");sub(/[[:space:]]*;.*/,"");print "  "$0}' "$f" 2>/dev/null
+  done
+  local vm vg
+  vm=$(awk 'BEGIN{g=1} /^[[:space:]]*\[/{g=(tolower($0)~/\[mister\]/)} g && tolower($0)~/^[[:space:]]*video_mode[[:space:]]*=/{sub(/.*=/,"");sub(/;.*/,"");gsub(/[[:space:]]/,"");v=$0} END{print v}' "$FAT/MiSTer.ini" 2>/dev/null)
+  [ -z "$vm" ] && finding "INFO: MiSTer.ini has no video_mode: HDMI uses the TV's preferred mode. If HDMI shows nothing (especially through a switch or receiver), set 720p or 1080p (SS1 Tool > Video)"
+  for vg in forced_scandoubler vga_scaler; do
+    grep -qiE "^[[:space:]]*${vg}[[:space:]]*=[[:space:]]*1" "$FAT/MiSTer.ini" 2>/dev/null && finding "WARN: $vg=1 in MiSTer.ini: 31 kHz VGA output, never for a TV-style (15 kHz) CRT"
+  done
+  grep -qiE '^[[:space:]]*direct_video[[:space:]]*=[[:space:]]*1' "$FAT/MiSTer.ini" 2>/dev/null && finding "INFO: direct_video=1 in MiSTer.ini: no HDMI picture on a normal TV or monitor"
+  [ -f "$FAT/yc.txt" ] && echo "yc.txt present ($(grep -c '=' "$FAT/yc.txt") entries)"
+  f=$(find "$FAT" -maxdepth 3 -iname 'consolemode_crt.bin' 2>/dev/null | head -n1)
+  [ -n "$f" ] && echo "Console Mode CRT settings: $f ($(od -An -tx1 -N16 "$f" 2>/dev/null | tr -s ' '))"
+  [ -d "$FAT/config/ss1tool/video_undo" ] && echo "SS1 Tool video undo copies: $(ls "$FAT/config/ss1tool/video_undo" 2>/dev/null | tr '\n' ' ')"
 
   # ---------------------------------------------------------------- 5
   progress "Console Mode files"

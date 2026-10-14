@@ -21,7 +21,16 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.28.8"
+const appVersion = "1.28.9"
+
+// displayVersion is the version shown in the app: SS1 Tool for Android has its own numbers,
+// passed on by the Android app.
+func displayVersion() string {
+	if v := os.Getenv("SS1TOOL_APPVERSION"); v != "" {
+		return v
+	}
+	return appVersion
+}
 
 //go:embed web/index.html
 var webFS embed.FS
@@ -147,7 +156,9 @@ func main() {
 		}
 		html, _ := fs.ReadFile(sub, "index.html")
 		page := strings.Replace(string(html), "{{TOKEN}}", token, 1)
-		page = strings.Replace(page, "{{VERSION}}", appVersion, -1)
+		page = strings.Replace(page, "{{VERSION}}", displayVersion(), -1)
+		page = strings.Replace(page, "{{PLATFORM}}", uiPlatform, -1)
+		page = strings.Replace(page, "{{STORE}}", storeBuild, -1)
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
 		_, _ = w.Write([]byte(page))
@@ -171,6 +182,7 @@ func main() {
 	registerShotRoutes(mux)
 	registerPadRoutes(mux)
 	registerVideoRoutes(mux)
+	registerPlatformRoutes(mux)
 
 	url := fmt.Sprintf("http://%s/", srvAddr)
 	fmt.Println("SS1 Tool", appVersion, "running at", url)
