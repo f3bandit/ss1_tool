@@ -21,6 +21,8 @@ import (
 	"time"
 )
 
+const uiPlatform = "windows"
+
 // setConsoleIcon puts the embedded SS1 icon (resource ID 1) on the console window
 // and its taskbar button. Windows Terminal keeps its own icon; classic consoles use ours.
 func init() {

@@ -297,7 +297,7 @@ func videoFileByPath(p string) (videoFile, bool) {
 // ---------------------------------------------------------------- display restart
 
 func videoReloadMenu() error {
-	out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core /media/fat/menu.rbf" > /dev/MiSTer_cmd' && echo ok`)
+	out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core menu.rbf" > /dev/MiSTer_cmd' && echo ok`)
 	if err != nil || !strings.Contains(out, "ok") {
 		return fmt.Errorf("the SuperStation didn't accept the restart command (%s)", strings.TrimSpace(out))
 	}
@@ -450,7 +450,7 @@ func apiVideoApply(w http.ResponseWriter, r *http.Request) {
 			secs = 20
 		}
 		// the SuperStation reverts by itself unless Keep removes the flag in time
-		script := fmt.Sprintf(`echo %s > %s; (sleep %d; if [ -f %s ] && [ "$(cat %s)" = %s ]; then cp -f %s %s && rm -f %s && sync; rm -f %s; [ -p /dev/MiSTer_cmd ] && echo "load_core /media/fat/menu.rbf" > /dev/MiSTer_cmd; fi) </dev/null >/dev/null 2>&1 &`,
+		script := fmt.Sprintf(`echo %s > %s; (sleep %d; if [ -f %s ] && [ "$(cat %s)" = %s ]; then cp -f %s %s && rm -f %s && sync; rm -f %s; [ -p /dev/MiSTer_cmd ] && echo "load_core menu.rbf" > /dev/MiSTer_cmd; fi) </dev/null >/dev/null 2>&1 &`,
 			shq(up), videoTryFlag, secs+3, videoTryFlag, videoTryFlag, shq(up), shq(up), shq(req.File), shq(up), videoTryFlag)
 		if _, err := run("if command -v setsid >/dev/null; then setsid sh -c " + shq(script) + "; else nohup sh -c " + shq(script) + "; fi </dev/null >/dev/null 2>&1"); err != nil {
 			fail(w, 502, "couldn't start the automatic undo - nothing changed")
@@ -597,7 +597,7 @@ func apiVideoSelect(w http.ResponseWriter, r *http.Request) {
 	}
 	// like a settings try: the SuperStation goes back to the previous profile unless kept
 	tok := fmt.Sprintf("profile%d", time.Now().UnixNano())
-	script := fmt.Sprintf(`echo %s > %s; (sleep %d; if [ -f %s ] && [ "$(cat %s)" = %s ]; then rm -f %s; %s -altcfg %d; [ -p /dev/MiSTer_cmd ] && echo "load_core /media/fat/menu.rbf" > /dev/MiSTer_cmd; fi) </dev/null >/dev/null 2>&1 &`,
+	script := fmt.Sprintf(`echo %s > %s; (sleep %d; if [ -f %s ] && [ "$(cat %s)" = %s ]; then rm -f %s; %s -altcfg %d; [ -p /dev/MiSTer_cmd ] && echo "load_core menu.rbf" > /dev/MiSTer_cmd; fi) </dev/null >/dev/null 2>&1 &`,
 		tok, videoTryFlag, secs+3, videoTryFlag, videoTryFlag, tok, videoTryFlag, kbdRemote, prev)
 	if _, err := run("if command -v setsid >/dev/null; then setsid sh -c " + shq(script) + "; else nohup sh -c " + shq(script) + "; fi </dev/null >/dev/null 2>&1"); err != nil {
 		fail(w, 502, "couldn't start the automatic undo - nothing changed")

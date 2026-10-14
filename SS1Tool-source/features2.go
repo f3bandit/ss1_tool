@@ -443,7 +443,19 @@ func exeDir() string {
 	return filepath.Dir(exe)
 }
 
-func backupsRoot() string { return filepath.Join(exeDir(), "backups") }
+// dataDir is where SS1 Tool keeps backups and exports: next to SS1Tool.exe on Windows,
+// the app's own folder on Android (SS1TOOL_DATA, set by the Android app).
+func dataDir() string {
+	if d := os.Getenv("SS1TOOL_DATA"); d != "" {
+		return d
+	}
+	if isSteam() {
+		return steamDataDir()
+	}
+	return exeDir()
+}
+
+func backupsRoot() string { return filepath.Join(dataDir(), "backups") }
 
 // relForRemote maps an ini on the SS1 to its category path inside a backup set (file name unchanged).
 func relForRemote(p string) (string, bool) {
@@ -1244,7 +1256,7 @@ f=$(sed -n 's/^[[:space:]]*fb_terminal[[:space:]]*=[[:space:]]*\([0-9]\).*/\1/Ip
 	if !strings.EqualFold(core, "MENU") {
 		// A game core is on screen (whether started from MiSTer or Console Mode): it may not
 		// support the Linux screen, so go back to the menu core. Whatever shows next is re-checked.
-		if _, err := run(`[ -p /dev/MiSTer_cmd ] && timeout 3 sh -c 'echo "load_core /media/fat/menu.rbf" > /dev/MiSTer_cmd'`); err == nil {
+		if _, err := run(`[ -p /dev/MiSTer_cmd ] && timeout 3 sh -c 'echo "load_core menu.rbf" > /dev/MiSTer_cmd'`); err == nil {
 			steps = append(steps, "loaded-menu-core")
 			time.Sleep(4 * time.Second)
 			if g = shutdownGrab(); g == "free" { // Console Mode may come back up by itself

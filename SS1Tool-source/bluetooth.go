@@ -422,7 +422,7 @@ func lastLine(s string) string {
 
 // ================================================================ backups (on this PC)
 
-func btBackupRoot() string { return filepath.Join(exeDir(), "backups", "bluetooth") }
+func btBackupRoot() string { return filepath.Join(dataDir(), "backups", "bluetooth") }
 
 func btSetDir(name string) (string, bool) {
 	if !btSetRe.MatchString(name) || strings.Contains(name, "..") {

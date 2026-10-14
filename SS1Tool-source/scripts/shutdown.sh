@@ -1,6 +1,8 @@
 #!/bin/bash
 # Safe shutdown for MiSTer: flush writes, try to mark filesystems clean,
 # report each drive's exFAT clean/dirty state, then halt.
+# "shutdown.sh reboot" does the same, then restarts the SuperStation the way
+# MiSTer's own Reboot does (a plain Linux reboot leaves the SS1 on a black screen).
 # Does NOT stop bluetoothd - a clean bluetoothd exit with RememberPowered=true
 # leaves the BT adapter permanently off (MiSTer-devel/Scripts_MiSTer#36).
 
@@ -36,6 +38,7 @@ cm_hidden() {
   case "$(cm_chain)" in *script_runner*) return 0 ;; esac
   [ ! -t 1 ]
 }
+MODE=halt; [ "$1" = reboot ] && MODE=reboot
 CM_HIDDEN=0; cm_hidden && CM_HIDDEN=1
 CM_PIDS=$(cm_frontend_pids | tr '\n' ' ')
 { echo "=== $(date) $(basename "$0")"
@@ -97,7 +100,8 @@ vol_state() { # on-disk exFAT VolumeFlags of a partition
   else echo "clean"; fi
 }
 
-show "Shutting down" "\n   Flushing writes to storage...\n\n   Do NOT power off yet." 9 warn
+T="Shutting down"; [ "$MODE" = reboot ] && T="Restarting"
+show "$T" "\n   Flushing writes to storage...\n\n   Do NOT power off yet." 9 warn
 mounts=()
 for m in /media/usb[0-9]* /media/fat; do [ -d "$m" ] && mountpoint -q "$m" && mounts+=("$m"); done
 sync
@@ -114,6 +118,22 @@ for m in "${mounts[@]}"; do
 done
 if [ $dirty -eq 0 ]; then note="   All data written to storage.\n   Windows will NOT complain."
 else note="   DIRTY: Windows will offer to scan.\n   Data is synced; scan is optional."; fi
+
+if [ "$MODE" = reboot ]; then
+  show "Restarting" "\n   Storage flushed, restarting now...\n$report" $(( 8 + ${#mounts[@]} )) good
+  sleep 1
+  echo "reboot: stopping main, cold reset" >> "$SS1LOG" 2>/dev/null
+  # keep the MiSTer main program from touching the FPGA while the reset is set up
+  for d in /proc/[0-9]*; do
+    case "$(cat "$d/comm" 2>/dev/null)" in MiSTer*|Mister*|ConsoleMode_arm*) kill -STOP "${d#/proc/}" 2>/dev/null ;; esac
+  done
+  [ -x "$SS1FB" ] && "$SS1FB" -reboot 2>>"$SS1LOG"
+  echo "reboot: helper failed, using sysrq" >> "$SS1LOG" 2>/dev/null
+  echo 1 > /proc/sys/kernel/sysrq 2>/dev/null
+  [ -w /proc/sysrq-trigger ] && echo b > /proc/sysrq-trigger
+  reboot -f
+  exit 0
+fi
 
 show "SAFE TO POWER OFF" "\n      ***  SAFE TO POWER OFF  ***\n$report\n\n$note" $(( 10 + ${#mounts[@]} + dirty )) good
 sleep 1

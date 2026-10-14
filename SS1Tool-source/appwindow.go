@@ -95,3 +95,15 @@ func anyPageOpen() bool {
 	}
 	return false
 }
+
+// anyPageAlive: an SS1 Tool window has checked in during the last few seconds.
+func anyPageAlive() bool {
+	pagesMu.Lock()
+	defer pagesMu.Unlock()
+	for _, t := range pages {
+		if time.Since(t) <= pageAlive {
+			return true
+		}
+	}
+	return false
+}

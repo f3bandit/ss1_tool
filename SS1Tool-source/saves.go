@@ -85,7 +85,7 @@ func registerRoutesSaves(mux *http.ServeMux) {
 	h("/api/saves/progress", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, savesJob.Snapshot()) })
 }
 
-func savesBackupRoot() string { return filepath.Join(exeDir(), "backups", "saves") }
+func savesBackupRoot() string { return filepath.Join(dataDir(), "backups", "saves") }
 
 // ================================================================ scanning the SuperStation
 

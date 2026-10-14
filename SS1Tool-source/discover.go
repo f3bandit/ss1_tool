@@ -25,6 +25,8 @@ type foundDevice struct {
 	Likely  bool   `json:"likely"`
 	SavedAs string `json:"saved_as,omitempty"`
 	Network string `json:"network"`
+
+	byDevice bool // the name came from the device itself (NetBIOS), not from DNS
 }
 
 func registerDiscoverRoutes(mux *http.ServeMux) {
@@ -35,13 +37,20 @@ func registerDiscoverRoutes(mux *http.ServeMux) {
 func scanNets() []*net.IPNet {
 	var out []*net.IPNet
 	seen := map[string]bool{}
+	var all []net.Addr
 	ifs, _ := net.Interfaces()
 	for _, it := range ifs {
 		if it.Flags&net.FlagUp == 0 || it.Flags&net.FlagLoopback != 0 {
 			continue
 		}
 		addrs, _ := it.Addrs()
-		for _, a := range addrs {
+		all = append(all, addrs...)
+	}
+	for _, n := range androidNets() { // Android: passed on by the Android app
+		all = append(all, n)
+	}
+	{
+		for _, a := range all {
 			n, ok := a.(*net.IPNet)
 			if !ok || n.IP.To4() == nil || n.IP.IsLinkLocalUnicast() {
 				continue
@@ -73,6 +82,29 @@ func scanNets() []*net.IPNet {
 		out = out[:4]
 	}
 	return out
+}
+
+func likelyName(name string) bool {
+	l := strings.ToLower(name)
+	return strings.Contains(l, "mister") || strings.Contains(l, "superstation") || strings.HasPrefix(l, "ss1")
+}
+
+// selfIPs: this computer's (or phone's) own addresses, which are never the SuperStation.
+func selfIPs() map[string]bool {
+	m := map[string]bool{}
+	ifs, _ := net.Interfaces()
+	for _, it := range ifs {
+		addrs, _ := it.Addrs()
+		for _, a := range addrs {
+			if n, ok := a.(*net.IPNet); ok {
+				m[n.IP.String()] = true
+			}
+		}
+	}
+	for _, n := range androidNets() {
+		m[n.IP.String()] = true
+	}
+	return m
 }
 
 func hostsOf(n *net.IPNet) []net.IP {
@@ -142,6 +174,7 @@ func netbiosName(ip string) string {
 
 func apiDiscover(w http.ResponseWriter, r *http.Request) {
 	nets := scanNets()
+	self := selfIPs()
 	type job struct {
 		ip  net.IP
 		net string
@@ -160,15 +193,20 @@ func apiDiscover(w http.ResponseWriter, r *http.Request) {
 				if !open {
 					continue
 				}
+				if self[ip] {
+					continue // this PC or phone
+				}
 				d := foundDevice{IP: ip, Banner: banner, Network: j.net}
-				if names, err := net.LookupAddr(ip); err == nil && len(names) > 0 {
-					d.Name = strings.TrimSuffix(names[0], ".")
-				}
+				// The device's own NetBIOS answer comes first: the router's DNS can still
+				// hold an old name for an address the SuperStation used before.
+				d.Name = netbiosName(ip)
+				d.byDevice = d.Name != ""
 				if d.Name == "" {
-					d.Name = netbiosName(ip)
+					if names, err := net.LookupAddr(ip); err == nil && len(names) > 0 {
+						d.Name = strings.TrimSuffix(names[0], ".")
+					}
 				}
-				l := strings.ToLower(d.Name)
-				d.Likely = strings.Contains(l, "mister") || strings.Contains(l, "superstation") || strings.HasPrefix(l, "ss1")
+				d.Likely = likelyName(d.Name)
 				mu.Lock()
 				found = append(found, d)
 				mu.Unlock()
@@ -184,6 +222,18 @@ func apiDiscover(w http.ResponseWriter, r *http.Request) {
 	}
 	close(jobs)
 	wg.Wait()
+	// a device that named itself a SuperStation beats one only the router's DNS names that way
+	sure := false
+	for _, d := range found {
+		sure = sure || (d.Likely && d.byDevice)
+	}
+	if sure {
+		for i := range found {
+			if !found[i].byDevice {
+				found[i].Likely = false
+			}
+		}
+	}
 	// devices the user already saved
 	cfgMu.Lock()
 	for i := range found {

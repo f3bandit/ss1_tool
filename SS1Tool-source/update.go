@@ -192,6 +192,9 @@ func updGet(url string) (*http.Response, error) {
 // updCheck finds the newest release: the tag from the releases/latest redirect (no API
 // rate limit), the file's SHA-256 from the release's asset list, and the notes from the API.
 func updCheck() {
+	if isSteam() {
+		return // Steam keeps SS1 Tool up to date
+	}
 	info := updateInfo{Checked: time.Now().Unix()}
 	defer func() {
 		updMu.Lock()
@@ -351,6 +354,10 @@ func updSwapAndRestart(info updateInfo) (string, error) {
 }
 
 func apiUpdateInstall(w http.ResponseWriter, r *http.Request) {
+	if isSteam() {
+		fail(w, 400, "Steam installs SS1 Tool updates")
+		return
+	}
 	info := updStatus()
 	if !info.Available {
 		fail(w, 400, "SS1 Tool is already up to date")
@@ -410,6 +417,9 @@ func updStartup(url string) (openBrowserNow bool) {
 		openBrowserNow = false
 	} else {
 		_ = os.Remove(exe + ".new")
+	}
+	if isSteam() {
+		return openBrowserNow // Steam installs the updates
 	}
 	go func() {
 		time.Sleep(4 * time.Second)
