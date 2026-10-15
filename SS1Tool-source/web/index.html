@@ -88,6 +88,12 @@ a.docs:hover{background:#79b8ff;border-color:#79b8ff}
 .pill.muted{color:var(--dim);background:#9aa3b212;border-color:#9aa3b240}
 .sst{align-items:center}.st{display:flex;flex-wrap:wrap;gap:4px}.advline{margin-top:8px}
 #snow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:5;display:none}
+/* Wow and Yer a wizard sit behind the page and show through the cards only: text, buttons,
+   bubbles, inputs and output boxes stay solid. Snow keeps falling in front. */
+html.fxback{background:var(--bg)}html.fxback body{background:transparent}html.fxback #snow{z-index:-1}
+html.fxback .card{background:rgba(23,26,33,.66)}
+html.fxback .pill{position:relative;isolation:isolate}
+html.fxback .pill::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:var(--panel);z-index:-1}
 .modal{position:fixed;inset:0;z-index:30;background:#0009;display:flex;align-items:center;justify-content:center}
 .mbox{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--warn);border-radius:8px;padding:20px 22px;max-width:460px;width:90%;box-shadow:0 10px 40px #000a}
 .mbox h3{margin:0 0 8px}.mbox p{margin:0 0 12px}
@@ -923,7 +929,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</pre></deta
  <div class="card pc-only win-only" id="winCard" style="display:none"><h3>Window</h3><p>SS1 Tool opens in its own window, with its icon on the taskbar like any other program. Closing the window keeps SS1 Tool running, with its icon by the clock, so long jobs like backups can finish and Linux update alerts still reach you. Click the icon to open the window again. Right-click it to turn <b>Start with Windows</b> on or off, or to <b>Exit</b> SS1 Tool completely.</p>
   <div class="row"><select id="openInSel" onchange="setOpenIn(this.value)"><option value="app">Open in its own window (recommended)</option><option value="browser">Open in my default browser</option></select><span class="muted" id="openInNote"></span></div></div>
  <div class="card pc-only steam-only"><h3>Updates</h3><p style="margin-bottom:0">Steam keeps SS1 Tool up to date: updates download and install by themselves, like your games. Backups, saves and exports are kept in your Documents folder, in <b>SS1 Tool</b>.</p></div>
- <div class="card pc-only no-steam"><h3>&#10024; Seasonal mode</h3><p>Adds a seasonal touch to the app: floating candles that drift, flicker and come and go, falling snowflakes, or a see-through night sky with twinkling stars, the odd meteor shower and, now and then, an aurora. Pick one and choose <b>Always on</b>, or <b>Seasonal</b> to show it only in its months. If animations are turned off in your Windows accessibility settings, this feature won't show.</p>
+ <div class="card pc-only no-steam"><h3>&#10024; Seasonal mode</h3><p>Adds a seasonal touch to the app: floating candles that drift, flicker and come and go, falling snowflakes, or twinkling stars behind the page, the odd meteor shower and, now and then, an aurora. Pick one and choose <b>Always on</b>, or <b>Seasonal</b> to show it only in its months. If animations are turned off in your Windows accessibility settings, this feature won't show.</p>
   <div class="row"><select id="seasonSel" onchange="setSeasonEffect(this.value)"><option value="candles">Yer a wizard (floating candles)</option><option value="snow">Oi to the world (snow)</option><option value="stars">Wow (night sky: stars, meteor showers, aurora)</option><option value="off">Off</option></select>
    <label class="ck"><input type="checkbox" id="seasonAlways" onchange="setSeasonWhen(this.checked)"> Always on</label>
    <label class="ck"><input type="checkbox" id="seasonSeasonal" onchange="setSeasonWhen(!this.checked)"> Seasonal <span class="muted" id="seasonMonths"></span></label><span id="seasonState"></span></div></div>
@@ -2442,7 +2448,7 @@ const FX=(()=>{const cv=$("snow"),ctx=cv.getContext("2d");let flakes=[],candles=
    ctx.globalAlpha=Math.min(1,.55+c.d*.5)*v;const p=Math.ceil(w*.3);ctx.drawImage(c.img,x-w/2-p,y-p/2);
    ctx.globalAlpha=v;ctx.save();ctx.translate(x,y-w*.25);ctx.rotate(sway);const fw=w*2,fh=w*2.3*flick;ctx.drawImage(flame,-fw/2,-fh*1.04,fw,fh*1.1);ctx.restore()}
   ctx.globalAlpha=1}
- // night sky ("Wow"): a see-through night sky with twinkling stars, now and then a meteor
+ // night sky ("Wow"): twinkling stars behind the page, now and then a meteor
  // shower, and more rarely an aurora that fades in for half a minute to a minute
  let stars=[],meteors=[],nextShower=0,aurStart=-1,aurLen=0,nextAur=0,aurDrawn=-1;
  const aurC=document.createElement("canvas"),aurX=aurC.getContext("2d"),aurG=document.createElement("canvas"),aurGX=aurG.getContext("2d");
@@ -2482,7 +2488,7 @@ const FX=(()=>{const cv=$("snow"),ctx=cv.getContext("2d");let flakes=[],candles=
   // the soft glow, blurred once per refresh rather than every frame
   aurGX.clearRect(0,0,w,h);aurGX.filter="blur(10px)";aurGX.drawImage(aurC,0,0);aurGX.filter="blur(2px)";aurGX.globalAlpha=.75;aurGX.drawImage(aurC,0,0);aurGX.globalAlpha=1;aurGX.filter="none"}
  function drawStars(dt){const t=T;
-  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"rgba(4,8,26,.62)");sky.addColorStop(.6,"rgba(8,14,38,.45)");sky.addColorStop(1,"rgba(10,18,40,.30)");ctx.globalAlpha=1;ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=1; // no sky tint: the stars sit behind the page and nothing dims the window
   if(aurStart<0&&t>nextAur){aurStart=t;aurLen=30+R()*30}
   const aa=aurAlpha(t);
   if(aa>0){if(t-aurDrawn>1/10||t<aurDrawn){renderAurora(t);aurDrawn=t}
@@ -2505,8 +2511,8 @@ const FX=(()=>{const cv=$("snow"),ctx=cv.getContext("2d");let flakes=[],candles=
   ctx.globalAlpha=1;raf=requestAnimationFrame(draw)}
  function build(){if(mode==="stars"){buildStars();return}if(mode==="snow"){const n=Math.round(Math.min(70,W*H/22000));flakes=Array.from({length:n},()=>mk(false))}
   else{const k=Math.max(.5,Math.min(1.6,W*H/(1280*820)));candles=[];LAYERS.forEach((L,i)=>{for(let j=0;j<Math.round(L[0]*k);j++)candles.push(mkC(i,T))});candles.sort((a,b)=>a.d-b.d)}}
- function start(m){if(reduce.matches){stop();return}if(mode===m)return;const was=!!mode;mode=m;size();build();cv.style.display="block";if(!was){last=0;raf=requestAnimationFrame(draw)}}
- function stop(){mode="";cancelAnimationFrame(raf);ctx.clearRect(0,0,W,H);cv.style.display="none"}
+ function start(m){if(reduce.matches){stop();return}if(mode===m)return;const was=!!mode;mode=m;document.documentElement.classList.toggle("fxback",m==="candles"||m==="stars");size();build();cv.style.display="block";if(!was){last=0;raf=requestAnimationFrame(draw)}}
+ function stop(){mode="";document.documentElement.classList.remove("fxback");cancelAnimationFrame(raf);ctx.clearRect(0,0,W,H);cv.style.display="none"}
  addEventListener("resize",()=>{if(!mode)return;size();if(mode==="candles")candles.forEach(place)});
  document.addEventListener("visibilitychange",()=>{if(!mode)return;if(document.hidden)cancelAnimationFrame(raf);else{last=0;raf=requestAnimationFrame(draw)}});
  reduce.addEventListener&&reduce.addEventListener("change",()=>{if(reduce.matches)stop();else applySeason()});
