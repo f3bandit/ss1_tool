@@ -160,6 +160,35 @@ test_gpt() { # disk, disk size in 512-byte sectors -> 0 ok, 1 fail
   return 0
 }
 
+# ---------- NVMe drive generation ----------
+# PCIe Gen 3 NVMe drives are safe in the SS1 dock. Gen 4 (and newer) drives cause boot and
+# file system problems there. The dock's USB bridge hides the PCIe link, so the generation
+# comes from the model name the bridge passes through, matched against known drives.
+GEN4_RE='980 ?PRO|990 ?(PRO|EVO)|9100 ?PRO|SN5000|SN580|SN7[17]0|SN7100|SN8[15]0|SN850X|SN8100|CT[0-9]+P3PSSD|CT[0-9]+P5PSSD|CT[0-9]+P310SSD|CT[0-9]+T[57]0[05]SSD|P3 ?PLUS|P5 ?PLUS|T500|T70[05]|SKC3000|SNV2S|SNV3S|SFYR|KC3000|FURY ?RENEGADE|SHPP41|PLATINUM ?P41|P44 ?PRO|SSDPFKKW|FIRECUDA ?5[234]0|ROCKET ?(4|Q4|5)|MP44|MP700|NM7[19]0|NM800|MP600|MP700|LEGEND ?[789][0-9]0|S70 ?BLADE|GAMMIX ?S70|KINGSTON NV[23]'
+GEN3_RE='970 ?EVO|970 ?PRO|SAMSUNG SSD 980( |$)|SN750|SN570|SN550|SN530|CT[0-9]+P[123]SSD|SNVS[0-9]|SA2000|SKC2500|A2000|SHGP31|GOLD ?P31|MP510|MP34|MP33|SX8200|SX6000|660P|670P|NM620|NM610|ROCKET ?NVME|INTEL SSDPEKNW'
+drive_gen() { # disk -> "<kind>\t<model>"; kind: gen4 | gen3 | unknown | sd
+  local name model vendor
+  name=$(basename "$1")
+  case "$name" in mmcblk*) printf 'sd\tSD card\n'; return ;; esac
+  vendor=$(tr -s ' ' < "/sys/block/$name/device/vendor" 2>/dev/null | sed 's/^ //;s/ $//')
+  model=$(tr -s ' ' < "/sys/block/$name/device/model" 2>/dev/null | sed 's/^ //;s/ $//')
+  model=$(echo "$vendor $model" | sed 's/^ //')
+  if echo "$model" | grep -qiE "$GEN4_RE"; then printf 'gen4\t%s\n' "$model"
+  elif echo "$model" | grep -qiE "$GEN3_RE"; then printf 'gen3\t%s\n' "$model"
+  else printf 'unknown\t%s\n' "${model:-not reported}"; fi
+}
+test_drive_type() {
+  local disk=${1:-$(disk_of "$(part_dev)")} kind model
+  IFS=$'\t' read -r kind model < <(drive_gen "$disk")
+  echo "Drive: $disk ($model)"
+  case "$kind" in
+    sd)   echo "INFO: SD card - the NVMe generation check doesn't apply" ;;
+    gen3) echo "PASS: PCIe Gen 3 NVMe drive - safe in the SS1 dock" ;;
+    gen4) echo "WARN: PCIe Gen 4 (or newer) NVMe drive - Gen 4 drives cause boot and file system problems in the SS1 dock. Use a PCIe Gen 3 drive" ;;
+    *)    echo "INFO: the drive's PCIe generation is unknown (the dock reports \"$model\"). Gen 3 drives are safe in the SS1 dock; Gen 4 drives cause boot and file system problems" ;;
+  esac
+}
+
 # shellcheck disable=SC2120
 test_partition_table() {
   local disk=${1:-$(disk_of "$(part_dev)")}
@@ -406,7 +435,7 @@ run_plain() { # title, function: no live log handle open while it runs
   rm -f "$out"
 }
 
-quick_check() { test_partition_table; echo; test_boot_region; echo; test_kernel_log; }
+quick_check() { test_partition_table; echo; test_boot_region; echo; test_kernel_log; [ "$TARGET" = /media/fat ] || { echo; test_drive_type; }; }
 
 # ---------- menus ----------
 quit() { clear; exit 0; }
@@ -496,7 +525,9 @@ if [ "$1" = "--run" ]; then
     partition) fn=test_partition_table ;;
     boot)      fn=test_boot_region ;;
     kernel)    fn=test_kernel_log ;;
-    *) echo "Usage: $0 --run quick|windows|partition|boot|kernel [target]"; exit 2 ;;
+    drive)     fn=test_drive_type ;;
+    drivegen)  drive_gen "$(disk_of "$(part_dev)")"; exit 0 ;; # for SS1 Tool's status page
+    *) echo "Usage: $0 --run quick|windows|partition|boot|kernel|drive [target]"; exit 2 ;;
   esac
   res=$("$fn" 2>&1)
   echo "$res"

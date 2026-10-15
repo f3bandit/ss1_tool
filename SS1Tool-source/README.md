@@ -327,6 +327,7 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
 SD card diagnostics, the BIOS and game folder check, the debug report and the controller tester on one page.
 
 #### SD Diagnostics
+- **NVMe Gen 3 / Gen 4:** PCIe Gen 3 NVMe drives are safe in the SS1 dock; Gen 4 (and newer) drives cause boot and file system problems. SS1 Tool reads the drive model the dock reports and warns when it finds a Gen 4 drive: when you connect (System status shows each drive with its generation), in the Quick check of a USB/NVMe drive, with the **NVMe Gen 3 / Gen 4** button and in the debug report. If the dock only reports its own chip name, the generation shows as unknown
 - Quick check: partition table and overlap (GPT drives, such as an NVMe formatted on Windows, are checked through their GPT header), exFAT boot region checksums, kernel I/O errors. USB resets only count as errors when they hit a storage device (NVMe dock, USB drive, card reader); a reset of WiFi, Bluetooth or a controller during start-up is normal and shown as information. Real USB power or cable trouble (over-current, failed enumeration) is shown as a warning
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
