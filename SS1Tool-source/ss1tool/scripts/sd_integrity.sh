@@ -173,6 +173,11 @@ drive_gen() { # disk -> "<kind>\t<model>"; kind: gen4 | gen3 | unknown | sd
   vendor=$(tr -s ' ' < "/sys/block/$name/device/vendor" 2>/dev/null | sed 's/^ //;s/ $//')
   model=$(tr -s ' ' < "/sys/block/$name/device/model" 2>/dev/null | sed 's/^ //;s/ $//')
   model=$(echo "$vendor $model" | sed 's/^ //')
+  # JMicron USB-NVMe bridges report "JMicron Generic": ask the NVMe drive itself (read-only Identify)
+  if echo "$vendor" | grep -qi jmicron && [ -x "$SS1FB" ]; then
+    local id; id=$("$SS1FB" -nvmeid "/dev/$name" 2>/dev/null | cut -f1)
+    [ -n "$id" ] && model=$id
+  fi
   if echo "$model" | grep -qiE "$GEN4_RE"; then printf 'gen4\t%s\n' "$model"
   elif echo "$model" | grep -qiE "$GEN3_RE"; then printf 'gen3\t%s\n' "$model"
   else printf 'unknown\t%s\n' "${model:-not reported}"; fi

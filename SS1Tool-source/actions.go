@@ -106,6 +106,10 @@ func apiConnect(w http.ResponseWriter, r *http.Request) {
 	cfg.Host, cfg.User = req.Host, req.User
 	cfgMu.Unlock()
 	saveConfig()
+	// keep already-installed SS1 scripts and helpers current (the status below uses the helper)
+	if out, _ := run("[ -d " + scriptsDir + "/.ss1tool ] && echo yes"); strings.TrimSpace(out) == "yes" {
+		_, _ = ensureScripts(false)
+	}
 	apiStatus(w, r)
 }
 
@@ -123,7 +127,9 @@ awk '$2 ~ /^\/media\/usb[0-9]+$/ {print $1" "$2}' /proc/mounts | while read -r d
   n=${m#/media/}; echo "drivespace_$n=$(df -h "$m" 2>/dev/null | awk 'NR==2{print $4" free of "$2}')"
   p=$(basename "$(readlink -f "$dev")"); d=$(basename "$(readlink -f "/sys/class/block/$p/..")")
   [ -e "/sys/block/$d/device" ] || d=$p
-  echo "drivemodel_$n=$(cat "/sys/block/$d/device/vendor" "/sys/block/$d/device/model" 2>/dev/null | tr -s ' \n' '  ' | sed 's/^ //;s/ $//')"
+  dm=$(cat "/sys/block/$d/device/vendor" "/sys/block/$d/device/model" 2>/dev/null | tr -s ' \n' '  ' | sed 's/^ //;s/ $//')
+  case "$dm" in [Jj][Mm][Ii][Cc][Rr][Oo][Nn]*) [ -x /media/fat/Scripts/.ss1tool/ss1fb ] && id=$(/media/fat/Scripts/.ss1tool/ss1fb -nvmeid "/dev/$d" 2>/dev/null | cut -f1) && [ -n "$id" ] && dm=$id ;; esac
+  echo "drivemodel_$n=$dm"
 done
 `
 
