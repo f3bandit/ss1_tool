@@ -476,7 +476,16 @@ test_fs() { # check | repair: unmounts the drive, runs the right checker, mounts
   esac
   command -v "$tool" >/dev/null 2>&1 || { echo "SKIP: $tool isn't on this SuperStation"; echo "RESULT: NOT RUN"; return; }
   echo "Drive: $TARGET ($dev, $type) - $( [ "$mode" = repair ] && echo "check and repair" || echo "check only, no changes")"
-  [ "$tool" = fsck.exfat ] && echo "Checker: $(fsck.exfat -V 2>&1 | grep -i -m1 -E "version|exfat [0-9]" || echo fsck.exfat)"
+  local exv="" weak=0
+  if [ "$tool" = fsck.exfat ]; then
+    exv=$(fsck.exfat -V 2>&1 | grep -o -m1 -E '[0-9]+\.[0-9]+(\.[0-9]+)?')
+    echo "Checker: fsck.exfat (exfatprogs ${exv:-unknown version})"
+    # exfatprogs could only check, not repair, before 1.2
+    case "$exv" in 0.*|1.0.*|1.1.*) weak=1 ;; esac
+    if [ "$weak" = 1 ] && [ "$mode" = repair ]; then
+      echo "NOTE: this SuperStation's exFAT tools (exfatprogs $exv) can only fix a few simple problems; full exFAT repair needs 1.2 or newer. If Repair can't fix it, repair the drive on a PC: chkdsk X: /f"
+    fi
+  fi
   if awk -v t="$TARGET/" 'index($2, t)==1 {f=1} END {exit !f}' /proc/mounts; then
     echo "FAIL: something is mounted inside $TARGET (a network share or a bind mount); unmount it first"
     echo "RESULT: NOT RUN"; return
@@ -510,6 +519,7 @@ test_fs() { # check | repair: unmounts the drive, runs the right checker, mounts
   if [ "$rc" -eq 0 ]; then echo "RESULT: PASS - no file system errors found"
   elif [ "$mode" = repair ] && [ "$rc" -eq 1 ] && [ "$tool" != ntfsfix ]; then echo "RESULT: PASS - errors were found and repaired. Run Check once more to confirm"
   elif [ "$mode" = repair ]; then echo "RESULT: FAIL - the checker couldn't repair everything (exit $rc). Back up the drive and repair it on a PC (chkdsk X: /f), or reformat it"
+  elif [ "$weak" = 1 ]; then echo "RESULT: FAIL - file system errors found (exit $rc). This SuperStation's exFAT tools can only fix simple problems: try Repair file system, and if that doesn't fix it, repair the drive on a PC (chkdsk X: /f)"
   else echo "RESULT: FAIL - file system errors found (exit $rc). Use Repair file system"; fi
 }
 
