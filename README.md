@@ -544,5 +544,14 @@ SuperStation One, Console Mode and MiSTer belong to their respective owners. Thi
 
 ## License
 
-<!-- Add a LICENSE file to the repo and name it here, e.g. GPL-3.0 -->
-See [LICENSE](LICENSE).
+Copyright (C) 2026 f3bandit (F3 Digital Systems)
+
+SS1 Tool and the SS1 storage scripts are free software: you can redistribute them and/or modify them under the terms of the **GNU General Public License version 3** as published by the Free Software Foundation. See [LICENSE](LICENSE).
+
+They are distributed in the hope that they will be useful, but **without any warranty**; without even the implied warranty of merchantability or fitness for a particular purpose. See the GNU General Public License for details.
+
+In short: you can use, study, share and change SS1 Tool. If you share a changed version, it has to be under GPL-3.0 too, with its source code.
+
+### Contributing
+
+Pull requests are welcome. By submitting one, you agree that your contribution is licensed under GPL-3.0, and you also allow f3bandit (F3 Digital Systems) to use it in other versions of SS1 Tool, including SS1 Tool for Android.
