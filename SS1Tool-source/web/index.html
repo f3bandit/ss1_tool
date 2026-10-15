@@ -28,7 +28,7 @@ textarea{width:100%;min-height:420px;font:13px/1.4 Consolas,monospace}
 .b:disabled{opacity:.45;cursor:default}
 pre.out{background:#0a0c10;border:1px solid var(--line);border-radius:6px;padding:12px;white-space:pre-wrap;max-height:460px;overflow:auto;font:12.5px/1.45 Consolas,monospace;margin:10px 0 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 18px}
-.kv{display:flex;justify-content:space-between;border-bottom:1px dashed var(--line);padding:4px 0}.kv>span:first-child{color:var(--dim)}
+.kv{display:flex;justify-content:space-between;gap:4px 14px;flex-wrap:wrap;border-bottom:1px dashed var(--line);padding:4px 0}.kv>span:last-child{margin-left:auto;text-align:right}.kv>span:first-child{color:var(--dim)}
 .good{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 table{width:100%;border-collapse:collapse}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--dim);font-weight:500}
 tr.f:hover{background:var(--panel2)}td.n{cursor:pointer}td.n.dir{color:#79c0ff}
@@ -1053,11 +1053,11 @@ function showStatus(s){LASTSTATUS=s;
    ["sd_integrity.sh",yes(s["script_sd_integrity.sh"])],["shutdown.sh",yes(s["script_shutdown.sh"])],
    ["ss1_debug_report.sh",yes(s["script_ss1_debug_report.sh"])],["update_all.sh",yes(s["script_update_all.sh"])]];
   // drives in the dock (/media/usbN), with the NVMe generation check
-  const gen4=[];
+  const gen4=[];let at=3;
   Object.keys(s).filter(k=>k.startsWith("drivespace_")).sort().forEach(k=>{const n=k.slice(11),[kind,model]=(s["drivegen_"+n]||"").split("|");
-   const pill=kind==="gen4"?'<span class="pill bad">PCIe Gen 4 - not safe in the SS1 dock</span>':kind==="gen3"?'<span class="pill good">PCIe Gen 3</span>':model?'<span class="pill">PCIe generation unknown</span>':"";
+   const pill=kind==="gen4"?'<span class="pill bad" title="Gen 4 NVMe drives cause sudden reboots, boot and file system problems in the SS1 dock">&#9888; PCIe Gen 4 - use Gen 3</span>':kind==="gen3"?'<span class="pill good">PCIe Gen 3</span>':model?'<span class="pill" title="The dock didn\'t report the drive model. Gen 3 drives are safe in the SS1 dock; Gen 4 drives cause sudden reboots, boot and file system problems">PCIe gen unknown</span>':"";
    if(kind==="gen4")gen4.push(`${model} (/media/${n})`);
-   rows.splice(3,0,["/media/"+n,`${esc(s[k]||"")}${model?" · "+esc(model):""} ${pill}`])});
+   rows.splice(at++,0,["/media/"+n,`${esc(s[k]||"")}${model?" · "+esc(model):""} ${pill}`])});
   if(gen4.length&&WARNEDGEN4!==gen4.join()){WARNEDGEN4=gen4.join();
    toast(`PCIe Gen 4 NVMe drive found: ${gen4.join(", ")}. Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock. Use a PCIe Gen 3 drive.`,true)}
   $("status").innerHTML=rows.map(r=>`<div class="kv"><span>${r[0]}</span><span>${r[1]||"-"}</span></div>`).join("");
