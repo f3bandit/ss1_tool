@@ -446,6 +446,73 @@ test_windows_dirty() { # must NOT run under run_test: an open log file blocks th
   fi
 }
 
+# ---------- file system check / repair (USB and NVMe drives) ----------
+fs_users() { # mount point -> processes with a file or their working folder on it
+  local mp=$1 d
+  for d in /proc/[0-9]*; do
+    [ "${d#/proc/}" = "$$" ] && continue
+    if readlink "$d/cwd" 2>/dev/null | grep -q "^$mp\(/\|$\)" || ls -l "$d/fd" 2>/dev/null | grep -q " $mp\(/\|$\)"; then
+      echo "${d#/proc/} $(cat "$d/comm" 2>/dev/null)"
+    fi
+  done | sort -u
+}
+test_fs() { # check | repair: unmounts the drive, runs the right checker, mounts it again as it was
+  local mode=${1:-check} dev mp type opts tool rc=0 sig
+  if [ "$TARGET" = /media/fat ]; then
+    echo "INFO: the SD card can't be checked or repaired while the SuperStation is running from it."
+    echo "INFO: Shut the SuperStation down safely, put the card in a PC and run:  chkdsk X: /f  (X = the card's drive letter)"
+    echo "RESULT: SKIP"; return
+  fi
+  read -r dev mp type opts <<< "$(awk -v t="$TARGET" '$2==t{print $1, $2, $3, $4; exit}' /proc/mounts)"
+  [ -n "$dev" ] || { echo "FAIL: $TARGET is not mounted"; echo "RESULT: NOT RUN"; return; }
+  dev=$(readlink -f "$dev")
+  if [ "$type" = fuseblk ]; then
+    sig=$(od -An -c -j3 -N8 "$dev" 2>/dev/null | tr -d ' \n')
+    case "$sig" in EXFAT*) type=exfat ;; NTFS*) type=ntfs ;; esac
+  fi
+  case "$type" in
+    exfat) tool=fsck.exfat ;; vfat|msdos) tool=fsck.vfat ;; ext2|ext3|ext4) tool=e2fsck ;; ntfs|ntfs3) tool=ntfsfix ;;
+    *) echo "SKIP: no checker for a $type drive"; echo "RESULT: NOT RUN"; return ;;
+  esac
+  command -v "$tool" >/dev/null 2>&1 || { echo "SKIP: $tool isn't on this SuperStation"; echo "RESULT: NOT RUN"; return; }
+  echo "Drive: $TARGET ($dev, $type) - $( [ "$mode" = repair ] && echo "check and repair" || echo "check only, no changes")"
+  [ "$tool" = fsck.exfat ] && echo "Checker: $(fsck.exfat -V 2>&1 | grep -i -m1 -E "version|exfat [0-9]" || echo fsck.exfat)"
+  if awk -v t="$TARGET/" 'index($2, t)==1 {f=1} END {exit !f}' /proc/mounts; then
+    echo "FAIL: something is mounted inside $TARGET (a network share or a bind mount); unmount it first"
+    echo "RESULT: NOT RUN"; return
+  fi
+  sync
+  if ! umount "$TARGET" 2>/dev/null; then
+    echo "FAIL: $TARGET is in use, so it can't be checked safely right now. Using it:"
+    fs_users "$TARGET" | sed 's/^/  /'
+    echo "Go back to the main menu (SS1 Tool: Remote > Reload menu), wait a few seconds and try again."
+    echo "RESULT: NOT RUN"; return
+  fi
+  echo "Unmounted $TARGET"
+  echo "----- $tool -----"
+  case "$tool:$mode" in
+    fsck.exfat:repair) fsck.exfat -y "$dev" 2>&1; rc=$? ;;
+    fsck.exfat:*)      fsck.exfat -n "$dev" 2>&1; rc=$? ;;
+    fsck.vfat:repair)  fsck.vfat -a -w "$dev" 2>&1; rc=$? ;;
+    fsck.vfat:*)       fsck.vfat -n "$dev" 2>&1; rc=$? ;;
+    e2fsck:repair)     e2fsck -f -p "$dev" 2>&1; rc=$? ;;
+    e2fsck:*)          e2fsck -f -n "$dev" 2>&1; rc=$? ;;
+    ntfsfix:repair)    ntfsfix "$dev" 2>&1; rc=$? ;;
+    ntfsfix:*)         ntfsfix -n "$dev" 2>&1; rc=$? ;;
+  esac
+  echo "----- exit code $rc -----"
+  mkdir -p "$TARGET"
+  if mount -t "$type" -o "$opts" "$dev" "$TARGET" 2>/dev/null || mount "$dev" "$TARGET" 2>/dev/null; then
+    echo "Mounted $TARGET again"
+  else
+    echo "WARN: couldn't mount $TARGET again - restart the SuperStation to get the drive back"
+  fi
+  if [ "$rc" -eq 0 ]; then echo "RESULT: PASS - no file system errors found"
+  elif [ "$mode" = repair ] && [ "$rc" -eq 1 ] && [ "$tool" != ntfsfix ]; then echo "RESULT: PASS - errors were found and repaired. Run Check once more to confirm"
+  elif [ "$mode" = repair ]; then echo "RESULT: FAIL - the checker couldn't repair everything (exit $rc). Back up the drive and repair it on a PC (chkdsk X: /f), or reformat it"
+  else echo "RESULT: FAIL - file system errors found (exit $rc). Use Repair file system"; fi
+}
+
 run_plain() { # title, function: no live log handle open while it runs
   local title=$1; shift
   local out; out=$(mktemp)
@@ -547,10 +614,12 @@ if [ "$1" = "--run" ]; then
     boot)      fn=test_boot_region ;;
     kernel)    fn=test_kernel_log ;;
     drive)     fn=test_drive_type ;;
+    fscheck)   fn="test_fs check" ;;
+    fsrepair)  fn="test_fs repair" ;;
     drivegen)  drive_gen "$(disk_of "$(part_dev)")"; exit 0 ;; # for SS1 Tool's status page
-    *) echo "Usage: $0 --run quick|windows|partition|boot|kernel|drive [target]"; exit 2 ;;
+    *) echo "Usage: $0 --run quick|windows|partition|boot|kernel|drive|fscheck|fsrepair [target]"; exit 2 ;;
   esac
-  res=$("$fn" 2>&1)
+  res=$($fn 2>&1)
   echo "$res"
   { echo "===== $2 (remote) | $TARGET | $(date) ====="; echo "$res"; echo; } >> "$LOG"
   exit 0
