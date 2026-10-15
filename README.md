@@ -554,4 +554,4 @@ In short: you can use, study, share and change SS1 Tool. If you share a changed 
 
 ### Contributing
 
-Pull requests are welcome. By submitting one, you agree that your contribution is licensed under GPL-3.0, and you also allow f3bandit (F3 Digital Systems) to use it in other versions of SS1 Tool, including SS1 Tool for Android.
+SS1 Tool is written and maintained by f3bandit only, so pull requests aren't accepted. Bug reports, drive reports and feature ideas are very welcome: [open an issue](https://github.com/f3bandit/ss1_tool/issues).
