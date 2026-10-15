@@ -32,7 +32,7 @@ pre.out{background:#0a0c10;border:1px solid var(--line);border-radius:6px;paddin
 .good{color:var(--ok)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 table{width:100%;border-collapse:collapse}td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--dim);font-weight:500}
 tr.f:hover{background:var(--panel2)}td.n{cursor:pointer}td.n.dir{color:#79c0ff}
-.bar{height:10px;background:var(--bg);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-top:10px}.bar div{height:100%;background:var(--acc);width:0}
+.bar{height:10px;background:var(--bg);border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-top:10px}.bar div{height:100%;background:var(--acc);width:0}.bar.ind div{width:30%!important;animation:barInd 1.3s ease-in-out infinite}@keyframes barInd{from{margin-left:-30%}to{margin-left:100%}}
 #toast{position:fixed;right:18px;bottom:52px;z-index:10;max-width:460px;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:6px;padding:12px 14px;white-space:pre-wrap;display:none;box-shadow:0 6px 24px #0008}
 #toast.err{border-left-color:var(--bad)}
 label.ck{display:flex;gap:8px;align-items:center;padding:3px 0}
@@ -1612,15 +1612,20 @@ function biosRender(){const j=BIOSDATA;if(!j)return;
  $("biosList").innerHTML=(shown.length?shown.map(row).join(""):'<tr><td colspan="4" class="muted">No games folders found.</td></tr>')
   +(hidden?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=true;biosRender();return false">Show ${hidden} more system${hidden>1?"s":""} that need no BIOS</a></td></tr>`:BIOSMORE&&j.systems.some(quiet)?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=false;biosRender();return false">Hide systems that need no BIOS</a></td></tr>`:"");}
 // ---------- Reflash and restore
+// Text while a backup gets ready: sizing the card takes a while before the first file is copied.
+function sbWaitText(j){const n=j.entries?` (${Math.min(j.measured+1,j.entries)} of ${j.entries}${j.current?": "+j.current:""})`:"";
+ return j.phase==="measure"?`Getting ready - measuring the SD card${n}...\nThis can take a minute or two before copying starts. Please wait.`:"Starting the copy... please wait."}
+function sbWaiting(j){return j.running&&(j.phase==="measure"||!j.done_bytes)}
 let RP=null,rsPolling=false,rsSeen=0,rpGen=0;
 async function makeRestorePoint(){if(!connectedHost)return toast("Connect to the SuperStation first",true);
- try{await api("/api/sdbackup/start",{name:"before-reflash"});$("rpBarWrap").style.display="block";pollRestorePoint()}catch(e){toast(e.message,true)}}
+ $("rpBtn").disabled=true;$("rpBarWrap").style.display="block";$("rpBarWrap").classList.add("ind");$("rpStatus").textContent="Getting ready - please wait...";
+ try{await api("/api/sdbackup/start",{name:"before-reflash"});pollRestorePoint()}catch(e){$("rpBtn").disabled=false;$("rpBarWrap").style.display="none";$("rpStatus").textContent="";toast(e.message,true)}}
 // Each call takes over from any check already running (rpGen), so a click is never lost to an
 // earlier "is a backup running?" check that's still finishing.
 async function pollRestorePoint(){const gen=++rpGen;$("rpBtn").disabled=true;
- try{for(;;){const j=await api("/api/sdbackup/progress");if(gen!==rpGen)return;if(!j.running&&!j.name){$("rpStatus").textContent="";$("rpBarWrap").style.display="none";break}$("rpBarWrap").style.display="block";const pct=j.total_bytes?Math.min(100,Math.floor(j.done_bytes*100/j.total_bytes)):0;
-  $("rpBar").style.width=(j.running?pct:100)+"%";
-  $("rpStatus").textContent=j.running?`Copying... ${pct}% (${j.files} files, ${fmtB(j.done_bytes)} of ${fmtB(j.total_bytes)})`:j.error?"Failed: "+j.error:j.canceled?"Canceled":`Done: restore point ${j.name} is on this PC (${j.files} files, ${fmtB(j.done_bytes)}).`;
+ try{for(;;){const j=await api("/api/sdbackup/progress");if(gen!==rpGen)return;if(!j.running&&!j.name){$("rpStatus").textContent="";$("rpBarWrap").style.display="none";$("rpBarWrap").classList.remove("ind");break}$("rpBarWrap").style.display="block";const pct=j.total_bytes?Math.min(100,Math.floor(j.done_bytes*100/j.total_bytes)):0;
+  $("rpBarWrap").classList.toggle("ind",sbWaiting(j));$("rpBar").style.width=(j.running?pct:100)+"%";
+  $("rpStatus").textContent=sbWaiting(j)?sbWaitText(j):j.running?`Copying... ${pct}% (${j.files} files, ${fmtB(j.done_bytes)} of ${fmtB(j.total_bytes)})`:j.error?"Failed: "+j.error:j.canceled?"Canceled":`Done: restore point ${j.name} is on this PC (${j.files} files, ${fmtB(j.done_bytes)}).`;
   if(!j.running)break;await new Promise(r=>setTimeout(r,700))}}catch(e){}
  if(gen===rpGen){$("rpBtn").disabled=false;sdBackupList()}}
 async function openRestore(name){openPart("setup","reflashCard");$("restorePanel").style.display="block";
@@ -1837,7 +1842,8 @@ async function sdBackupList(){try{const j=await api("/api/sdbackup/list");$("sbD
  $("sbList").innerHTML=j.backups.length?j.backups.map(b=>`<tr><td><b>${esc(b.name)}</b></td><td>${new Date(b.mtime*1000).toLocaleString()}</td><td>${b.files}</td><td>${esc(b.size)}</td>
   <td style="white-space:nowrap;text-align:right"><button class="b" onclick="openRestore('${esc(b.name)}')">Restore...</button> <button class="b" onclick="sdBackupOpen('${esc(b.name)}')">Open folder</button> <button class="b d" onclick="sdBackupDelete('${esc(b.name)}')">Delete</button></td></tr>`).join(""):'<tr><td colspan="5" class="muted">No SD card backups yet.</td></tr>'}catch(e){}}
 function sdBackupStart(){if(!connectedHost)return toast("Connect to the SuperStation first",true);
- busy(event.target,async()=>{await api("/api/sdbackup/start",{name:$("sbName").value});$("sbName").value="";pollSDBackup()})}
+ $("sbBarWrap").style.display="block";$("sbBarWrap").classList.add("ind");$("sbOut").style.display="block";$("sbOut").textContent="Getting ready - please wait...";
+ busy(event.target,async()=>{try{await api("/api/sdbackup/start",{name:$("sbName").value})}catch(e){$("sbBarWrap").style.display="none";$("sbOut").style.display="none";throw e}$("sbName").value="";pollSDBackup()})}
 function sdBackupCancel(){if(confirm("Cancel the backup? The files copied so far stay in the backup folder."))api("/api/sdbackup/cancel",{})}
 function sdBackupOpen(n){api("/api/sdbackup/open",{name:n}).catch(e=>toast(e.message,true))}
 function sdBackupDelete(n){if(!confirm("Delete the backup "+n+" from this PC?"))return;busy(null,async()=>{await api("/api/sdbackup/delete",{name:n});sdBackupList()})}
@@ -1845,8 +1851,9 @@ let sbPolling=false;
 async function pollSDBackup(){if(sbPolling)return;sbPolling=true;try{for(;;){const j=await api("/api/sdbackup/progress");
   if(!j.running&&!j.finished)break;
   const pct=j.total_bytes?Math.min(100,Math.floor(100*j.done_bytes/j.total_bytes)):0;
-  $("sbBarWrap").style.display="block";$("sbOut").style.display="block";$("sbCancel").style.display=j.running?"":"none";$("sbBar").style.width=(j.finished&&!j.error&&!j.canceled?100:pct)+"%";
-  if(j.running)$("sbOut").textContent=`Backing up "${j.name}"... ${pct}%\n${fmtB(j.done_bytes)} of about ${fmtB(j.total_bytes)} - ${j.files} files\nNow: ${j.current||""}`;
+  $("sbBarWrap").style.display="block";$("sbOut").style.display="block";$("sbCancel").style.display=j.running?"":"none";$("sbBar").style.width=(j.finished&&!j.error&&!j.canceled?100:pct)+"%";$("sbBarWrap").classList.toggle("ind",sbWaiting(j));
+  if(sbWaiting(j))$("sbOut").textContent=`Backing up "${j.name}"\n`+sbWaitText(j);
+  else if(j.running)$("sbOut").textContent=`Backing up "${j.name}"... ${pct}%\n${fmtB(j.done_bytes)} of about ${fmtB(j.total_bytes)} - ${j.files} files\nNow: ${j.current||""}`;
   else{$("sbOut").textContent=j.error?"Backup failed: "+j.error:j.canceled?"Backup cancelled. "+j.files+" files were copied to:\n"+j.path:`Backup complete: ${j.files} files, ${fmtB(j.done_bytes)}\nSaved to: ${j.path}`+(j.skipped?`\n${j.skipped} item(s) Windows can't store (links or file names it doesn't allow) weren't copied; they're listed in _backup_info.txt.`:"");sdBackupList();break}
   await new Promise(r=>setTimeout(r,800))}}catch(e){toast(e.message,true)}sbPolling=false}
 // ---------- dashboard

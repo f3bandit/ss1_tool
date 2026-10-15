@@ -186,7 +186,7 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 
 ##### Reflash without losing anything
 Reflashing erases the SD card. This card, at the top of Flash SD card, keeps everything else in three steps:
-1. **Make a restore point** while the SuperStation is connected: everything on the SD card except the games folder is copied to this PC
+1. **Make a restore point** while the SuperStation is connected: everything on the SD card except the games folder is copied to this PC. It starts by measuring the card, which can take a minute or two on a full card; a moving bar and "Getting ready - measuring the SD card" show it's working until copying starts
 2. **Flash the SD card**, then let the SuperStation finish installing
 3. **Restore**: choose a restore point and what to bring back. Saves and save states, core settings and controller mappings, Bluetooth pairings, WiFi, MiSTer settings, the network share (Cifs, including mounting at startup), the RetroAchievements login, Console Mode settings and scraper logins (never the Console Mode program itself), screenshots and Samba are ticked. Update All settings (`downloader.ini`) and the startup script are left off unless you tick them, because the new card may have newer versions
 
