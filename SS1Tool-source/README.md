@@ -532,5 +532,4 @@ SuperStation One, Console Mode and MiSTer belong to their respective owners. Thi
 
 ## License
 
-<!-- Add a LICENSE file to the repo and name it here, e.g. GPL-3.0 -->
-See [LICENSE](LICENSE).
+Copyright (C) 2026 f3bandit (F3 Digital Systems). Free software under the GNU General Public License version 3: see [LICENSE](LICENSE). No warranty.
