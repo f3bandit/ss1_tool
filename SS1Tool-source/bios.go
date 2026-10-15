@@ -437,7 +437,7 @@ done; true`
 
 // Known patched BIOS files (SHA-1), which are deliberately different from the database copies.
 // PSX GameID: jdfr228's PS1-Disc-Based-Game-ID patches, applied by the PSX BIOS Patcher script
-// (psx_bios_patcher.sh), let memory cards that support it (MemCard PRO, SD2PSX...) see which
+// (psx_bios_patcher.sh), let memory cards that support GameID see which
 // game is running. Hashes from psx_bios_patcher.sh v1.0.
 var patchedBIOS = map[string]map[string]string{
 	"psx": {
