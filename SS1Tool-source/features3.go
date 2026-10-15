@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -134,12 +135,17 @@ type sdBackupJob struct {
 	Ended    int64  `json:"ended"`
 	Skipped  int    `json:"skipped"`
 	Canceled bool   `json:"canceled"`
+	// measure (sizing the folders on the card) -> copy; Measured/Entries count the folders
+	Phase    string `json:"phase"`
+	Measured int    `json:"measured"`
+	Entries  int    `json:"entries"`
 }
 
 var (
-	sbMu     sync.Mutex
-	sb       sdBackupJob
-	sbCancel func()
+	sbMeasureCanceled atomic.Bool
+	sbMu              sync.Mutex
+	sb                sdBackupJob
+	sbCancel          func()
 )
 
 func sbSet(f func(*sdBackupJob)) { sbMu.Lock(); f(&sb); sbMu.Unlock() }
@@ -164,10 +170,18 @@ func apiSDBackupCancel(w http.ResponseWriter, r *http.Request) {
 // top-level entries of /media/fat except games and anything mounted there (a network share at
 // /media/fat/cifs, or share folders mounted over SD card folders), with their sizes in KB
 const sdListCmd = `cd /media/fat || exit 1
+list=""
 for e in * .[!.]* ..?*; do
   [ -e "$e" ] || [ -L "$e" ] || continue
   [ "$e" = games ] && continue
   awk -v m="/media/fat/$e" '$2==m{f=1} END{exit !f}' /proc/mounts && continue
+  list="$list$e
+"
+done
+printf 'N\t%s\n' "$(printf '%s' "$list" | grep -c .)"
+printf '%s' "$list" | while IFS= read -r e; do
+  [ -n "$e" ] || continue
+  printf '@\t%s\n' "$e"
   printf '%s\t%s\n' "$(du -sk -- "$e" 2>/dev/null | cut -f1)" "$e"
 done`
 
@@ -189,45 +203,91 @@ func apiSDBackupStart(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, "a backup is already running")
 		return
 	}
-	sb = sdBackupJob{Running: true, Name: name, Current: "Measuring the SD card...", Started: time.Now().Unix()}
+	sb = sdBackupJob{Running: true, Name: name, Phase: "measure", Current: "Measuring the SD card...", Started: time.Now().Unix()}
 	sbMu.Unlock()
+	// Sizing the card (du over every folder) can take a minute or more on a full card, so it
+	// runs in the background and the page shows what is being measured while it waits.
+	go prepareSDBackup(name)
+	writeJSON(w, map[string]any{"ok": true, "name": name})
+}
 
-	out, err := run(sdListCmd)
+// measureSD sizes the top-level entries of /media/fat, updating the job as each one is done.
+func measureSD() ([]string, int64, error) {
+	s, err := session()
 	if err != nil {
-		sbSet(func(j *sdBackupJob) { j.Running, j.Finished, j.Error = false, true, "could not read /media/fat" })
-		fail(w, 502, "could not read the SD card")
-		return
+		return nil, 0, err
+	}
+	defer s.Close()
+	sbMu.Lock()
+	sbCancel = func() { sbMeasureCanceled.Store(true); _ = s.Close() }
+	sbMu.Unlock()
+	defer func() { sbMu.Lock(); sbCancel = nil; sbMu.Unlock() }()
+	stdout, _ := s.StdoutPipe()
+	if err := s.Start(sdListCmd); err != nil {
+		return nil, 0, err
 	}
 	var entries []string
 	var total int64
-	for _, l := range strings.Split(strings.TrimSpace(out), "\n") {
-		kb, n, ok := strings.Cut(l, "\t")
-		if !ok || n == "" {
+	sc := bufio.NewScanner(stdout)
+	for sc.Scan() {
+		k, v, ok := strings.Cut(sc.Text(), "\t")
+		if !ok || v == "" {
 			continue
 		}
-		v, _ := strconv.ParseInt(strings.TrimSpace(kb), 10, 64)
-		total += v * 1024
-		entries = append(entries, n)
+		switch k {
+		case "N":
+			n, _ := strconv.Atoi(strings.TrimSpace(v))
+			sbSet(func(j *sdBackupJob) { j.Entries = n })
+		case "@":
+			sbSet(func(j *sdBackupJob) { j.Current = v })
+		default:
+			kb, _ := strconv.ParseInt(strings.TrimSpace(k), 10, 64)
+			total += kb * 1024
+			entries = append(entries, v)
+			sbSet(func(j *sdBackupJob) { j.Measured, j.TotalB = len(entries), total })
+		}
+	}
+	if err := s.Wait(); err != nil && len(entries) == 0 {
+		return nil, 0, err
+	}
+	return entries, total, nil
+}
+
+func prepareSDBackup(name string) {
+	stop := func(msg string) {
+		sbSet(func(j *sdBackupJob) {
+			j.Running, j.Finished, j.Error, j.Current, j.Ended = false, true, msg, "", time.Now().Unix()
+		})
+	}
+	sbMeasureCanceled.Store(false)
+	entries, total, err := measureSD()
+	if sbMeasureCanceled.Load() {
+		sbSet(func(j *sdBackupJob) {
+			j.Running, j.Finished, j.Canceled, j.Current, j.Ended = false, true, true, "", time.Now().Unix()
+		})
+		return
+	}
+	if err != nil {
+		stop("could not read the SD card: " + err.Error())
+		return
 	}
 	if len(entries) == 0 {
-		sbSet(func(j *sdBackupJob) { j.Running, j.Finished, j.Error = false, true, "nothing to back up" })
-		fail(w, 404, "nothing to back up")
+		stop("nothing to back up")
 		return
 	}
 	dst := filepath.Join(sdBackupRoot(), name)
 	if free := freeBytes(dataDir()); free > 0 && free < uint64(total)+200<<20 {
-		sbSet(func(j *sdBackupJob) { j.Running, j.Finished, j.Error = false, true, "not enough free space on this PC" })
-		fail(w, 507, fmt.Sprintf("not enough free space on this PC: the backup needs about %s, %s is free", humanBytes(total), humanBytes(int64(free))))
+		stop(fmt.Sprintf("not enough free space on this PC: the backup needs about %s, %s is free", humanBytes(total), humanBytes(int64(free))))
 		return
 	}
 	if err := os.MkdirAll(dst, 0o755); err != nil {
-		sbSet(func(j *sdBackupJob) { j.Running, j.Finished, j.Error = false, true, err.Error() })
-		fail(w, 500, "cannot create "+dst+": "+err.Error())
+		stop("cannot create " + dst + ": " + err.Error())
 		return
 	}
-	sbSet(func(j *sdBackupJob) { j.Path, j.TotalB, j.Current = dst, total, "Starting..." })
-	go runSDBackup(dst, entries)
-	writeJSON(w, map[string]any{"ok": true, "path": dst})
+	sbSet(func(j *sdBackupJob) {
+		j.Path, j.TotalB, j.Phase, j.Current = dst, total, "copy", "Starting the copy..."
+	})
+	runSDBackup(dst, entries)
 }
 
 // safeJoin keeps tar paths inside the backup folder.
