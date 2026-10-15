@@ -15,6 +15,10 @@
   <a href="https://discord.gg/74pb5PJRxX"><b>💬 Taki Udon Discord</b></a>
 </p>
 
+<p align="center">
+  <a href="https://ko-fi.com/W2V228VDIQ"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support SS1 Tool on Ko-fi"></a>
+</p>
+
 > [!WARNING]
 > Community project. Not affiliated with or endorsed by Taki Udon or Retro Remake.
 > Back up your SD card before flashing it or editing configuration files.
