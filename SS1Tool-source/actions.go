@@ -152,7 +152,7 @@ func apiStatus(w http.ResponseWriter, r *http.Request) {
 
 // driveGen sorts an NVMe drive by PCIe generation from the model name its USB bridge reports,
 // with the same lists sd_integrity.sh uses (GEN4_RE / GEN3_RE there, so they can't drift apart).
-// Gen 3 drives are safe in the SS1 dock; Gen 4 and newer cause boot and file system problems.
+// Gen 3 drives are safe in the SS1 dock; Gen 4 and newer cause sudden reboots, boot and file system problems.
 var driveGenRe = func() map[string]*regexp.Regexp {
 	b, _ := scriptFS.ReadFile("scripts/sd_integrity.sh")
 	out := map[string]*regexp.Regexp{}
