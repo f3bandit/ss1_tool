@@ -28,3 +28,24 @@ func TestMaxPower(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 }
+
+func TestSmartFields(t *testing.T) {
+	d := make([]byte, 512)
+	d[0] = 0
+	d[1], d[2] = 0x3E, 0x01 // 318 K = 45 C
+	d[3], d[4], d[5] = 100, 10, 3
+	d[144] = 7                  // unsafe shutdowns
+	d[128], d[129] = 0x10, 0x27 // 10000 hours
+	f := map[string]string{}
+	for _, l := range smartFields(d) {
+		for i := 0; i < len(l); i++ {
+			if l[i] == '=' {
+				f[l[:i]] = l[i+1:]
+				break
+			}
+		}
+	}
+	if f["temperature_c"] != "45" || f["unsafe_shutdowns"] != "7" || f["power_on_hours"] != "10000" || f["percentage_used"] != "3" {
+		t.Fatalf("%v", f)
+	}
+}

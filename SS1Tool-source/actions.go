@@ -129,7 +129,7 @@ awk '$2 ~ /^\/media\/usb[0-9]+$/ {print $1" "$2}' /proc/mounts | while read -r d
   [ -e "/sys/block/$d/device" ] || d=$p
   dm=$(cat "/sys/block/$d/device/vendor" "/sys/block/$d/device/model" 2>/dev/null | tr -s ' \n' '  ' | sed 's/^ //;s/ $//')
   dp=""
-  case "$dm" in [Jj][Mm][Ii][Cc][Rr][Oo][Nn]*) [ -x /media/fat/Scripts/.ss1tool/ss1fb ] && id=$(/media/fat/Scripts/.ss1tool/ss1fb -nvmeid "/dev/$d" 2>/dev/null) && [ -n "$id" ] && dm=$(echo "$id" | cut -f1) && dp=$(echo "$id" | cut -f4) && echo "drivefw_$n=$(echo "$id" | cut -f2)" ;; esac
+  case "$dm" in [Jj][Mm][Ii][Cc][Rr][Oo][Nn]*) [ -x /media/fat/Scripts/.ss1tool/ss1fb ] && id=$(/media/fat/Scripts/.ss1tool/ss1fb -nvmeid "/dev/$d" 2>/dev/null) && [ -n "$id" ] && dm=$(echo "$id" | cut -f1) && dp=$(echo "$id" | cut -f4) && echo "drivefw_$n=$(echo "$id" | cut -f2)" && /media/fat/Scripts/.ss1tool/ss1fb -nvmesmart "/dev/$d" 2>/dev/null | sed "s/^/drivesmart_${n}_/" ;; esac
   echo "drivemodel_$n=$dm"; echo "drivepower_$n=$dp"
 done
 `
@@ -649,7 +649,7 @@ func apiTargets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, t)
 }
 
-var diagTests = map[string]bool{"quick": true, "windows": true, "partition": true, "boot": true, "kernel": true, "drive": true, "fscheck": true, "fsrepair": true}
+var diagTests = map[string]bool{"quick": true, "windows": true, "partition": true, "boot": true, "kernel": true, "drive": true, "fscheck": true, "fsrepair": true, "health": true, "speed": true}
 var targetRe = regexp.MustCompile(`^/media/(fat|usb[0-9]+)$`)
 
 func apiDiag(w http.ResponseWriter, r *http.Request) {

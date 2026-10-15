@@ -75,32 +75,32 @@ func sgCmd(fd int, cdb []byte, dir int32, buf []byte) error {
 
 func jmCDB(proto byte, n int) []byte {
 	c := make([]byte, 12)
-	c[0] = 0xA1        // ATA PASS-THROUGH (12), used by JMicron as its NVMe tunnel
+	c[0] = 0xA1         // ATA PASS-THROUGH (12), used by JMicron as its NVMe tunnel
 	c[1] = 0x80 | proto // admin command
 	c[3], c[4], c[5] = byte(n>>16), byte(n>>8), byte(n)
 	return c
 }
 
-func nvmeIdentifyJMicron(dev string) ([]byte, error) {
+// jmAdmin runs one read-only NVMe admin command (data from the drive) through a JMicron bridge:
+// 1 the command, 2 the data, 3 the response, as smartmontools does for "-d sntjmicron".
+func jmAdmin(dev string, opcode, nsid, cdw10 uint32, size int) ([]byte, error) {
 	fd, err := syscall.Open(dev, syscall.O_RDWR|syscall.O_NONBLOCK, 0)
 	if err != nil {
 		return nil, err
 	}
 	defer syscall.Close(fd)
-	// 1: the NVMe command: Identify (opcode 6), CNS=1 (controller)
 	cmd := make([]byte, jmCmdLen)
 	binary.LittleEndian.PutUint32(cmd[0:], jmSignature)
-	binary.LittleEndian.PutUint32(cmd[8:], 0x06)
-	binary.LittleEndian.PutUint32(cmd[48:], 1)
+	binary.LittleEndian.PutUint32(cmd[8:], opcode)
+	binary.LittleEndian.PutUint32(cmd[12:], nsid)
+	binary.LittleEndian.PutUint32(cmd[48:], cdw10)
 	if err := sgCmd(fd, jmCDB(0x0, jmCmdLen), sgDxferToDev, cmd); err != nil {
 		return nil, fmt.Errorf("command: %w", err)
 	}
-	// 2: data in
-	data := make([]byte, identifyLen)
-	if err := sgCmd(fd, jmCDB(0x2, identifyLen), sgDxferFromDev, data); err != nil {
+	data := make([]byte, size)
+	if err := sgCmd(fd, jmCDB(0x2, size), sgDxferFromDev, data); err != nil {
 		return nil, fmt.Errorf("data: %w", err)
 	}
-	// 3: response
 	reply := make([]byte, jmCmdLen)
 	if err := sgCmd(fd, jmCDB(0xF, jmCmdLen), sgDxferFromDev, reply); err != nil {
 		return nil, fmt.Errorf("reply: %w", err)
@@ -113,6 +113,9 @@ func nvmeIdentifyJMicron(dev string) ([]byte, error) {
 	}
 	return data, nil
 }
+
+// Identify Controller (opcode 6, CNS 1).
+func nvmeIdentifyJMicron(dev string) ([]byte, error) { return jmAdmin(dev, 0x06, 0, 1, identifyLen) }
 
 func nvmeIDMain(dev string) {
 	d, err := nvmeIdentifyJMicron(dev)

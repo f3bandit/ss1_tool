@@ -160,6 +160,8 @@ Open **★ Wizard** (bottom left of the menu, always visible). It walks a new ow
 ### Dashboard
 - Live health of the SS1's Linux side, refreshed every 3 seconds: CPU use and load with the number of cores and threads and a bar for each thread, memory, storage space on the SD card and USB/NVMe drives, network traffic with a download/upload graph, uptime, the current core, running processes (busiest first), and temperature on hardware that has a sensor
 - Kernel log viewer (last 20 to 200 messages) for tracking down controllers, WiFi adapters or drives that keep disconnecting
+- **Disk activity:** read and write speed of the SD card and each USB/NVMe drive, live, so you can see when a drive is busy (a copy, a scan, a game loading)
+- **Board buses (I2C):** the SuperStation's I2C buses and the devices on them, listed only (nothing is read or written)
 
 ### Setup
 One-click fixes and installs, with **Flash SD card** and **MiSTer settings** at the bottom of the page (the **Further down** links jump to them).
@@ -217,6 +219,7 @@ How the SuperStation connects to your network, with Ethernet, WiFi and network s
 - Counts data, errors and link drops since the SuperStation started, and flags a slow or half-duplex link. Errors and drops usually mean a damaged cable or a bad router port
 - With no cable connected, it says how the SuperStation is online instead (for example through WiFi) and why a cable helps: it's faster and more reliable for playing games from a network share and for big copies
 - Built-in ports and USB Ethernet adapters are both shown. Any address range works, including setups that don't use 192.168.x.x
+- **Port and router speed** (ethtool): the fastest speed the SuperStation's port supports and the fastest the router or switch offers, so a slow link can be traced to the cable, the router or the port
 
 #### WiFi
 - Creates the SuperStation One's WiFi settings file, `linux/wpa_supplicant.conf`, in the same format as MiSTer's `_wpa_supplicant.conf` template
@@ -225,6 +228,8 @@ How the SuperStation connects to your network, with Ethernet, WiFi and network s
 - **Option A, SD card in this PC:** writes the file straight to the SS1's SD card in your card reader
 - **Option B, over the network:** sends the file to an SS1 temporarily connected by Ethernet, then restarts it onto WiFi, showing the new WiFi IP
 - Keeps a `.bak` copy of any existing WiFi file
+- **Connection quality:** the network the SuperStation is on, its signal (dBm, with a Good / Fair / Weak rating), band, channel and link speed, as the SuperStation itself sees it
+- **Nearby networks:** what the SuperStation's WiFi adapter can hear, strongest first, with signal, band and channel, to pick a less crowded channel or check whether the SS1 is too far from the router
 
 #### Network share (Cifs)
 Play games straight from a shared folder on a NAS or PC, using MiSTer's own `cifs_mount.sh` and `cifs_umount.sh` scripts from [MiSTer-devel/Scripts_MiSTer](https://github.com/MiSTer-devel/Scripts_MiSTer).
@@ -276,17 +281,22 @@ File manager, saves, SD card backup and screenshots on one page, with **Jump to*
 - **Restore** a whole backup or only the systems you tick. Saves with the same name are replaced and every other save is left alone. The current saves for those systems are backed up on this PC first
 - Backup and restore run with a progress bar, the current step, files and megabytes copied, elapsed time and a log
 - Exit the game to the menu before backing up or restoring: a running game writes its save when it exits
+- **Nightly saves backup:** the SuperStation copies saves and save states to an NVMe/USB drive every night at the hour you choose (`SS1_backup/saves/<weekday>` on the drive, one copy per day, the last 7 days kept). It runs on the SuperStation with its built-in cron, keeps working after a restart and needs no PC; it runs while the SuperStation is switched on. Turning it off removes everything SS1 Tool added
+- The saves list refreshes by itself when a game writes a save
 
 #### SD Backup
 - Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on. Mounted network shares (Cifs) are skipped too, so a backup never copies your NAS
 - Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary. Links, and files with names Windows doesn't allow (for example with `:` or `?`), can't be stored on a PC: they're skipped and listed in `_backup_info.txt` instead of stopping the backup
 - Progress bar, cancel, and a list of backups with **Restore...**, Open folder and Delete. Restore uses the same choices as Reflash without losing anything
+- **System areas:** every SD backup also saves the card's partition table, its first sector (MBR) and MiSTer's bootloader partition (type a2) in `_system\`, with a README on how to restore them, so a card can be rebuilt exactly
+- **Back up to the NVMe/USB drive:** the SuperStation copies the SD card (except the games folder) to `SS1_backup/sdcard` on a drive in the dock with rsync. No PC needed while it runs, and later backups copy only what changed. The system areas go to `SS1_backup/system`
 
 #### Screenshots
 - **Take a screenshot** of whatever is running on the SuperStation from your PC, with an optional name and an option for the scaled picture as shown on the TV. It's saved on the SS1 and copied to `backups\screenshots\<core>\` next to SS1Tool.exe
 - Two cards, **On this PC** and **On the SD card**, each with a scrolling list and a built-in viewer
 - On this PC: show in folder, open full size, delete. On the SD card: copy one or all to this PC, open full size, delete from the SD card
 - Works while a game or core is running; the MiSTer menu and Console Mode's own screens can't be captured
+- New screenshots taken on the SuperStation (with the controller or keyboard) appear in the list by themselves
 
 ### Devices
 USB devices, Bluetooth and controllers on one page, with **Jump to** links at the top.
@@ -333,6 +343,8 @@ SD card diagnostics, the BIOS and game folder check, the debug report and the co
 - Quick check: partition table and overlap (GPT drives, such as an NVMe formatted on Windows, are checked through their GPT header), exFAT boot region checksums, kernel I/O errors. USB resets only count as errors when they hit a storage device (NVMe dock, USB drive, card reader); a reset of WiFi, Bluetooth or a controller during start-up is normal and shown as information. Real USB power or cable trouble (over-current, failed enumeration) is shown as a warning
 - **"Will Windows complain?"**: checks whether the exFAT dirty flag clears, which is what makes Windows offer to scan the card
 - Deep scans: read every file, full surface read, and a write/verify test that detects failing or fake-capacity cards
+- **NVMe health:** reads the drive's own health log through the dock (temperature, percentage of its rated life used, spare blocks, media errors, unsafe shutdowns, power-on hours, data read and written), read-only. Temperature, wear and health also show in System status
+- **Read speed test:** times reading from the drive or SD card for about 3 seconds with `hdparm` (nothing is written) and explains the result: the SuperStation's USB is USB 2.0, so about 30-40 MB/s is the most any drive reaches
 
 #### BIOS and game folders
 Uses the same databases as Update All: ajgowans' **BIOS Database** (the exact path, size and checksum of each BIOS file) and the MiSTer distribution (the official `games/<system>` folder names). SS1 Tool only checks; Update All's BIOS Database option installs missing BIOS files.

@@ -27,6 +27,9 @@ type netIface struct {
 	LinkDrops           int
 	MTU                 int
 	Default, SSH        bool
+	MaxSpeed            int  // fastest speed the port supports (ethtool)
+	PartnerMax          int  // fastest speed the router/switch port offers (ethtool), 0 = unknown
+	AutoNeg             bool // speed negotiated automatically
 }
 
 const ethCmd = `# default route from /proc/net/route (always present); gateway is little-endian hex
@@ -52,7 +55,18 @@ for d in /sys/class/net/*; do n=$(basename "$d"); [ "$n" = lo ] && continue; [ -
  gw=; [ "$n" = "$def" ] && gw=$gwdef
  r(){ cat "$d/$1" 2>/dev/null; }
  echo "@@IF|$n|$k|$(r operstate)|$(r carrier)|$(r speed)|$(r duplex)|$(r address)|$drv|$bus|$ip4|$dyn|$gw|$(r statistics/rx_bytes)|$(r statistics/tx_bytes)|$(r statistics/rx_errors)|$(r statistics/tx_errors)|$(r statistics/rx_dropped)|$(r carrier_changes)|$(r mtu)"
-done; true`
+done
+# ethtool: what the port and the router/switch port support (is a slow link the cable or the router?)
+if command -v ethtool >/dev/null 2>&1; then
+ for d in /sys/class/net/*; do n=$(basename "$d"); [ -d "$d/wireless" ] && continue; [ -e "$d/device" ] || continue
+  ethtool "$n" 2>/dev/null | awk -v n="$n" '
+   /Supported link modes:/ {sec="s"} /Advertised link modes:/ {sec="a"} /Link partner advertised link modes:/ {sec="p"}
+   /pause frame|FEC modes|Speed:|Duplex:|Port:/ {sec=""}
+   { if (sec != "") { s=$0; while (match(s, /[0-9]+base/)) { v=substr(s, RSTART, RLENGTH-4)+0; if (sec=="s" && v>sm) sm=v; if (sec=="p" && v>pm) pm=v; s=substr(s, RSTART+RLENGTH) } } }
+   /Auto-negotiation:/ {an=$2}
+   END {print "@@ETHT|" n "|" sm+0 "|" pm+0 "|" an}'
+ done
+fi; true`
 
 func cidrMask(cidr string) (ip, mask string) {
 	if i := strings.Index(cidr, "/"); i > 0 && strings.Contains(cidr[i+1:], ".") {
@@ -119,6 +133,19 @@ func apiEthernet(w http.ResponseWriter, r *http.Request) {
 			it.Default = it.Name == def
 			it.SSH = it.IPv4 != "" && it.IPv4 == sshIP
 			ifs = append(ifs, it)
+		}
+	}
+	// ethtool details, matched by interface name
+	for _, l := range strings.Split(out, "\n") {
+		p := strings.Split(strings.TrimSpace(l), "|")
+		if len(p) == 5 && p[0] == "@@ETHT" {
+			for i := range ifs {
+				if ifs[i].Name == p[1] {
+					ifs[i].MaxSpeed, _ = strconv.Atoi(p[2])
+					ifs[i].PartnerMax, _ = strconv.Atoi(p[3])
+					ifs[i].AutoNeg = p[4] == "on"
+				}
+			}
 		}
 	}
 	var eth, wifi []netIface

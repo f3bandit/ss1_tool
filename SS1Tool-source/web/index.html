@@ -452,7 +452,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div class="card mc" id="tempCard"><h3>Temperature</h3><div class="big" id="dTemp">-</div><div id="dTempPill"></div><canvas class="spark" id="sTemp"></canvas></div>
   <div class="card mc"><h3>CPU</h3><div class="big" id="dCpu">-</div><div class="muted" id="dCpuInfo"></div><div class="muted" id="dLoad"></div><canvas class="spark" id="sCpu"></canvas><div id="dCores"></div></div>
   <div class="card mc"><h3>Memory</h3><div class="big" id="dMem">-</div><div class="mbar"><i id="dMemBar"></i></div><div class="muted" id="dMemTxt"></div></div>
-  <div class="card mc"><h3>System</h3><div class="kv"><span>Uptime</span><span id="dUp">-</span></div><div class="kv"><span>Current core</span><span id="dCore">-</span></div><div id="dIps"></div></div>
+  <div class="card mc"><h3>System</h3><div class="kv"><span>Uptime</span><span id="dUp">-</span></div><div class="kv"><span>Current core</span><span id="dCore">-</span></div><div id="dIps"></div><div id="dI2c"></div></div>
  </div>
  <div class="card"><h3>Storage</h3><div id="dDisks"></div></div>
  <div class="card"><h3>Network</h3>
@@ -577,6 +577,10 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div id="ethCards"><div class="card"><span class="muted">-</span></div></div>
  </div>
 <div class="subpage" id="wifi">
+ <div class="card" id="wlCard"><h3>&#128246; WiFi connection now</h3><p class="muted" style="margin:0 0 8px">How well the SuperStation hears your network, measured by the SuperStation itself.</p>
+  <div id="wlNow" class="ethgrid"><span class="muted">-</span></div><div id="wlAdvice" style="margin-top:8px"></div>
+  <div class="row" style="margin-top:10px"><button class="b" onclick="wlLoad()">Refresh</button><button class="b" onclick="wlScan()">Scan nearby networks</button><span class="muted" id="wlScanNote"></span></div>
+  <div id="wlNear" style="margin-top:10px"></div></div>
  <h2>WiFi setup</h2><p class="sub">Create the WiFi settings file the SuperStation One uses (<code>linux/wpa_supplicant.conf</code> on its SD card), so it joins your wireless network when it starts.</p>
  <div class="card"><h3>Choose how to set it up</h3>
   <div class="ways">
@@ -657,7 +661,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="files">
  <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, and take and browse screenshots.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a></div>
 <div class="subpage" id="fm">
  <h2>File manager</h2><p class="sub">Pick a drive on each side to move or copy files between the SD card and the NVMe/USB drive. Tick files, then use the arrows in the middle.</p>
  <div class="panes">
@@ -711,6 +715,20 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div class="bar" id="sbBarWrap" style="display:none"><div id="sbBar"></div></div><pre class="out" id="sbOut" style="display:none"></pre></div>
  <div class="card"><h3>Backups on this PC</h3><p class="muted" id="sbDir"></p>
   <table><thead><tr><th>Backup</th><th>Date</th><th>Files</th><th>Size</th><th></th></tr></thead><tbody id="sbList"></tbody></table></div>
+</div>
+<div class="subpage" id="nvmebk">
+ <h2>SD card backup to the NVMe drive</h2><p class="sub">The SuperStation copies its own SD card to the NVMe or USB drive, <b>no PC needed</b>. Everything except the games folder is copied: settings, saves, cores, Scripts, Console Mode, linux and so on. The next backup only copies what changed, so it's quick.</p>
+ <div class="card"><h3>Back up now</h3>
+  <p>The copy goes to <code>SS1_backup/sdcard</code> on the drive, with the same folders and file names as on the card, and is kept up to date: files you deleted from the card are removed from the copy too. To bring files back, copy them from there with the File manager. Avoid saving games or changing settings while it runs.</p>
+  <div class="row"><label for="nbDrive">Drive</label><select id="nbDrive" onchange="nbInfoShow()"></select><button class="b p" id="nbBtn" onclick="nbStart()">Back up SD card to this drive</button><button class="b d" id="nbCancel" style="display:none" onclick="nbCancel()">Cancel</button></div>
+  <p class="muted" id="nbInfo" style="margin:8px 0 0"></p>
+  <div class="bar" id="nbBarWrap" style="display:none"><div id="nbBar"></div></div><pre class="out" id="nbOut" style="display:none"></pre></div>
+ <div class="card"><h3>&#127769; Nightly saves backup</h3>
+  <p>Every night the SuperStation copies your saves and save states to the drive, into <code>SS1_backup/saves/&lt;weekday&gt;</code>, keeping one copy for each day of the week. It only runs while the SuperStation is switched on at that time, and keeps working after a restart.</p>
+  <div class="row"><label class="ck"><input type="checkbox" id="ntOn"> Back up saves every night</label>
+   <label for="ntDrive">to</label><select id="ntDrive"></select><label for="ntHour">at</label><select id="ntHour"></select>
+   <button class="b p" onclick="ntSave()">Save</button></div>
+  <p class="muted" id="ntInfo" style="margin:8px 0 0"></p></div>
 </div>
 <div class="subpage" id="shots">
  <h2>Screenshots</h2><p class="sub">Take a screenshot of the SuperStation's screen from here, and browse the screenshots saved on this PC and on the SD card.</p>
@@ -811,6 +829,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
    <button class="b" onclick="diag('boot')">exFAT boot region</button>
    <button class="b" onclick="diag('kernel')">Kernel error log</button>
    <button class="b" onclick="diag('drive')">NVMe Gen 3 / Gen 4</button>
+   <button class="b" onclick="diag('health')">NVMe health</button>
+   <button class="b" onclick="diag('speed')">Read speed test</button>
   </div>
   <div class="row" style="margin-top:10px">
    <button class="b" onclick="diag('fscheck')">Check file system</button>
@@ -1031,8 +1051,8 @@ async function loadSetupStatus(){const ok=t=>`<span class="pill good">&#10003; $
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
-const SUBLOAD={fm:filesInit,saves:()=>{svLoad();svPoll()},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1()},
- sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wifiInfo();wifiRemoteState()},
+const SUBLOAD={fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},
+ sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
 function openPage(s){
@@ -1077,7 +1097,11 @@ function showStatus(s){LASTSTATUS=s;
    if(kind==="unknown"&&model){const q=encodeURIComponent(model+" NVMe PCIe Gen 3 or Gen 4");
     pills+=`<br><a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">Look it up</a> &middot; <a href="${esc(driveReportURL(model,s["drivefw_"+n],s["drivepower_"+n]))}" target="_blank" rel="noopener">Report this drive</a>`}
    if(kind==="gen4")gen4.push(`${model} (/media/${n})`);
-   rows.splice(at++,0,["/media/"+n+(model?" (NVMe drive)":""),`${esc(s[k]||"")}${model?" · "+esc(model):""}${pw?" · max "+pw.toFixed(1)+" W":""} ${pills}`,"wide"])});
+   const sm=x=>s[`drivesmart_${n}_${x}`],temp=+sm("temperature_c"),used=sm("percentage_used"),media=+sm("media_errors"),cw=+sm("critical_warning");
+   let health="";if(used!==undefined){health=` · ${temp} °C · ${used}% worn`;
+    if(cw||media>0)pills+=` <span class="pill bad" title="Run Diag > SD diagnostics > NVMe health for details">&#10007; drive health problem</span>`;
+    else if(temp>=70)pills+=` <span class="pill warn">&#9888; hot</span>`}
+   rows.splice(at++,0,["/media/"+n+(model?" (NVMe drive)":""),`${esc(s[k]||"")}${model?" · "+esc(model):""}${pw?" · max "+pw.toFixed(1)+" W":""}${health} ${pills}`,"wide"])});
   if(gen4.length&&WARNEDGEN4!==gen4.join()){WARNEDGEN4=gen4.join();
    toast(`PCIe Gen 4 NVMe drive found: ${gen4.join(", ")}. Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock. Use a PCIe Gen 3 drive.`,true)}
   $("status").innerHTML=rows.map(r=>`<div class="kv${r[2]?" wide":""}"><span>${r[0]}</span><span>${r[1]||"-"}</span></div>`).join("");
@@ -1571,7 +1595,12 @@ async function ethLoad(){const box=$("ethCards");
    <div class="ethgrid">${kv("MAC address",esc(e.MAC||"-"))}${e.LinkDrops?kv("Link drops since start",e.LinkDrops,"warn"):""}</div></div>`;
   const slow=e.Duplex==="half"||(e.Speed&&e.Speed<100),sp=e.Speed?`${e.Speed>=1000?(e.Speed/1000)+" Gb/s":e.Speed+" Mb/s"}${e.Duplex?", "+esc(e.Duplex)+" duplex":""}`:"";
   const p=[`<span class="pill ${slow?"warn":"good"}">&#9679; Connected${sp?" &middot; "+sp:""}</span>`];
-  if(slow)p.push('<span class="pill warn">&#9888; Slow or half-duplex link - try another cable or router port</span>');
+  const spd=v=>v>=1000?(v/1000)+" Gb/s":v+" Mb/s";
+  // ethtool: is a slow link the router's limit or the cable?
+  if(e.Speed&&e.MaxSpeed>e.Speed){
+   if(e.PartnerMax&&e.PartnerMax<=e.Speed)p.push(`<span class="pill muted">Your router or switch port only offers ${spd(e.PartnerMax)} (the SuperStation can do ${spd(e.MaxSpeed)})</span>`);
+   else if(e.PartnerMax>e.Speed)p.push(`<span class="pill warn">&#9888; Both ends can do ${spd(Math.min(e.MaxSpeed,e.PartnerMax))} but the link runs at ${spd(e.Speed)}: usually a damaged cable or one without all 8 wires. Try another cable</span>`)}
+  else if(slow)p.push('<span class="pill warn">&#9888; Slow or half-duplex link - try another cable or router port</span>');
   if(!e.IPv4)p.push('<span class="pill warn">&#9888; Cable connected, but no IP address - the router didn\'t give one</span>');
   if(e.Default)p.push('<span class="pill good">Used for the internet</span>');
   if(e.SSH)p.push('<span class="pill muted">SS1 Tool is connected through this</span>');
@@ -1580,7 +1609,7 @@ async function ethLoad(){const box=$("ethCards");
    ${kv("IP address",esc(e.IPv4||"-"))}${kv("Subnet mask",esc(e.Mask||"-"))}${kv("Gateway",esc(e.Gateway||(e.Default?"-":"not used for the internet")))}
    ${kv("DNS servers",esc(j.dns||"-"))}${kv("Address from",e.DHCP==="dhcp"?"Your router (DHCP)":e.DHCP==="manual"?"Set manually":"-")}${kv("MAC address",esc(e.MAC||"-"))}
    ${kv("Received since start",fmtB(e.RxBytes))}${kv("Sent since start",fmtB(e.TxBytes))}
-   ${kv("Errors",errs?errs+" (dropped "+e.RxDropped+")":"none",errs?"warn":"good")}${kv("Link drops since start",e.LinkDrops||"none",e.LinkDrops?"warn":"good")}${kv("MTU",e.MTU||"-")}</div>
+   ${kv("Errors",errs?errs+" (dropped "+e.RxDropped+")":"none",errs?"warn":"good")}${kv("Link drops since start",e.LinkDrops||"none",e.LinkDrops?"warn":"good")}${kv("MTU",e.MTU||"-")}${e.MaxSpeed?kv("Port supports",spd(e.MaxSpeed)):""}${e.PartnerMax?kv("Router port offers",spd(e.PartnerMax)):""}</div>
    ${errs||e.LinkDrops?'<p class="muted" style="margin:10px 0 0">Errors or link drops usually mean a damaged cable, a loose plug or a bad router port. Try another cable or port.</p>':""}</div>`}).join("")}
 // ---------- one SS1 Tool window
 // Each window keeps an id across reloads (sessionStorage). If another SS1 Tool window is already
@@ -1642,6 +1671,63 @@ function biosRender(){const j=BIOSDATA;if(!j)return;
   return r};
  $("biosList").innerHTML=(shown.length?shown.map(row).join(""):'<tr><td colspan="4" class="muted">No games folders found.</td></tr>')
   +(hidden?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=true;biosRender();return false">Show ${hidden} more system${hidden>1?"s":""} that need no BIOS</a></td></tr>`:BIOSMORE&&j.systems.some(quiet)?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=false;biosRender();return false">Hide systems that need no BIOS</a></td></tr>`:"");}
+// ---------- SD card backup to the NVMe drive (done by the SuperStation with rsync)
+let nbPolling=false,NB=null;
+async function nbLoad(){if(!connectedHost){$("nbInfo").textContent="Connect to the SuperStation first.";return}
+ try{NB=await api("/api/ss1backup/status");const sel=$("nbDrive"),cur=sel.value;
+  sel.innerHTML=NB.drives.length?NB.drives.map(d=>`<option value="${esc(d.path)}">${esc(d.path)} (${fmtB(d.free_kb*1024)} free)</option>`).join(""):'<option value="">No NVMe or USB drive found</option>';
+  if(cur&&NB.drives.some(d=>d.path===cur))sel.value=cur;nbInfoShow()}catch(e){$("nbInfo").textContent=e.message}}
+function nbInfoShow(){if(!NB)return;const d=NB.drives.find(x=>x.path===$("nbDrive").value);
+ $("nbBtn").disabled=!d;$("nbInfo").textContent=!d?"Plug in or mount an NVMe or USB drive first.":`SD card: about ${fmtB(NB.sd_used_kb*1024)} in use, including games (the games folder isn't copied, so the backup is smaller). `+(d.last?`Last backup on this drive: ${d.last}.`:"No backup on this drive yet.")}
+function nbStart(){const d=$("nbDrive").value;if(!d)return;
+ $("nbBarWrap").style.display="block";$("nbBarWrap").classList.add("ind");$("nbOut").style.display="block";$("nbOut").textContent="Getting ready - measuring the SD card... please wait.";
+ busy(event.target,async()=>{try{await api("/api/ss1backup/start",{drive:d})}catch(e){$("nbBarWrap").style.display="none";throw e}nbPoll()})}
+function nbCancel(){if(confirm("Cancel the backup? The copy on the drive stays as far as it got and is completed by the next backup."))api("/api/ss1backup/cancel",{})}
+async function nbPoll(){if(nbPolling)return;nbPolling=true;try{for(;;){const j=await api("/api/ss1backup/progress");
+  if(!j.running&&!j.title)break;
+  const pct=j.total_bytes?Math.min(100,Math.floor(100*j.bytes/j.total_bytes)):0,copying=j.running&&j.step>=2&&j.bytes>0;
+  $("nbBarWrap").style.display="block";$("nbOut").style.display="block";$("nbCancel").style.display=j.running?"":"none";$("nbBtn").disabled=j.running;
+  $("nbBarWrap").classList.toggle("ind",j.running&&!copying);$("nbBar").style.width=(j.running?pct:(j.error?pct:100))+"%";
+  const tail=(j.log||[]).slice(-6).join("\n");
+  if(j.running)$("nbOut").textContent=(copying?`${j.msg}... ${pct}%\n${fmtB(j.bytes)} of about ${fmtB(j.total_bytes)}`+(j.total?` - ${j.done} of ${j.total} files checked`:""):`${j.msg}... please wait.`)+"\n\n"+tail;
+  else{$("nbOut").textContent=(j.error?"Backup stopped: "+j.error:j.result)+"\n\n"+tail;nbLoad();break}
+  await new Promise(r=>setTimeout(r,900))}}catch(e){toast(e.message,true)}nbPolling=false}
+// ---------- WiFi connection quality (iw on the SuperStation)
+function wlQuality(dbm){return dbm>=-55?["good","Excellent"]:dbm>=-65?["good","Good"]:dbm>=-72?["warn","Fair"]:dbm>=-80?["warn","Weak"]:["bad","Very weak"]}
+let WL=null;
+async function wlLoad(){const box=$("wlNow");if(!connectedHost){box.innerHTML='<span class="pill warn">Not connected - connect on the Connect tab first</span>';return}
+ try{WL=await api("/api/wifi/link")}catch(e){box.innerHTML=`<span class="pill bad">${esc(e.message)}</span>`;return}
+ const kv=(k,v,cls)=>`<div><span>${k}</span><span${cls?` class="${cls}"`:""}>${v}</span></div>`;
+ if(!WL.iface){box.innerHTML='<span class="pill muted">No WiFi adapter in the SuperStation</span>';$("wlAdvice").innerHTML="";return}
+ if(!WL.connected){box.innerHTML=`<span class="pill muted">&#9675; ${esc(WL.iface)} isn't connected to a network</span>`;$("wlAdvice").innerHTML="";return}
+ const [cls,q]=wlQuality(WL.signal||-100);
+ box.innerHTML=kv("Network",esc(WL.ssid||"-"))+kv("Signal",`<span class="pill ${cls}">${q} &middot; ${WL.signal} dBm</span>`)+kv("Band",WL.band?`${WL.band}, channel ${WL.channel}`:"-")+kv("Speed",WL.tx_mbit?`${WL.tx_mbit} Mbit/s out, ${WL.rx_mbit||"?"} Mbit/s in`:"-");
+ const tips=[];
+ if(WL.signal<-72)tips.push("The signal is weak: move the router or SuperStation closer, keep the SuperStation out of a cabinet, or use a network cable. Weak WiFi causes slow network shares and dropped connections.");
+ if(WL.band==="2.4 GHz"&&WL.signal>=-65)tips.push("You're on 2.4 GHz. If your router also offers 5 GHz, it's usually much faster and less crowded at this distance.");
+ $("wlAdvice").innerHTML=tips.map(t=>`<div class="muted">&#9888; ${esc(t)}</div>`).join("")}
+async function wlScan(){const box=$("wlNear");$("wlScanNote").textContent="Scanning... (a few seconds; the connection stays up)";
+ try{const j=await api("/api/wifi/nearby",{});$("wlScanNote").textContent=`${j.networks.length} network${j.networks.length===1?"":"s"} found`;
+  const same={};j.networks.forEach(n=>{const k=n.band+n.channel;same[k]=(same[k]||0)+1});
+  box.innerHTML=j.networks.length?`<table><thead><tr><th>Network</th><th>Signal</th><th>Band / channel</th><th></th></tr></thead><tbody>${j.networks.map(n=>{const [c,q]=wlQuality(n.signal),mine=WL&&WL.ssid&&n.ssid===WL.ssid;
+   return `<tr><td>${n.ssid?esc(n.ssid):'<span class="muted">(hidden)</span>'}${mine?' <span class="pill good">connected</span>':""}</td><td><span class="pill ${c}">${q} &middot; ${n.signal} dBm</span></td><td>${n.band} &middot; ${n.channel}${same[n.band+n.channel]>2?` <span class="muted">(${same[n.band+n.channel]} networks share it)</span>`:""}</td><td class="muted">${n.secure?"&#128274;":"open"}</td></tr>`}).join("")}</tbody></table>`:'<span class="muted">No networks found.</span>'}
+ catch(e){$("wlScanNote").textContent="";box.innerHTML=`<span class="pill bad">${esc(e.message)}</span>`}}
+// ---------- nightly saves backup (cron on the SuperStation)
+async function ntLoad(){if(!connectedHost)return;const h=$("ntHour");if(!h.options.length)h.innerHTML=Array.from({length:24},(_,i)=>`<option value="${i}">${String(i).padStart(2,"0")}:07</option>`).join("");
+ try{const j=await api("/api/nightly/status");
+  $("ntDrive").innerHTML=j.drives.length?j.drives.map(d=>`<option>${esc(d)}</option>`).join(""):'<option value="">no drive</option>';
+  $("ntOn").checked=!!j.enabled;if(j.drive)$("ntDrive").value=j.drive;h.value=String(j.enabled?j.hour:3);
+  $("ntInfo").innerHTML=!j.crond?'<span class="pill warn">This SuperStation has no cron, so scheduled backups can\'t run</span>':
+   (j.enabled?(j.running?'<span class="pill good">&#10003; On</span> ':'<span class="pill warn">On, but the scheduler isn\'t running - click Save to start it</span> '):'<span class="pill muted">Off</span> ')+
+   `SuperStation clock now: ${esc(j.clock||"?")}.`+(j.last?` Last run: ${esc(j.last)}`:"")}catch(e){$("ntInfo").textContent=e.message}}
+function ntSave(){busy(event.target,async()=>{const j=await api("/api/nightly/set",{enabled:$("ntOn").checked,drive:$("ntDrive").value,hour:+$("ntHour").value});toast(j.message);ntLoad()})}
+// ---------- live updates: refresh a list as soon as the SuperStation has new screenshots or saves
+const LIVE={};
+async function liveWatch(what,refresh){if(LIVE[what])return;LIVE[what]=true;
+ try{while(connectedHost&&$("files").classList.contains("on")&&!document.hidden){
+  const j=await api("/api/watch?what="+what);if(!j.supported)break;
+  if(j.changed){await new Promise(r=>setTimeout(r,800));refresh()}}}
+ catch(e){await new Promise(r=>setTimeout(r,5000))}finally{LIVE[what]=false}}
 // ---------- Reflash and restore
 // Text while a backup gets ready: sizing the card takes a while before the first file is copied.
 function sbWaitText(j){const n=j.entries?` (${Math.min(j.measured+1,j.entries)} of ${j.entries}${j.current?": "+j.current:""})`:"";
@@ -1915,6 +2001,9 @@ async function dashLoad(){if(dashBusy)return;if(!connectedHost){$("dashTime").te
   $("dIps").innerHTML=(j.ips||[]).map(i=>`<div class="kv"><span>${esc(i.iface)}</span><span>${esc(i.addr)}</span></div>`).join("");
   $("dDisks").innerHTML=(j.disks||[]).map(d=>{const p=100*d.used_kb/d.total_kb,col=p<85?"var(--ok)":p<95?"var(--warn)":"var(--bad)";
    return `<div class="disk"><div class="top"><span><b>${esc(d.label)}</b> <span class="muted">${esc(d.mount)}</span></span><span>${fmtB(d.avail_kb*1024)} free of ${fmtB(d.total_kb*1024)}</span></div><div class="mbar"><i style="width:${p}%;background:${col}"></i></div></div>`}).join("")||'<span class="muted">-</span>';
+  {const act=(j.io||[]).filter(x=>x.read_bps!=null);
+   $("dDisks").innerHTML+=act.length?`<div class="muted" style="margin-top:8px">${act.map(x=>`<div>${esc(x.label)}: read ${fmtB(x.read_bps)}/s &middot; write ${fmtB(x.write_bps)}/s</div>`).join("")}</div>`:""}
+  {const b=$("dI2c");if(b)b.innerHTML=(j.i2c||[]).length?`<div class="kv"><span>Board buses (I2C)</span><span title="${esc(j.i2c.join("\n"))}">${j.i2c.length}</span></div>`:""}
   {const rx=(j.nets||[]).reduce((a,n)=>a+(n.rx_bps||0),0),tx=(j.nets||[]).reduce((a,n)=>a+(n.tx_bps||0),0),ok=(j.nets||[]).some(n=>n.rx_bps!=null);
    if(ok){DH.rx.push(rx);DH.tx.push(tx);for(const k of ["rx","tx"])if(DH[k].length>60)DH[k].shift()}
    $("dNetDown").textContent=ok?fmtB(rx)+"/s":"-";$("dNetUp").textContent=ok?fmtB(tx)+"/s":"-";
