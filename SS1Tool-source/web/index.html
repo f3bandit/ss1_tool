@@ -86,6 +86,7 @@ a.docs:hover{background:#79b8ff;border-color:#79b8ff}
 .pill.warn{color:var(--warn);background:#e3b3411a;border-color:#e3b34159}
 .pill.bad{color:var(--bad);background:#f851491a;border-color:#f8514959}
 .pill.muted{color:var(--dim);background:#9aa3b212;border-color:#9aa3b240}
+.pill.info{color:#58a6ff;background:#58a6ff14;border-color:#58a6ff55}
 .sst{align-items:center}.st{display:flex;flex-wrap:wrap;gap:4px}.advline{margin-top:8px}
 #snow{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:5;display:none}
 /* Wow and Yer a wizard sit behind the page and show through the cards only: text, buttons,
@@ -1616,7 +1617,7 @@ async function findSS1(){const b=$("findBtn"),box=$("findResults");b.disabled=tr
  catch(e){$("findNote").textContent=e.message}finally{b.disabled=false}}
 function useFound(ip){$("host").value=ip;doConnect()}
 // ---------- BIOS and game folders
-const BIOS_LABEL={ready:["good","&#10003; Ready"],different:["warn","&#9888; Different version"],missing:["bad","&#10007; BIOS missing"],elsewhere:["bad","&#10007; BIOS in the wrong folder"],optional:["muted","Optional BIOS not found"],nobios:["muted","No BIOS needed"]};
+const BIOS_LABEL={ready:["good","&#10003; Ready"],patched:["info","&#10003; Patched (GameID)"],different:["warn","&#9888; Different version"],missing:["bad","&#10007; BIOS missing"],elsewhere:["bad","&#10007; BIOS in the wrong folder"],optional:["muted","Optional BIOS not found"],nobios:["muted","No BIOS needed"]};
 let BIOSOPEN={},BIOSDATA=null,BIOSMORE=false,biosBusy=false;
 // Check again fetches; Files and the Show more links only redraw from the last result.
 async function biosLoad(){if(!connectedHost){$("biosList").innerHTML='<tr><td colspan="4"><span class="pill warn">Not connected - connect on the Connect tab first</span></td></tr>';return}
@@ -1628,8 +1629,8 @@ async function biosLoad(){if(!connectedHost){$("biosList").innerHTML='<tr><td co
 function biosToggle(sys){BIOSOPEN[sys]=!BIOSOPEN[sys];biosRender()}
 function biosRender(){const j=BIOSDATA;if(!j)return;
  const c={};j.systems.forEach(s=>c[s.status]=(c[s.status]||0)+1);
- $("biosPills").innerHTML=[c.ready?`<span class="pill good">&#10003; ${c.ready} ready</span>`:"",c.elsewhere?`<span class="pill bad">&#10007; ${c.elsewhere} BIOS in the wrong folder</span>`:"",c.missing?`<span class="pill bad">&#10007; ${c.missing} missing a BIOS</span>`:"",c.different?`<span class="pill warn">&#9888; ${c.different} different BIOS version</span>`:"",c.nobios||c.optional?`<span class="pill muted">${(c.nobios||0)+(c.optional||0)} need no BIOS</span>`:""].join("");
- const fileLabel={ok:'<span class="pill good">&#10003; correct</span>',different:'<span class="pill warn">&#9888; different version</span>',missing:'<span class="pill bad">&#10007; missing</span>',elsewhere:'<span class="pill bad">&#10007; only in a folder MiSTer doesn\'t use</span>'};
+ $("biosPills").innerHTML=[c.ready?`<span class="pill good">&#10003; ${c.ready} ready</span>`:"",c.patched?`<span class="pill info">&#10003; ${c.patched} patched (GameID)</span>`:"",c.elsewhere?`<span class="pill bad">&#10007; ${c.elsewhere} BIOS in the wrong folder</span>`:"",c.missing?`<span class="pill bad">&#10007; ${c.missing} missing a BIOS</span>`:"",c.different?`<span class="pill warn">&#9888; ${c.different} different BIOS version</span>`:"",c.nobios||c.optional?`<span class="pill muted">${(c.nobios||0)+(c.optional||0)} need no BIOS</span>`:""].join("");
+ const fileLabel={ok:'<span class="pill good">&#10003; correct</span>',patched:'<span class="pill info">&#10003; patched</span>',different:'<span class="pill warn">&#9888; different version</span>',missing:'<span class="pill bad">&#10007; missing</span>',elsewhere:'<span class="pill bad">&#10007; only in a folder MiSTer doesn\'t use</span>'};
  const kindLabel={main:"main BIOS",region:"other region / model",extra:"optional extra"};
  const quiet=s=>s.status==="nobios"||s.status==="optional";
  const shown=j.systems.filter(s=>BIOSMORE||!quiet(s)||s.others.length),hidden=j.systems.length-shown.length;
@@ -1637,7 +1638,7 @@ function biosRender(){const j=BIOSDATA;if(!j)return;
   let r=`<tr><td><b>${esc(s.system)}</b>${s.games?`<div class="muted">${s.games} item${s.games>1?"s":""}</div>`:""}</td><td><span class="pill ${cls}">${txt}</span></td>
    <td>${s.used?`<code>${esc(s.used)}</code><div class="muted">${esc(s.used_from)}</div>`:'<span class="muted">no games folder</span>'}${s.others.length?`<div class="muted" style="margin-top:4px">&#9888; Also has games here, ignored by MiSTer: ${s.others.map(esc).join("; ")}</div>`:""}</td>
    <td style="text-align:right">${s.bios.length?`<button class="b" onclick="biosToggle('${esc(key)}')">${BIOSOPEN[s.system]?"Hide":"Files"}</button>`:""}</td></tr>`;
-  if(BIOSOPEN[s.system]||s.status==="elsewhere")r+=`<tr><td></td><td colspan="3"><table>${s.bios.map(b=>`<tr><td><code>${esc(b.file)}</code><div class="muted">${kindLabel[b.kind]||b.kind}</div></td><td>${b.status==="missing"&&(b.kind!=="main"||s.status==="optional")?'<span class="pill muted">not installed</span>':(fileLabel[b.status]||b.status)}${b.where?`<div class="muted">found in ${esc(b.where)} - move it to the folder MiSTer uses</div>`:""}</td></tr>`).join("")}</table></td></tr>`;
+  if(BIOSOPEN[s.system]||s.status==="elsewhere")r+=`<tr><td></td><td colspan="3"><table>${s.bios.map(b=>`<tr><td><code>${esc(b.file)}</code><div class="muted">${kindLabel[b.kind]||b.kind}</div></td><td>${b.status==="missing"&&(b.kind!=="main"||s.status==="optional")?'<span class="pill muted">not installed</span>':(fileLabel[b.status]||b.status)}${b.patch?`<div class="muted">${esc(b.patch)}: lets memory cards that support it (MemCard PRO, SD2PSX) see which game is running</div>`:""}${b.where?`<div class="muted">found in ${esc(b.where)} - move it to the folder MiSTer uses</div>`:""}</td></tr>`).join("")}</table></td></tr>`;
   return r};
  $("biosList").innerHTML=(shown.length?shown.map(row).join(""):'<tr><td colspan="4" class="muted">No games folders found.</td></tr>')
   +(hidden?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=true;biosRender();return false">Show ${hidden} more system${hidden>1?"s":""} that need no BIOS</a></td></tr>`:BIOSMORE&&j.systems.some(quiet)?`<tr><td colspan="4"><a href="#" onclick="BIOSMORE=false;biosRender();return false">Hide systems that need no BIOS</a></td></tr>`:"");}

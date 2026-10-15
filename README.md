@@ -336,6 +336,7 @@ SD card diagnostics, the BIOS and game folder check, the debug report and the co
 
 #### BIOS and game folders
 Uses the same databases as Update All: ajgowans' **BIOS Database** (the exact path, size and checksum of each BIOS file) and the MiSTer distribution (the official `games/<system>` folder names). SS1 Tool only checks; Update All's BIOS Database option installs missing BIOS files.
+- **Patched BIOS files are recognised:** PSX BIOS files patched for GameID (jdfr228's patches, applied by the PSX BIOS Patcher script, for memory cards such as MemCard PRO and SD2PSX) show as a blue **Patched (GameID)** instead of a different-version warning, with which patch and BIOS model they are
 - For every system you have games folders for: the folder MiSTer actually uses (USB and NVMe drives come before the SD card, then the network share) and its BIOS status: **Ready**, **Different version** (may still work), **BIOS missing**, or **BIOS in the wrong folder**
 - **Wrong folder** catches a common problem: a BIOS on the SD card is ignored when the same system also has a games folder on the NVMe drive, because MiSTer uses that one. The check says where the BIOS is and where it needs to be
 - Systems that can't start without a BIOS (PlayStation, Saturn, Sega CD, PC Engine CD, Neo Geo, Neo Geo CD, Jaguar, N64, 3DO, CD-i) are flagged when it's missing; for the rest a missing BIOS is optional
