@@ -649,7 +649,7 @@ func apiTargets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, t)
 }
 
-var diagTests = map[string]bool{"quick": true, "windows": true, "partition": true, "boot": true, "kernel": true, "drive": true}
+var diagTests = map[string]bool{"quick": true, "windows": true, "partition": true, "boot": true, "kernel": true, "drive": true, "fscheck": true, "fsrepair": true}
 var targetRe = regexp.MustCompile(`^/media/(fat|usb[0-9]+)$`)
 
 func apiDiag(w http.ResponseWriter, r *http.Request) {

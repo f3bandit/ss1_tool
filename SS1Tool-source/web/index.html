@@ -801,7 +801,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <h2>Diag</h2><p class="sub">Check the SD card, the BIOS files and games folders, collect a debug report when something isn't right, and test controllers.</p>
  <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('sddiag');return false">SD diagnostics</a><a href="#" onclick="jumpTo('bioscheck');return false">BIOS and game folders</a><a href="#" onclick="jumpTo('debug');return false">Debug report</a><a href="#" onclick="jumpTo('padtest');return false">Controller tester</a><a href="#" class="android-only" onclick="openPage('about');setTimeout(()=>jumpTo('appReport'),50);return false">App problem report</a></div>
 <div class="subpage" id="sddiag">
- <h2>SD diagnostics</h2><p class="sub">Runs the sd_integrity checks on the SuperStation (read-only). Results are also logged to /media/fat/sd_integrity.log.</p>
+ <h2>SD diagnostics</h2><p class="sub">Runs the sd_integrity checks on the SuperStation. Everything here only reads, except <b>Repair file system</b>. Results are also logged to /media/fat/sd_integrity.log.</p>
  <div class="card"><div class="row"><span>Drive:</span><select id="diagTarget"></select><button class="b" onclick="loadTargets()">Refresh drives</button></div>
   <div class="row" style="margin-top:12px">
    <button class="b p" onclick="diag('quick')">Quick check</button>
@@ -810,6 +810,11 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
    <button class="b" onclick="diag('boot')">exFAT boot region</button>
    <button class="b" onclick="diag('kernel')">Kernel error log</button>
    <button class="b" onclick="diag('drive')">NVMe Gen 3 / Gen 4</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+   <button class="b" onclick="diag('fscheck')">Check file system</button>
+   <button class="b d" onclick="diag('fsrepair')">Repair file system</button>
+   <span class="muted">NVMe and USB drives: the drive is unmounted while it's checked, so go back to the main menu first. The SD card is repaired on a PC.</span>
   </div>
   <p class="muted" style="margin:10px 0 0">Deep scans (read every file, surface read, write/verify) take a long time and run on the SuperStation itself: <a href="#" onclick="term('sd_integrity');return false" style="color:#79c0ff">open sd_integrity in a terminal</a>.</p>
   <pre class="out" id="diagOut">No test run yet.</pre></div>
@@ -1194,7 +1199,9 @@ function bkShow(i){const b=i===""?null:BKSETS[i];api("/api/ini/backup-show",{set
 function bkDelete(i){const b=BKSETS[i];if(!b||!confirm("Delete backup "+b.name+" and all its files?"))return;busy(null,async()=>{await api("/api/ini/backup-delete",{set:b.name});loadBackups()})}
 // ---------- diagnostics / debug
 async function loadTargets(){try{const t=await api("/api/targets");$("diagTarget").innerHTML=t.map(x=>`<option value="${x.path}">${x.path} (${x.fs})</option>`).join("")}catch(e){}}
-function diag(test){$("diagOut").textContent="Running "+test+"...";busy(event.target,async()=>{const j=await api("/api/diag",{test,target:$("diagTarget").value||"/media/fat"});$("diagOut").textContent=j.output})}
+function diag(test){const tgt=$("diagTarget").value||"/media/fat";
+ if(test==="fsrepair"&&!confirm(`Repair the file system on ${tgt}?\n\nThe drive is unmounted while it's repaired, so nothing may be using it: go back to the main menu first. Repairs can remove broken files or folders the checker can't fix, so back up anything important first if you can.`))return;
+ $("diagOut").textContent=test.startsWith("fs")?"Checking the file system... this can take a few minutes on a big drive. Don't switch the SuperStation off.":"Running "+test+"...";busy(event.target,async()=>{const j=await api("/api/diag",{test,target:$("diagTarget").value||"/media/fat"});$("diagOut").textContent=j.output})}
 let lastReportName="";
 function debugReport(){$("dbgOut").textContent="Collecting... this can take a minute (it hashes the system files).";$("dbgSave").style.display="none";$("dbgOpen").style.display="none";
  busy(event.target,async()=>{const j=await api("/api/debug-report",{});lastReportName=j.name;
