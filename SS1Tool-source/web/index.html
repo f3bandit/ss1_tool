@@ -883,7 +883,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="card android-only" id="devCard"><h3>This device</h3><p class="muted" style="margin-top:0">SS1 Tool adjusts its layout to your screen, text size and accessibility settings. If something doesn't fit, include this when you report it.</p><div id="devInfo" class="muted">-</div></div>
  <div class="card android-only"><h3>SS1 Tool for Android</h3><p>Version {{VERSION}}. An unofficial tool for the SuperStation One; it isn't made, endorsed or supported by Taki Udon or Retro Remake. Sold by F3 Digital Systems (f3bandit).</p>
   <p id="licInfo" class="muted"></p>
-  <div class="row" style="margin-bottom:10px"><button class="b" onclick="location.href='ss1app://update/check'">Check for updates</button><button class="b" onclick="location.href='ss1app://eula/view'">License Agreement</button><a class="b" href="https://ss1-tools.github.io/legal/privacy.html" target="_blank" rel="noopener">Privacy policy</a><button class="b" id="licRemove" style="display:none" onclick="licRemove()">Remove license from this device</button></div>
+  <div class="row" style="margin-bottom:10px"><button class="b" onclick="location.href='ss1app://update/check'">Check for updates</button><button class="b" onclick="location.href='ss1app://eula/view'">License Agreement</button><a class="b" href="https://ss1-tools.github.io/legal/privacy.html" target="_blank" rel="noopener">Privacy policy</a></div>
   <details><summary>Open-source licenses</summary><p class="muted" style="margin-top:8px">SS1 Tool for Android includes the Go programming language's standard library and the Go projects golang.org/x/crypto, golang.org/x/sys and golang.org/x/image, under this license:</p>
 <pre class="out">Copyright 2009 The Go Authors.
 
@@ -2154,15 +2154,15 @@ const ANDROID=document.documentElement.dataset.platform==="android";
 const STEAM=document.documentElement.dataset.store==="steam",LINUX=document.documentElement.dataset.platform==="linux";
 // Android: the app tells the page about the device (form factor, screen, text size, accessibility)
 let DEV=null;
-// Android: a newer version is listed on ss1-tools.github.io (see MainActivity.checkForUpdate)
+// Android: a newer version is available (the app gets it from the Play Store)
 function ss1Update(u){const b=$("aUpd");if(!b||!u||!u.versionName)return;
  const notes=(u.notes||[]).map(n=>`<li>${esc(n)}</li>`).join("");
  b.innerHTML=`<span><b>Update available:</b> SS1 Tool ${esc(u.versionName)}</span>`+
-  `<a class="b p" href="${esc(u.download||"https://app.lemonsqueezy.com/my-orders")}" target="_blank" rel="noopener">Download</a>`+
+  `<button class="b p" onclick="location.href='ss1app://update/check'">Open the Play Store</button>`+
   (notes?`<button class="b" onclick="const l=$('aUpdNotes');l.style.display=l.style.display==='none'?'block':'none'">What's new</button>`:"")+
   `<button class="b" onclick="$('aUpd').style.display='none';location.href='ss1app://update/skip?code=${+u.versionCode||0}'">Not now</button>`+
   (notes?`<ul id="aUpdNotes" style="display:none;flex-basis:100%;margin:4px 0 0;padding-left:20px;text-align:left">${notes}</ul>`:"")+
-  `<span class="muted" style="flex-basis:100%;text-align:center;font-size:13px">Download it from your order (the button opens Lemon Squeezy's My Orders), then install it over this version. Your settings and license stay.</span>`;
+  `<span class="muted" style="flex-basis:100%;text-align:center;font-size:13px">Update SS1 Tool in the Google Play Store. Your settings stay.</span>`;
  b.style.display="flex"}
 const TOTOP={delay:1500,fade:500};let topT=0;
 // The back-to-top button shows while you scroll and fades out with the scroll bar.
@@ -2245,10 +2245,8 @@ function repIssue(){if(!REPORT)return;const where=$("repWhere").value||"app",typ
  if((base+encodeURIComponent(body)).length>7500){repCopy(true);body="_The full report is on your clipboard: paste it here (long-press, Paste). It's also in the report file._\n\n"+REPORT.split("### Layout check")[0].slice(0,3000);toast("The report is long: it's on your clipboard, paste it into the issue")}
  const a=document.createElement("a");a.href=base+encodeURIComponent(body);a.target="_blank";a.rel="noopener";document.body.appendChild(a);a.click();a.remove()}
 function repSave(btn){if(!REPORT)return;busy(btn,async()=>{await api("/api/appreport/save",{text:REPORT,layout:REPLAYOUT,shots:REPSNAP?REPSNAP.shots:[]});location.href="/api/appreport/file?t="+encodeURIComponent(TOKEN)})}
-function licRemove(){if(confirm("Remove the license from this device? SS1 Tool asks for a key again here, and the freed slot can be used on another phone or tablet."))location.href="ss1app://license/deactivate"}
 function ss1Device(d){DEV=d;const h=document.documentElement.dataset;
- const li=$("licInfo");if(li)li.textContent=[d.store==="play"?"Bought on Google Play. Updates come from the Play Store.":d.licensing?(d.license?`License key ${d.license}, activated on this device.`:""):"Test build: no license key needed.",d.eula_version?`License Agreement ${d.eula_version} accepted.`:""].filter(Boolean).join(" ");
- const lr=$("licRemove");if(lr)lr.style.display=d.licensing&&d.license?"":"none";
+ const li=$("licInfo");if(li)li.textContent=[d.store==="play"?"Bought on Google Play. Updates come from the Play Store.":"Test build (not from Google Play).",d.eula_version?`License Agreement ${d.eula_version} accepted.`:""].filter(Boolean).join(" ");
  if(d.scroll_fade_delay)TOTOP.delay=d.scroll_fade_delay;if(d.scroll_fade_ms)TOTOP.fade=d.scroll_fade_ms;
  const st=$("supportThis");if(st&&d.sdk)st.textContent=`This device: Android ${d.android} (API ${d.sdk}) - `+(d.sdk>SDK_TESTED?"newer than SS1 Tool has been tested on; please report anything that doesn't work.":"supported.");
  h.form=d.form;h.contrast=d.high_contrast_text?"high":"";h.motion=d.reduce_motion?"reduce":"";h.bold=d.bold_text?"1":"";
