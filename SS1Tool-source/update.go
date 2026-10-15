@@ -76,6 +76,9 @@ func registerUpdateRoutes(mux *http.ServeMux) {
 }
 
 func updMode() string {
+	if uiPlatform == "android" {
+		return "off" // Google Play updates the Android app
+	}
 	cfgMu.Lock()
 	defer cfgMu.Unlock()
 	switch cfg.UpdateMode {
@@ -418,8 +421,8 @@ func updStartup(url string) (openBrowserNow bool) {
 	} else {
 		_ = os.Remove(exe + ".new")
 	}
-	if isSteam() {
-		return openBrowserNow // Steam installs the updates
+	if isSteam() || uiPlatform == "android" {
+		return openBrowserNow // Steam and Google Play install the updates
 	}
 	go func() {
 		time.Sleep(4 * time.Second)
