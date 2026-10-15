@@ -54,3 +54,7 @@ The report starts with an automatic **FINDINGS** summary (missing system files, 
 
 - Tested on a SuperStation One with a 512 GB SD card: quick check, partition table, boot region and kernel log checks all pass on a correctly flashed card.
 - Check logic was validated against exFAT and MBR test images, including a corrupted boot sector, a missing `a2` partition, overlapping partitions, a filesystem larger than its partition, dirty/media-failure flags and simulated write corruption.
+
+## License
+
+Copyright (C) 2026 f3bandit (F3 Digital Systems). Free software under the GNU General Public License version 3: see [LICENSE](LICENSE). No warranty.
