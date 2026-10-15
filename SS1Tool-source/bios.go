@@ -132,14 +132,15 @@ func rootLabel(r string) string {
 type biosFile struct {
 	File     string `json:"file"`
 	Kind     string `json:"kind"`   // main | region | extra
-	Status   string `json:"status"` // ok | different | missing | elsewhere
+	Status   string `json:"status"` // ok | patched | different | missing | elsewhere
 	Where    string `json:"where,omitempty"`
+	Patch    string `json:"patch,omitempty"` // what the patched BIOS is, e.g. "GameID patch (PS1)"
 	Expected string `json:"expected"`
 }
 
 type sysReport struct {
 	System   string     `json:"system"`
-	Status   string     `json:"status"` // ready | different | missing | elsewhere | optional | nobios
+	Status   string     `json:"status"` // ready | patched | different | missing | elsewhere | optional | nobios
 	Used     string     `json:"used"`   // folder MiSTer uses
 	UsedFrom string     `json:"used_from"`
 	Others   []string   `json:"others"` // other folders for the same system, ignored by MiSTer
@@ -238,7 +239,7 @@ done 2>/dev/null
 for r in /media/fat /media/usb[0-9]* /media/usb[0-9]*/games /media/fat/cifs /media/fat/cifs/games /media/fat/games; do
  [ -d "$r" ] || continue
  find "$r" -mindepth 2 -maxdepth 3 -type f \( ` + strings.Join(iname, " -o ") + ` \) -size -8192k 2>/dev/null | while IFS= read -r f; do
-  echo "@@F|$r|${f#$r/}|$(stat -c %s "$f")|$(md5sum "$f" | cut -d' ' -f1)"
+  echo "@@F|$r|${f#$r/}|$(stat -c %s "$f")|$(md5sum "$f" | cut -d' ' -f1)|$(sha1sum "$f" 2>/dev/null | cut -d' ' -f1)"
  done
 done; true`
 	out, err := run(script)
@@ -253,8 +254,8 @@ done; true`
 	dirs := map[string][]dirInfo{} // lower system name -> where it exists
 	dirName := map[string]string{} // lower -> name as found
 	type fileInfo struct {
-		root, rel, md5 string
-		size           int64
+		root, rel, md5, sha1 string
+		size                 int64
 	}
 	var files []fileInfo
 	cores := map[string]bool{}
@@ -281,9 +282,13 @@ done; true`
 			if _, ok := dirName[k]; !ok {
 				dirName[k] = p[2]
 			}
-		case len(p) == 5 && p[0] == "@@F":
+		case (len(p) == 5 || len(p) == 6) && p[0] == "@@F":
 			sz, _ := strconv.ParseInt(p[3], 10, 64)
-			files = append(files, fileInfo{p[1], p[2], strings.ToLower(p[4]), sz})
+			sha := ""
+			if len(p) == 6 {
+				sha = strings.ToLower(p[5])
+			}
+			files = append(files, fileInfo{p[1], p[2], strings.ToLower(p[4]), sha, sz})
 		}
 	}
 	for k := range dirs {
@@ -358,8 +363,10 @@ done; true`
 					continue
 				}
 				if f.md5 == x.hash {
-					bf.Status, bf.Where = "ok", ""
-				} else if bf.Status != "ok" {
+					bf.Status, bf.Where, bf.Patch = "ok", "", ""
+				} else if p := knownPatch(k, x.rel, f.sha1); p != "" && bf.Status != "ok" {
+					bf.Status, bf.Where, bf.Patch = "patched", "", p
+				} else if bf.Status != "ok" && bf.Status != "patched" {
 					bf.Status, bf.Where = "different", ""
 				}
 			}
@@ -378,6 +385,8 @@ done; true`
 			switch {
 			case got["ok"]:
 				rep.Status = "ready"
+			case got["patched"]:
+				rep.Status = "patched"
 			case got["different"]:
 				rep.Status = "different"
 			case got["elsewhere"]:
@@ -393,7 +402,7 @@ done; true`
 		}
 		reports = append(reports, rep)
 	}
-	order := map[string]int{"elsewhere": 0, "missing": 1, "different": 2, "optional": 3, "ready": 4, "nobios": 5}
+	order := map[string]int{"elsewhere": 0, "missing": 1, "different": 2, "optional": 3, "patched": 4, "ready": 4, "nobios": 5}
 	sort.Slice(reports, func(i, j int) bool {
 		if order[reports[i].Status] != order[reports[j].Status] {
 			return order[reports[i].Status] < order[reports[j].Status]
@@ -424,4 +433,35 @@ done; true`
 		reports = []sysReport{}
 	}
 	writeJSON(w, map[string]any{"systems": reports, "folders": notes, "bios_db": biosDBURL})
+}
+
+// Known patched BIOS files (SHA-1), which are deliberately different from the database copies.
+// PSX GameID: jdfr228's PS1-Disc-Based-Game-ID patches, applied by the PSX BIOS Patcher script
+// (psx_bios_patcher.sh), let memory cards that support it (MemCard PRO, SD2PSX...) see which
+// game is running. Hashes from psx_bios_patcher.sh v1.0.
+var patchedBIOS = map[string]map[string]string{
+	"psx": {
+		"f65cb2e8116c3ca59b9f4039c7ba720691f52348": "boot.rom|GameID patch (PS1, SCPH-7001)",
+		"908b51a024ae2aa9edf3e35311bb6e9bbf1d57cd": "boot1.rom|GameID patch (PS1, SCPH-7000)",
+		"83f2e26a91037ff6acb6f39ecfddecfa86874f10": "boot2.rom|GameID patch (PS1, SCPH-7002)",
+		"c49a582272eeb31a8c3458a6c31f1fff6c5a7375": "boot.rom|GameID patch (PSone, SCPH-101)",
+		"60329e6a61fd59e784f4098a07da7d79eba3b4cc": "boot1.rom|GameID patch (PSone, SCPH-100)",
+		"c5de1c258737004519d7f755f25ef8286ebae6b4": "boot2.rom|GameID patch (PSone, SCPH-102A)",
+	},
+}
+
+// knownPatch says what a patched BIOS file is, or "" when it isn't a known patch.
+func knownPatch(system, file, sha1 string) string {
+	if sha1 == "" {
+		return ""
+	}
+	v, ok := patchedBIOS[strings.ToLower(system)][sha1]
+	if !ok {
+		return ""
+	}
+	f, what, _ := strings.Cut(v, "|")
+	if !strings.EqualFold(path.Base(file), f) {
+		return ""
+	}
+	return what
 }
