@@ -492,9 +492,28 @@ test_fs() { # check | repair: unmounts the drive, runs the right checker, mounts
   fi
   sync
   if ! umount "$TARGET" 2>/dev/null; then
+    # A PC with the network share open (Samba) keeps a session on the drive. Close just those
+    # sessions; Samba keeps running and Windows reconnects by itself next time.
+    local users others smb
+    users=$(fs_users "$TARGET")
+    others=$(echo "$users" | awk 'NF && $2!="smbd"')
+    smb=$(echo "$users" | awk '$2=="smbd"{print $1}')
+    if [ -n "$smb" ] && [ -z "$others" ]; then
+      echo "Closing the network share (Samba) session that has the drive open; Windows reconnects by itself"
+      kill $smb 2>/dev/null; sleep 2; sync
+      umount "$TARGET" 2>/dev/null || { sleep 2; umount "$TARGET" 2>/dev/null; }
+    fi
+  fi
+  if grep -q " $TARGET " /proc/mounts; then
     echo "FAIL: $TARGET is in use, so it can't be checked safely right now. Using it:"
-    fs_users "$TARGET" | sed 's/^/  /'
-    echo "Go back to the main menu (SS1 Tool: Remote > Reload menu), wait a few seconds and try again."
+    fs_users "$TARGET" | while read -r pid name; do
+      case "$name" in
+        smbd) echo "  $pid $name (the network share: close File Explorer windows on the SuperStation's share)" ;;
+        MiSTer*|Mister*|ConsoleMode*) echo "  $pid $name (MiSTer or Console Mode: go back to the main menu with nothing loaded)" ;;
+        *) echo "  $pid $name" ;;
+      esac
+    done
+    echo "Try again once nothing is using the drive."
     echo "RESULT: NOT RUN"; return
   fi
   echo "Unmounted $TARGET"
