@@ -1,0 +1,50 @@
+# Checks MiSTer's main distribution for a new Linux image every 6 hours. When one appears it
+# sets update_flags (never lower than before) and opens an issue with what changed.
+name: Watch MiSTer Linux updates
+
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: linux-flag
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Look for a new MiSTer Linux image
+        id: watch
+        run: python3 .github/scripts/linux_watch.py
+      - name: Save the watch state (first run)
+        if: steps.watch.outputs.changed != 'true'
+        run: |
+          git add update_flags/linux_watch.ini
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Linux watch: start watching MiSTer Linux updates"
+            git push
+          fi
+      - name: Publish the flag and open an issue
+        if: steps.watch.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.watch.outputs.version }}
+          STATE: ${{ steps.watch.outputs.state }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update_flags
+          git commit -m "Linux update flag: $STATE (new MiSTer Linux $VERSION)"
+          git push
+          gh label create linux-update --color d93f0b --description "New MiSTer Linux image to review" --force
+          gh issue create --title "MiSTer Linux $VERSION: review for the SS1 (flag set to $STATE)" \
+            --label linux-update --assignee "${{ github.repository_owner }}" --body-file .linux_watch_issue.md

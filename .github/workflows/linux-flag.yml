@@ -1,0 +1,79 @@
+# Sets SS1 Tool's Linux update flag from a reply on a "linux-update" issue
+# ("/flag safe|warning|unsafe <note>", repo owner only), or by running this workflow by hand.
+name: Set the Linux update flag
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      state:
+        description: Flag
+        type: choice
+        options: [safe, warning, unsafe]
+      note:
+        description: Note shown next to the flag in SS1 Tool
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: linux-flag
+  cancel-in-progress: false
+
+jobs:
+  flag:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.comment.user.login == github.repository_owner &&
+       startsWith(github.event.comment.body, '/flag ') &&
+       contains(github.event.issue.labels.*.name, 'linux-update'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write the flag
+        id: set
+        env:
+          BODY: ${{ github.event.comment.body }}
+          IN_STATE: ${{ inputs.state }}
+          IN_NOTE: ${{ inputs.note }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          body = os.environ.get("BODY") or f"/flag {os.environ.get('IN_STATE', '')} {os.environ.get('IN_NOTE', '')}"
+          m = re.match(r"/flag\s+(safe|warning|unsafe)\b\s*(.*)", body.strip().splitlines()[0], re.I)
+          out = open(os.environ["GITHUB_OUTPUT"], "a")
+          if not m:
+              out.write("ok=false\n")
+              raise SystemExit(0)
+          state, note = m.group(1).lower(), m.group(2).strip()
+          note = note or {"safe": "Checked on the SuperStation One: safe to update.",
+                          "warning": "Update with caution.",
+                          "unsafe": "Don't update Linux on the SuperStation One yet."}[state]
+          open("update_flags/linux_update.ini", "w").write(f"Linux_update = {state}\n")
+          open("update_flags/linux_update_readme.ini", "w").write(f"< {state} > {note}\n")
+          out.write(f"ok=true\nstate={state}\n")
+          PY
+      - name: Publish
+        if: steps.set.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ steps.set.outputs.state }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add update_flags
+          if git diff --cached --quiet; then
+            MSG="The flag was already **$STATE** with that note."
+          else
+            git commit -m "Linux update flag: $STATE"
+            git push
+            MSG="Done: SS1 Tool's Linux update flag is now **$STATE**. SS1 Tool picks it up within a few minutes."
+          fi
+          if [ -n "$ISSUE" ]; then
+            gh issue comment "$ISSUE" --body "$MSG"
+            gh issue close "$ISSUE"
+          fi
