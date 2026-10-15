@@ -137,6 +137,29 @@ disk_of() { # parent disk of a partition, via sysfs
 fs_type() { awk -v t="$TARGET" '$2==t{print $3; exit}' /proc/mounts; }
 
 # ---------- tests ----------
+u64le() { # file, byte offset -> unsigned 64-bit little endian
+  local -a v; mapfile -t v < <(od -An -tu4 -v -j"$2" -N8 "$1" | tr -s ' ' '\n' | grep -v '^$')
+  [ ${#v[@]} -eq 2 ] && echo $(( v[0] + (v[1] << 32) ))
+}
+test_gpt() { # disk, disk size in 512-byte sectors -> 0 ok, 1 fail
+  local disk=$1 sectors=$2 name lbs=512 sig last alt total
+  name=$(basename "$disk")
+  [ -r "/sys/class/block/$name/queue/logical_block_size" ] && lbs=$(cat "/sys/class/block/$name/queue/logical_block_size")
+  sig=$(od -An -c -j"$lbs" -N8 "$disk" 2>/dev/null | tr -d ' \n')
+  if [ "$sig" != "EFIPART" ]; then echo "FAIL: GPT header missing at LBA 1"; return 1; fi
+  echo "PASS: GPT header found"
+  [ "$sectors" -gt 0 ] || return 0
+  total=$(( sectors * 512 / lbs ))
+  alt=$(u64le "$disk" $((lbs + 32))); last=$(u64le "$disk" $((lbs + 48)))
+  if [ -n "$last" ] && [ "$last" -ge "$total" ]; then
+    echo "FAIL: GPT partitions end past the disk ($total sectors) - table copied from a bigger disk?"; return 1
+  fi
+  if [ -n "$alt" ] && [ "$alt" -ne $((total - 1)) ]; then
+    echo "WARN: backup GPT is not at the end of the disk (disk was cloned or resized) - harmless, can be fixed with gdisk/diskpart"
+  fi
+  return 0
+}
+
 # shellcheck disable=SC2120
 test_partition_table() {
   local disk=${1:-$(disk_of "$(part_dev)")}
@@ -158,8 +181,14 @@ test_partition_table() {
     start=$(( b[o+8] | b[o+9]<<8 | b[o+10]<<16 | b[o+11]<<24 ))
     size=$(( b[o+12] | b[o+13]<<8 | b[o+14]<<16 | b[o+15]<<24 ))
     printf "%-4s 0x%02x  %-12s %-12s %s MB\n" "$((i+1))" "$type" "$start" "$size" "$((size/2048))"
-    [ "$type" -eq 238 ] && echo "INFO: GPT disk (protective MBR) - MBR checks limited"
     [ "$type" -eq 162 ] && has_a2=1
+    if [ "$type" -eq 238 ]; then
+      # protective MBR: size 0xFFFFFFFF is allowed by the UEFI spec and many tools write it
+      # whatever the disk size, so check the GPT header instead of this entry
+      echo "INFO: GPT disk (protective MBR)"
+      test_gpt "$disk" "$disk_sectors" || fail=1
+      continue
+    fi
     if [ "$disk_sectors" -gt 0 ] && [ $((start + size)) -gt "$disk_sectors" ]; then
       echo "FAIL: partition $((i+1)) extends past end of disk ($disk_sectors sectors)"; fail=1
     fi
@@ -227,8 +256,47 @@ test_boot_region() {
 }
 
 test_kernel_log() {
-  local hits
-  hits=$(dmesg 2>/dev/null | grep -iE "i/o error|buffer i/o|blk_update_request|critical medium|mmc[0-9].*(error|timeout|crc)|exfat.*(error|corrupt)|fat-fs.*error|nvme.*(error|timeout)|reset high-speed|uas.*(error|abort)")
+  # Storage errors fail the check. USB resets only count when they hit a storage device
+  # (NVMe dock, USB drive, card reader): a reset of WiFi, Bluetooth or a controller is
+  # normal (drivers like btusb/rtw88 reset the device while loading firmware, and the
+  # MiSTer USB controller often resets a device once while starting up).
+  local log storports hits resets r port other usbwarn
+  log=$(dmesg 2>/dev/null)
+  # USB ports (like 1-1.1.1) that storage devices sit on
+  storports=" "
+  for d in "${SS1_SYSBLOCK:-/sys/block}"/sd*; do
+    [ -e "$d" ] || continue
+    port=$(readlink -f "$d/device" 2>/dev/null | grep -oE '/[0-9]+-[0-9]+(\.[0-9]+)*/[0-9]+-[0-9.]+:[0-9.]+/' | head -n1 | cut -d/ -f2)
+    [ -n "$port" ] && storports="$storports$port "
+  done
+  hits=$(echo "$log" | grep -iE "i/o error|buffer i/o|blk_update_request|critical medium|mmc[0-9].*(error|timeout|crc)|exfat.*(error|corrupt)|fat-fs.*error|nvme.*(error|timeout)|uas.*(error|abort)")
+  resets=$(echo "$log" | grep -iE "usb [0-9-]+(\.[0-9]+)*: reset (high|full|low|super)[a-z+]*-speed")
+  other=""
+  while IFS= read -r r; do
+    [ -n "$r" ] || continue
+    port=$(echo "$r" | sed -nE 's/.*usb ([0-9]+-[0-9.]+): reset.*/\1/p')
+    case "$storports" in
+      *" $port "*) hits=$(printf '%s\n%s' "$hits" "$r") ;;
+      *) other=$(printf '%s\n%s' "$other" "$r") ;;
+    esac
+  done <<EOF2
+$resets
+EOF2
+  hits=$(echo "$hits" | grep -v '^$')
+  other=$(echo "$other" | grep -v '^$')
+  # signs of a real USB power or cable problem (worth a look, not a storage failure on their own)
+  usbwarn=$(echo "$log" | grep -iE "over-current|device descriptor read|error -71|error -110|unable to enumerate|not accepting address|cannot enable|disabled by hub")
+  if [ -n "$other" ]; then
+    echo "INFO: $(echo "$other" | wc -l) USB reset(s) of non-storage devices (WiFi, Bluetooth, controllers)."
+    echo "      This is normal: drivers reset some devices while loading firmware, and MiSTer's"
+    echo "      USB controller often resets one device while starting up. Not counted as an error."
+    echo "$other" | tail -n 5 | sed 's/^/      /'
+  fi
+  if [ -n "$usbwarn" ]; then
+    echo "WARN: USB power or cable trouble in the kernel log (over-current, failed enumeration):"
+    echo "$usbwarn" | tail -n 8 | sed 's/^/      /'
+    echo "      Try another power supply or cable, or a powered USB hub for power-hungry devices."
+  fi
   if [ -z "$hits" ]; then echo "PASS: no storage errors in kernel log since boot"; echo "RESULT: PASS"
   else echo "$hits" | tail -n 40; echo "RESULT: FAIL ($(echo "$hits" | wc -l) error lines)"; fi
 }
