@@ -803,6 +803,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
    <button class="b" onclick="diag('partition')">Partition table</button>
    <button class="b" onclick="diag('boot')">exFAT boot region</button>
    <button class="b" onclick="diag('kernel')">Kernel error log</button>
+   <button class="b" onclick="diag('drive')">NVMe Gen 3 / Gen 4</button>
   </div>
   <p class="muted" style="margin:10px 0 0">Deep scans (read every file, surface read, write/verify) take a long time and run on the SuperStation itself: <a href="#" onclick="term('sd_integrity');return false" style="color:#79c0ff">open sd_integrity in a terminal</a>.</p>
   <pre class="out" id="diagOut">No test run yet.</pre></div>
@@ -1041,7 +1042,7 @@ function setConn(on){$("conn").innerHTML=on?"Connected to <b>"+$("host").value+"
 function doConnect(){busy(event.target,async()=>{const s=await api("/api/connect",{host:$("host").value,user:$("user").value,pass:$("pass").value});connectedHost=$("host").value;setConn(true);showStatus(s);toast("Connected");loadDevices()})}
 async function doDisconnect(){await api("/api/disconnect",{});connectedHost="";setConn(false);loadDevices()}
 async function loadStatus(quiet){try{if(!ADV)await loadAdvisory();showStatus(await api("/api/status"))}catch(e){if(!quiet)toast(e.message,true)}}
-let LASTSTATUS=null;
+let LASTSTATUS=null,WARNEDGEN4="";
 function showStatus(s){LASTSTATUS=s;
   const yes=v=>v==="1"?'<span class="pill good">installed</span>':'<span class="pill warn">not installed</span>';
   const rows=[["Kernel",s.kernel],["/MiSTer.version",s.misterver||"missing"],["SD card",s.fat_space],
@@ -1051,6 +1052,14 @@ function showStatus(s){LASTSTATUS=s;
    ["Scraper login",s.scraper==="1"?'<span class="pill good">set</span>':'<span class="pill warn">not set</span>'],
    ["sd_integrity.sh",yes(s["script_sd_integrity.sh"])],["shutdown.sh",yes(s["script_shutdown.sh"])],
    ["ss1_debug_report.sh",yes(s["script_ss1_debug_report.sh"])],["update_all.sh",yes(s["script_update_all.sh"])]];
+  // drives in the dock (/media/usbN), with the NVMe generation check
+  const gen4=[];
+  Object.keys(s).filter(k=>k.startsWith("drivespace_")).sort().forEach(k=>{const n=k.slice(11),[kind,model]=(s["drivegen_"+n]||"").split("|");
+   const pill=kind==="gen4"?'<span class="pill bad">PCIe Gen 4 - not safe in the SS1 dock</span>':kind==="gen3"?'<span class="pill good">PCIe Gen 3</span>':model?'<span class="pill">PCIe generation unknown</span>':"";
+   if(kind==="gen4")gen4.push(`${model} (/media/${n})`);
+   rows.splice(3,0,["/media/"+n,`${esc(s[k]||"")}${model?" · "+esc(model):""} ${pill}`])});
+  if(gen4.length&&WARNEDGEN4!==gen4.join()){WARNEDGEN4=gen4.join();
+   toast(`PCIe Gen 4 NVMe drive found: ${gen4.join(", ")}. Gen 4 drives cause boot and file system problems in the SS1 dock. Use a PCIe Gen 3 drive.`,true)}
   $("status").innerHTML=rows.map(r=>`<div class="kv"><span>${r[0]}</span><span>${r[1]||"-"}</span></div>`).join("");
 }
 // ---------- saved devices

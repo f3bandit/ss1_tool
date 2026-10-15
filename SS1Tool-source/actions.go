@@ -119,6 +119,12 @@ n=0; for f in /media/fat/Scripts/*fix_sd_overlap* /media/fat/Scripts/*exfat_fix_
 [ -d /media/fat/ConsoleMode ] && echo cm=1 || echo cm=0
 [ -s /media/fat/ConsoleMode/screenscraper.txt ] && echo scraper=1 || echo scraper=0
 df -h /media/fat 2>/dev/null | awk 'NR==2{print "fat_space="$4" free of "$2}'
+awk '$2 ~ /^\/media\/usb[0-9]+$/ {print $1" "$2}' /proc/mounts | while read -r dev m; do
+  n=${m#/media/}; echo "drivespace_$n=$(df -h "$m" 2>/dev/null | awk 'NR==2{print $4" free of "$2}')"
+  p=$(basename "$(readlink -f "$dev")"); d=$(basename "$(readlink -f "/sys/class/block/$p/..")")
+  [ -e "/sys/block/$d/device" ] || d=$p
+  echo "drivemodel_$n=$(cat "/sys/block/$d/device/vendor" "/sys/block/$d/device/model" 2>/dev/null | tr -s ' \n' '  ' | sed 's/^ //;s/ $//')"
+done
 `
 
 func apiStatus(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +142,40 @@ func apiStatus(w http.ResponseWriter, r *http.Request) {
 			m[k] = v
 		}
 	}
+	for k, v := range m {
+		if n, ok := strings.CutPrefix(k, "drivemodel_"); ok {
+			m["drivegen_"+n] = driveGen(v) + "|" + v
+		}
+	}
 	writeJSON(w, m)
+}
+
+// driveGen sorts an NVMe drive by PCIe generation from the model name its USB bridge reports,
+// with the same lists sd_integrity.sh uses (GEN4_RE / GEN3_RE there, so they can't drift apart).
+// Gen 3 drives are safe in the SS1 dock; Gen 4 and newer cause boot and file system problems.
+var driveGenRe = func() map[string]*regexp.Regexp {
+	b, _ := scriptFS.ReadFile("scripts/sd_integrity.sh")
+	out := map[string]*regexp.Regexp{}
+	for _, l := range strings.Split(string(b), "\n") {
+		for _, g := range []string{"GEN4", "GEN3"} {
+			if v, ok := strings.CutPrefix(l, g+"_RE='"); ok {
+				out[g] = regexp.MustCompile("(?i)" + strings.TrimSuffix(v, "'"))
+			}
+		}
+	}
+	return out
+}()
+
+func driveGen(model string) string {
+	switch {
+	case model == "":
+		return "unknown"
+	case driveGenRe["GEN4"] != nil && driveGenRe["GEN4"].MatchString(model):
+		return "gen4"
+	case driveGenRe["GEN3"] != nil && driveGenRe["GEN3"].MatchString(model):
+		return "gen3"
+	}
+	return "unknown"
 }
 
 // ---------------------------------------------------------------- scripts
@@ -618,7 +657,7 @@ func apiTargets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, t)
 }
 
-var diagTests = map[string]bool{"quick": true, "windows": true, "partition": true, "boot": true, "kernel": true}
+var diagTests = map[string]bool{"quick": true, "windows": true, "partition": true, "boot": true, "kernel": true, "drive": true}
 var targetRe = regexp.MustCompile(`^/media/(fat|usb[0-9]+)$`)
 
 func apiDiag(w http.ResponseWriter, r *http.Request) {
