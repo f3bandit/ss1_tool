@@ -127,6 +127,8 @@ disk_of() { # parent disk of a partition, via sysfs
   local name; name=$(basename "$1")
   if [ -e "/sys/class/block/$name/partition" ]; then
     echo "/dev/$(basename "$(readlink -f "/sys/class/block/$name/..")")"
+  elif [ -e "/sys/class/block/$name" ]; then
+    echo "$1" # already a whole disk
   else
     case "$1" in
       *mmcblk*|*nvme*|*loop*) echo "${1%p[0-9]*}" ;;
@@ -446,6 +448,72 @@ test_windows_dirty() { # must NOT run under run_test: an open log file blocks th
   fi
 }
 
+# ---------- NVMe health (SMART log through the dock's JMicron bridge) ----------
+test_nvme_health() {
+  local disk=${1:-$(disk_of "$(part_dev)")} name vendor out k v
+  name=$(basename "$disk")
+  case "$name" in mmcblk*) echo "INFO: SD card - NVMe health doesn't apply"; return ;; esac
+  vendor=$(cat "/sys/block/$name/device/vendor" 2>/dev/null)
+  if ! echo "$vendor" | grep -qi jmicron || [ ! -x "$SS1FB" ]; then
+    echo "INFO: the drive's health log can only be read through the SS1 dock's JMicron adapter (this drive reports \"$vendor\")"; return
+  fi
+  out=$("$SS1FB" -nvmesmart "/dev/$name" 2>&1) || { echo "INFO: the drive didn't answer the health request ($out)"; return; }
+  local cw=0 temp=0 used=0 spare=0 thr=0 hours=0 cycles=0 unsafe=0 media=0 errs=0 wr=0 rd=0
+  while IFS='=' read -r k v; do
+    case "$k" in
+      critical_warning) cw=$v ;; temperature_c) temp=$v ;; percentage_used) used=$v ;;
+      available_spare) spare=$v ;; spare_threshold) thr=$v ;; power_on_hours) hours=$v ;;
+      power_cycles) cycles=$v ;; unsafe_shutdowns) unsafe=$v ;; media_errors) media=$v ;;
+      error_log_entries) errs=$v ;; data_written_units) wr=$v ;; data_read_units) rd=$v ;;
+    esac
+  done <<< "$out"
+  local model; model=$(drive_gen "$disk" | cut -f2)
+  echo "Drive: $disk ($model)"
+  echo "Temperature:       ${temp} C"
+  echo "Wear:              ${used}% of rated life used, spare ${spare}% (warning below ${thr}%)"
+  echo "Written / read:    $(awk -v u="$wr" 'BEGIN{printf "%.1f TB", u*512000/1e12}') / $(awk -v u="$rd" 'BEGIN{printf "%.1f TB", u*512000/1e12}')"
+  echo "Power-on time:     ${hours} hours, ${cycles} power cycles"
+  echo "Unsafe shutdowns:  ${unsafe}"
+  echo "Media errors:      ${media} (error log entries: ${errs})"
+  if [ "$cw" -ne 0 ]; then
+    local why=""
+    [ $((cw & 1)) -ne 0 ] && why="$why spare space low;"
+    [ $((cw & 2)) -ne 0 ] && why="$why temperature out of range;"
+    [ $((cw & 4)) -ne 0 ] && why="$why reliability degraded;"
+    [ $((cw & 8)) -ne 0 ] && why="$why drive switched to read-only;"
+    [ $((cw & 16)) -ne 0 ] && why="$why backup power failed;"
+    echo "FAIL: the drive reports a critical warning:$why back it up and replace it"
+  fi
+  [ "$media" -gt 0 ] 2>/dev/null && echo "FAIL: $media media error(s): the drive has had data it couldn't read back. Back it up and consider replacing it"
+  [ "$used" -ge 90 ] 2>/dev/null && echo "WARN: the drive has used ${used}% of its rated write life"
+  [ "$spare" -le "$thr" ] 2>/dev/null && [ "$thr" -gt 0 ] && echo "FAIL: spare space (${spare}%) is at or below the drive's warning level"
+  [ "$temp" -ge 70 ] 2>/dev/null && echo "WARN: the drive is hot (${temp} C): give the dock more air"
+  if [ "$unsafe" -gt 0 ] 2>/dev/null; then
+    echo "INFO: each unsafe shutdown is a time the drive lost power while it was on: a sudden reboot, or switching the SuperStation off without Safe shutdown. A count that keeps rising while you always use Safe shutdown points to power problems in the dock"
+  fi
+  [ "$cw" -eq 0 ] && [ "$media" -eq 0 ] 2>/dev/null && echo "PASS: no health warnings"
+}
+
+# ---------- read speed test (hdparm -t, read-only) ----------
+test_speed() {
+  local disk=${1:-$(disk_of "$(part_dev)")} out mbs sd=0
+  case "$(basename "$disk")" in mmcblk*) sd=1 ;; esac
+  command -v hdparm >/dev/null 2>&1 || { echo "SKIP: hdparm isn't on this SuperStation"; return; }
+  echo "Drive: $disk - reading for about 3 seconds (nothing is written)"
+  sync
+  out=$(hdparm -t "$disk" 2>&1)
+  echo "$out" | grep -i 'timing'
+  mbs=$(echo "$out" | sed -n 's/.*= *\([0-9.]*\) MB\/sec.*/\1/p' | tail -n1)
+  [ -n "$mbs" ] || { echo "INFO: hdparm couldn't time this drive: $(echo "$out" | grep -v '^ *$' | tail -n1)"; return; }
+  if [ "$sd" = 1 ]; then
+    if awk -v v="$mbs" 'BEGIN{exit !(v < 10)}'; then echo "WARN: $mbs MB/s is slow for an SD card: a slow or failing card makes loading slow"
+    else echo "PASS: $mbs MB/s - normal for the SuperStation's SD card slot"; fi
+  else
+    if awk -v v="$mbs" 'BEGIN{exit !(v < 15)}'; then echo "WARN: $mbs MB/s is slow: the SuperStation's USB is USB 2.0 (about 30-40 MB/s at best). Something is holding it back: a busy drive, a poor connection or a failing drive"
+    else echo "PASS: $mbs MB/s - the SuperStation's USB is USB 2.0, so about 30-40 MB/s is the most any drive reaches"; fi
+  fi
+}
+
 # ---------- file system check / repair (USB and NVMe drives) ----------
 fs_users() { # mount point -> processes with a file or their working folder on it
   local mp=$1 d
@@ -643,10 +711,12 @@ if [ "$1" = "--run" ]; then
     boot)      fn=test_boot_region ;;
     kernel)    fn=test_kernel_log ;;
     drive)     fn=test_drive_type ;;
+    health)    fn=test_nvme_health ;;
+    speed)     fn=test_speed ;;
     fscheck)   fn="test_fs check" ;;
     fsrepair)  fn="test_fs repair" ;;
     drivegen)  drive_gen "$(disk_of "$(part_dev)")"; exit 0 ;; # for SS1 Tool's status page
-    *) echo "Usage: $0 --run quick|windows|partition|boot|kernel|drive|fscheck|fsrepair [target]"; exit 2 ;;
+    *) echo "Usage: $0 --run quick|windows|partition|boot|kernel|drive|health|speed|fscheck|fsrepair [target]"; exit 2 ;;
   esac
   res=$($fn 2>&1)
   echo "$res"

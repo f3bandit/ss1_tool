@@ -417,6 +417,12 @@ func runSDBackup(dst string, entries []string) {
 	if e := strings.TrimSpace(stderr.String()); e != "" {
 		info += "\nWarnings from the SS1:\n" + e + "\n"
 	}
+	sbSet(func(j *sdBackupJob) { j.Current = "The card's partition table and bootloader" })
+	if err := saveSDSystemPC(filepath.Join(dst, "_system")); err != nil {
+		info += "\nSystem areas (partition table, bootloader): " + err.Error() + "\n"
+	} else {
+		info += "System areas: partition table and bootloader partition saved in _system (see README.txt there)\n"
+	}
 	_ = os.WriteFile(filepath.Join(dst, "_backup_info.txt"), []byte(strings.ReplaceAll(info, "\n", "\r\n")), 0o644)
 	sbSet(func(j *sdBackupJob) { j.Skipped = len(skippedLinks) + len(skippedFiles) })
 	finish("", false)
@@ -530,6 +536,8 @@ df -k 2>/dev/null | awk '$6=="/media/fat" || $6 ~ /^\/media\/usb[0-9]+$/ {print 
 echo "CORE $(cat /tmp/CORENAME 2>/dev/null)"
 ip -4 -o addr show 2>/dev/null | awk '$2!="lo"{print "IP "$2" "$4}'
 awk 'NR>2{gsub(":","",$1); if($1!="lo") print "NET "$1" "$2" "$10}' /proc/net/dev
+awk '$3 ~ /^(mmcblk[0-9]+|sd[a-z]+|nvme[0-9]+n[0-9]+)$/ {print "IO "$3" "$6" "$10}' /proc/diskstats
+command -v i2cdetect >/dev/null 2>&1 && i2cdetect -l 2>/dev/null | sed 's/^/I2C /'
 sleep 0.5
 grep '^cpu' /proc/stat | sed 's/^/S2 /'
 echo "PROCS"; COLUMNS=200 top -b -n 1 2>/dev/null | head -n 400
@@ -559,6 +567,7 @@ func cpuFields(l string) (idle, total uint64) {
 var (
 	netMu   sync.Mutex
 	netPrev = map[string][2]uint64{}
+	ioPrev  = map[string][2]uint64{} // disk: sectors read, written
 	netTime time.Time
 )
 
@@ -578,7 +587,8 @@ func apiDash(w http.ResponseWriter, r *http.Request) {
 func parseDash(out string) map[string]any {
 	res := map[string]any{}
 	mem := map[string]uint64{}
-	var disks, ips, nets, sensors []map[string]any
+	var disks, ips, nets, sensors, io []map[string]any
+	var i2c []string
 	st1, st2 := map[string]string{}, map[string]string{}
 	var cpuModel, cpuPart, bogo, hw string
 	var topo [][]string
@@ -668,6 +678,27 @@ func parseDash(out string) map[string]any {
 				}
 				disks = append(disks, map[string]any{"mount": f[0], "label": label, "total_kb": t, "used_kb": u, "avail_kb": a})
 			}
+		case "IO":
+			f := strings.Fields(v)
+			if len(f) == 3 {
+				rd, _ := strconv.ParseUint(f[1], 10, 64)
+				wr, _ := strconv.ParseUint(f[2], 10, 64)
+				label := "USB/NVMe drive (" + f[0] + ")"
+				if strings.HasPrefix(f[0], "mmcblk") {
+					label = "SD card"
+				}
+				d := map[string]any{"dev": f[0], "label": label}
+				if p, ok := ioPrev[f[0]]; ok && dt > 0 && dt < 60 && rd >= p[0] && wr >= p[1] {
+					d["read_bps"] = float64(rd-p[0]) * 512 / dt
+					d["write_bps"] = float64(wr-p[1]) * 512 / dt
+				}
+				ioPrev[f[0]] = [2]uint64{rd, wr}
+				io = append(io, d)
+			}
+		case "I2C":
+			if f := strings.Fields(v); len(f) > 0 {
+				i2c = append(i2c, strings.Join(f, " "))
+			}
 		case "CORE":
 			res["core"] = strings.TrimSpace(v)
 		case "IP":
@@ -754,6 +785,7 @@ func parseDash(out string) map[string]any {
 	}
 	res["disks"], res["ips"], res["nets"], res["procs"] = disks, ips, nets, strings.TrimRight(procs, "\n")
 	res["sensors"] = sensors
+	res["io"], res["i2c"] = io, i2c
 	return res
 }
 

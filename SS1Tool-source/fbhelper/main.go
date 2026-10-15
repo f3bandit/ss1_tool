@@ -244,7 +244,12 @@ func main() {
 	tone := flag.String("tone", "info", "good | warn | bad | info")
 	reboot := flag.Bool("reboot", false, "cold-reboot the SuperStation like MiSTer's own Reboot")
 	nvmeid := flag.String("nvmeid", "", "print the NVMe model behind a JMicron USB bridge (/dev/sdX)")
+	nvmesmart := flag.String("nvmesmart", "", "print the NVMe health log behind a JMicron USB bridge (/dev/sdX)")
 	flag.Parse()
+	if *nvmesmart != "" {
+		nvmeSmartMain(*nvmesmart)
+		return
+	}
 	if *nvmeid != "" {
 		nvmeIDMain(*nvmeid)
 		return

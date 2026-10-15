@@ -309,6 +309,10 @@ collect() {
         unknown) finding "INFO: $m drive \"$gm\"${gp:+ (rated max $gp W)} isn't in SS1 Tool's drive list: PCIe generation unknown" ;;
       esac
       [ "$gk" != gen4 ] && [ -n "$gp" ] && awk -v p="$gp" 'BEGIN{exit !(p+0 > 7)}' && finding "WARN: $m drive is rated up to $gp W: drives above 7 W can overload the SS1 dock and cause sudden reboots"
+      local hl; hl=$(bash "$FAT/Scripts/sd_integrity.sh" --run health "$m" 2>/dev/null | grep -v '^=====')
+      if [ -n "$hl" ]; then echo "$hl" | sed 's/^/  /'
+        while read -r l; do [ -n "$l" ] && finding "${l%%:*}: $m drive health:${l#*:}"; done < <(echo "$hl" | grep -E '^(FAIL|WARN):')
+      fi
     fi
   done
   p=$(part_of "$FAT"); local disk=""
@@ -345,6 +349,10 @@ collect() {
 
   # ---------------------------------------------------------------- 9
   progress "USB devices"
+  sec "BOARD BUSES (I2C)"
+  if command -v i2cdetect >/dev/null 2>&1; then i2cdetect -l 2>/dev/null || echo "none"; else echo "i2cdetect not available"; fi
+  echo "(listed only; SS1 Tool never probes the buses)"
+
   sec "USB DEVICES"
   echo "Location: port 1-1.1.x = Dock (incl. its NVMe slot), other 1-1.x = SuperStation"
   echo "Note: 'pico_ir_keyboard' (TinyUSB) is the receiver for the dock's TV remote; it shows up as a keyboard and mouse"
@@ -393,6 +401,19 @@ collect() {
   echo; echo "Interfaces:"
   if ip -brief addr >/dev/null 2>&1; then ip -brief addr | redact; else ifconfig 2>/dev/null | redact; fi
   echo; echo "WiFi config present: $( [ -f "$FAT/linux/wpa_supplicant.conf" ] && echo yes || echo no) (contents not collected)"
+  if command -v iw >/dev/null 2>&1; then
+    local wl sig
+    for wl in /sys/class/net/wlan*; do [ -e "$wl" ] || continue
+      echo; echo "WiFi link ($(basename "$wl")):"; iw dev "$(basename "$wl")" link 2>/dev/null | grep -E 'freq|signal|bitrate' | sed 's/^[[:space:]]*/  /'
+      sig=$(iw dev "$(basename "$wl")" link 2>/dev/null | sed -n 's/.*signal: *\(-[0-9]*\).*/\1/p')
+      [ -n "$sig" ] && [ "$sig" -lt -75 ] && finding "WARN: weak WiFi signal ($sig dBm): slow network shares and dropped connections are likely; move closer or use a cable"
+    done
+  fi
+  if command -v ethtool >/dev/null 2>&1; then
+    for wl in /sys/class/net/eth*; do [ -e "$wl" ] || continue
+      echo; echo "Ethernet ($(basename "$wl")):"; ethtool "$(basename "$wl")" 2>/dev/null | grep -E 'Speed|Duplex|Auto-negotiation|Link detected' | sed 's/^[[:space:]]*/  /'
+    done
+  fi
 
   # ---------------------------------------------------------------- 10
   progress "Running processes"

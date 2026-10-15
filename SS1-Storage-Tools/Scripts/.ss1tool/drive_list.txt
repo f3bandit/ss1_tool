@@ -1,0 +1,84 @@
+# SS1 Tool NVMe drive list
+#
+# PCIe Gen 3 NVMe drives are safe in the SS1 dock; Gen 4 and newer cause sudden reboots, boot
+# and file system problems. SS1 Tool reads the drive's own model name (through the dock's
+# USB bridge) and matches it against these rules, top to bottom within each group.
+#
+# One rule per line:  gen3|gen4 <pattern>
+# Patterns are case-insensitive extended regular expressions (grep -E). Keep them simple:
+# letters, digits, spaces, ? + * [] () | and ^ $. SS1 Tool rejects the whole file if any
+# rule doesn't compile, and then keeps using its built-in copy.
+#
+# Raise 'version' with every change: SS1 Tool uses the newest of its built-in list and this file.
+version 2
+
+# ---- Gen 4 and newer
+gen4 WDS[0-9]+[GT][0-9][BGX]0E
+gen4 980 ?PRO
+gen4 990 ?(PRO|EVO)
+gen4 9100 ?PRO
+gen4 SN5000
+gen4 SN580
+gen4 SN7[17]0
+gen4 SN7100
+gen4 SN8[15]0
+gen4 SN850X
+gen4 SN8100
+gen4 CT[0-9]+P3PSSD
+gen4 CT[0-9]+P5PSSD
+gen4 CT[0-9]+P310SSD
+gen4 CT[0-9]+T[57]0[05]SSD
+gen4 P3 ?PLUS
+gen4 P5 ?PLUS
+gen4 T500
+gen4 T70[05]
+gen4 SKC3000
+gen4 SNV2S
+gen4 SNV3S
+gen4 SFYR
+gen4 KC3000
+gen4 FURY ?RENEGADE
+gen4 SHPP41
+gen4 PLATINUM ?P41
+gen4 P44 ?PRO
+gen4 SSDPFKKW
+gen4 FIRECUDA ?5[234]0
+gen4 ROCKET ?(4|Q4|5)
+gen4 MP44
+gen4 MP700
+gen4 NM7[19]0
+gen4 NM800
+gen4 MP600
+gen4 LEGEND ?[789][0-9]0
+gen4 S70 ?BLADE
+gen4 GAMMIX ?S70
+gen4 KINGSTON NV[23]
+
+# ---- Gen 3
+gen3 WDS[0-9]+[GT][0-9][BGX]0C
+gen3 SN350
+gen3 970 ?EVO
+gen3 970 ?PRO
+gen3 SAMSUNG SSD 980( |$)
+gen3 SN750
+gen3 SN570
+gen3 SN550
+gen3 SN530
+gen3 CT[0-9]+P[123]SSD
+gen3 SNVS[0-9]
+gen3 SA2000
+gen3 SKC2500
+gen3 A2000
+gen3 SHGP31
+gen3 GOLD ?P31
+gen3 MP510
+gen3 MP34
+gen3 MP33
+gen3 SX8200
+gen3 SX6000
+gen3 660P
+gen3 670P
+gen3 NM620
+gen3 NM610
+gen3 ROCKET ?NVME
+gen3 INTEL SSDPEKNW
