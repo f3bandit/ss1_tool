@@ -551,7 +551,3 @@ SS1 Tool and the SS1 storage scripts are free software: you can redistribute the
 They are distributed in the hope that they will be useful, but **without any warranty**; without even the implied warranty of merchantability or fitness for a particular purpose. See the GNU General Public License for details.
 
 In short: you can use, study, share and change SS1 Tool. If you share a changed version, it has to be under GPL-3.0 too, with its source code.
-
-### Contributing
-
-SS1 Tool is written and maintained by f3bandit only, so pull requests aren't accepted. Bug reports, drive reports and feature ideas are very welcome: [open an issue](https://github.com/f3bandit/ss1_tool/issues).
