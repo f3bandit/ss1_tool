@@ -1,0 +1,58 @@
+name: NVMe drive not in the list
+description: SS1 Tool showed "PCIe gen unknown" for an NVMe drive in the SS1 dock. Report it so it can be added for everyone.
+title: "NVMe drive: "
+labels: ["nvme-drive"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        PCIe **Gen 3** NVMe drives are safe in the SS1 dock; **Gen 4** and newer cause sudden reboots, boot and file system problems.
+        SS1 Tool tells them apart by the model name the drive reports. Thanks for reporting one it doesn't know yet.
+        The **Report this drive** link in SS1 Tool fills in the first fields for you.
+  - type: input
+    id: model
+    attributes:
+      label: Model (as the drive reports it)
+      placeholder: e.g. WDC WDS250G2B0C-00PXH0
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware
+  - type: input
+    id: power
+    attributes:
+      label: Rated maximum power
+      placeholder: e.g. 5.00 W
+  - type: dropdown
+    id: gen
+    attributes:
+      label: PCIe generation
+      description: From the box, the maker's spec sheet or a review. "Don't know" is fine.
+      options:
+        - Don't know
+        - PCIe Gen 3
+        - PCIe Gen 4
+        - PCIe Gen 5
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Where you found the generation (link)
+      placeholder: https://...
+  - type: dropdown
+    id: works
+    attributes:
+      label: How does it behave in the SS1 dock?
+      options:
+        - Works fine
+        - Sudden reboots
+        - Boot problems
+        - File system errors
+        - Not tested yet
+  - type: input
+    id: app
+    attributes:
+      label: SS1 Tool version

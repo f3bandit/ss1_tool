@@ -164,34 +164,50 @@ test_gpt() { # disk, disk size in 512-byte sectors -> 0 ok, 1 fail
 # PCIe Gen 3 NVMe drives are safe in the SS1 dock. Gen 4 (and newer) drives cause boot and
 # file system problems there. The dock's USB bridge hides the PCIe link, so the generation
 # comes from the model name the bridge passes through, matched against known drives.
-GEN4_RE='WDS[0-9]+[GT][0-9][BX]0E|980 ?PRO|990 ?(PRO|EVO)|9100 ?PRO|SN5000|SN580|SN7[17]0|SN7100|SN8[15]0|SN850X|SN8100|CT[0-9]+P3PSSD|CT[0-9]+P5PSSD|CT[0-9]+P310SSD|CT[0-9]+T[57]0[05]SSD|P3 ?PLUS|P5 ?PLUS|T500|T70[05]|SKC3000|SNV2S|SNV3S|SFYR|KC3000|FURY ?RENEGADE|SHPP41|PLATINUM ?P41|P44 ?PRO|SSDPFKKW|FIRECUDA ?5[234]0|ROCKET ?(4|Q4|5)|MP44|MP700|NM7[19]0|NM800|MP600|MP700|LEGEND ?[789][0-9]0|S70 ?BLADE|GAMMIX ?S70|KINGSTON NV[23]'
+GEN4_RE='WDS[0-9]+[GT][0-9][BX]0E|980 ?PRO|990 ?(PRO|EVO)|9100 ?PRO|SN5000|SN580|SN7[17]0|SN7100|SN8[15]0|SN850X|SN8100|CT[0-9]+P3PSSD|CT[0-9]+P5PSSD|CT[0-9]+P310SSD|CT[0-9]+T[57]0[05]SSD|P3 ?PLUS|P5 ?PLUS|T500|T70[05]|SKC3000|SNV2S|SNV3S|SFYR|KC3000|FURY ?RENEGADE|SHPP41|PLATINUM ?P41|P44 ?PRO|SSDPFKKW|FIRECUDA ?5[234]0|ROCKET ?(4|Q4|5)|MP44|MP700|NM7[19]0|NM800|MP600|LEGEND ?[789][0-9]0|S70 ?BLADE|GAMMIX ?S70|KINGSTON NV[23]'
 GEN3_RE='WDS[0-9]+[GT][0-9][BX]0C|970 ?EVO|970 ?PRO|SAMSUNG SSD 980( |$)|SN750|SN570|SN550|SN530|CT[0-9]+P[123]SSD|SNVS[0-9]|SA2000|SKC2500|A2000|SHGP31|GOLD ?P31|MP510|MP34|MP33|SX8200|SX6000|660P|670P|NM620|NM610|ROCKET ?NVME|INTEL SSDPEKNW'
-drive_gen() { # disk -> "<kind>\t<model>"; kind: gen4 | gen3 | unknown | sd
-  local name model vendor
+# SS1 Tool keeps the newest drive list here (downloaded from the SS1 Tool repo); the lists
+# above are the built-in fallback.
+DRIVE_LIST="$(dirname "$SS1FB")/drive_list.txt"
+if [ -r "$DRIVE_LIST" ]; then
+  l4=$(awk '$1=="gen4"{sub(/^gen4[ \t]+/,""); sub(/[ \t\r]+$/,""); printf "%s%s", (n++ ? "|" : ""), $0}' "$DRIVE_LIST")
+  l3=$(awk '$1=="gen3"{sub(/^gen3[ \t]+/,""); sub(/[ \t\r]+$/,""); printf "%s%s", (n++ ? "|" : ""), $0}' "$DRIVE_LIST")
+  [ -n "$l4" ] && GEN4_RE=$l4
+  [ -n "$l3" ] && GEN3_RE=$l3
+fi
+HIGH_POWER_W=7   # drives rated above this can overload the SS1 dock whatever their generation
+drive_gen() { # disk -> "<kind>\t<model>\t<max power W or empty>"; kind: gen4 | gen3 | unknown | sd
+  local name model vendor power=""
   name=$(basename "$1")
-  case "$name" in mmcblk*) printf 'sd\tSD card\n'; return ;; esac
+  case "$name" in mmcblk*) printf 'sd\tSD card\t\n'; return ;; esac
   vendor=$(tr -s ' ' < "/sys/block/$name/device/vendor" 2>/dev/null | sed 's/^ //;s/ $//')
   model=$(tr -s ' ' < "/sys/block/$name/device/model" 2>/dev/null | sed 's/^ //;s/ $//')
   model=$(echo "$vendor $model" | sed 's/^ //')
   # JMicron USB-NVMe bridges report "JMicron Generic": ask the NVMe drive itself (read-only Identify)
   if echo "$vendor" | grep -qi jmicron && [ -x "$SS1FB" ]; then
-    local id; id=$("$SS1FB" -nvmeid "/dev/$name" 2>/dev/null | cut -f1)
-    [ -n "$id" ] && model=$id
+    local id; id=$("$SS1FB" -nvmeid "/dev/$name" 2>/dev/null)
+    if [ -n "$id" ]; then model=$(echo "$id" | cut -f1); power=$(echo "$id" | cut -f4); fi
   fi
-  if echo "$model" | grep -qiE "$GEN4_RE"; then printf 'gen4\t%s\n' "$model"
-  elif echo "$model" | grep -qiE "$GEN3_RE"; then printf 'gen3\t%s\n' "$model"
-  else printf 'unknown\t%s\n' "${model:-not reported}"; fi
+  if echo "$model" | grep -qiE "$GEN4_RE"; then printf 'gen4\t%s\t%s\n' "$model" "$power"
+  elif echo "$model" | grep -qiE "$GEN3_RE"; then printf 'gen3\t%s\t%s\n' "$model" "$power"
+  else printf 'unknown\t%s\t%s\n' "${model:-not reported}" "$power"; fi
 }
+high_power() { [ -n "$1" ] && awk -v p="$1" -v m="$HIGH_POWER_W" 'BEGIN{exit !(p+0 > m+0)}'; }
 test_drive_type() {
-  local disk=${1:-$(disk_of "$(part_dev)")} kind model
-  IFS=$'\t' read -r kind model < <(drive_gen "$disk")
-  echo "Drive: $disk ($model)"
+  local disk=${1:-$(disk_of "$(part_dev)")} kind model power
+  IFS=$'\t' read -r kind model power < <(drive_gen "$disk")
+  echo "Drive: $disk ($model${power:+, rated max $power W})"
   case "$kind" in
-    sd)   echo "INFO: SD card - the NVMe generation check doesn't apply" ;;
+    sd)   echo "INFO: SD card - the NVMe generation check doesn't apply"; return ;;
     gen3) echo "PASS: PCIe Gen 3 NVMe drive - safe in the SS1 dock" ;;
     gen4) echo "WARN: PCIe Gen 4 (or newer) NVMe drive - Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock. Use a PCIe Gen 3 drive" ;;
-    *)    echo "INFO: the drive's PCIe generation is unknown (the dock reports \"$model\"). Gen 3 drives are safe in the SS1 dock; Gen 4 drives cause sudden reboots, boot and file system problems" ;;
+    *)    echo "INFO: \"$model\" isn't in SS1 Tool's drive list yet, so its PCIe generation is unknown."
+          echo "INFO: Gen 3 drives are safe in the SS1 dock; Gen 4 drives cause sudden reboots, boot and file system problems."
+          echo "INFO: Look up \"$model\" (search: $model NVMe PCIe Gen 3 or Gen 4) and report it in SS1 Tool so it gets added" ;;
   esac
+  if [ "$kind" != gen4 ] && high_power "$power"; then
+    echo "WARN: this drive is rated up to $power W - drives above $HIGH_POWER_W W can overload the SS1 dock and cause sudden reboots"
+  fi
 }
 
 # shellcheck disable=SC2120

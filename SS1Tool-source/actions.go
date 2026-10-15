@@ -128,8 +128,9 @@ awk '$2 ~ /^\/media\/usb[0-9]+$/ {print $1" "$2}' /proc/mounts | while read -r d
   p=$(basename "$(readlink -f "$dev")"); d=$(basename "$(readlink -f "/sys/class/block/$p/..")")
   [ -e "/sys/block/$d/device" ] || d=$p
   dm=$(cat "/sys/block/$d/device/vendor" "/sys/block/$d/device/model" 2>/dev/null | tr -s ' \n' '  ' | sed 's/^ //;s/ $//')
-  case "$dm" in [Jj][Mm][Ii][Cc][Rr][Oo][Nn]*) [ -x /media/fat/Scripts/.ss1tool/ss1fb ] && id=$(/media/fat/Scripts/.ss1tool/ss1fb -nvmeid "/dev/$d" 2>/dev/null | cut -f1) && [ -n "$id" ] && dm=$id ;; esac
-  echo "drivemodel_$n=$dm"
+  dp=""
+  case "$dm" in [Jj][Mm][Ii][Cc][Rr][Oo][Nn]*) [ -x /media/fat/Scripts/.ss1tool/ss1fb ] && id=$(/media/fat/Scripts/.ss1tool/ss1fb -nvmeid "/dev/$d" 2>/dev/null) && [ -n "$id" ] && dm=$(echo "$id" | cut -f1) && dp=$(echo "$id" | cut -f4) && echo "drivefw_$n=$(echo "$id" | cut -f2)" ;; esac
+  echo "drivemodel_$n=$dm"; echo "drivepower_$n=$dp"
 done
 `
 
@@ -154,34 +155,6 @@ func apiStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, m)
-}
-
-// driveGen sorts an NVMe drive by PCIe generation from the model name its USB bridge reports,
-// with the same lists sd_integrity.sh uses (GEN4_RE / GEN3_RE there, so they can't drift apart).
-// Gen 3 drives are safe in the SS1 dock; Gen 4 and newer cause sudden reboots, boot and file system problems.
-var driveGenRe = func() map[string]*regexp.Regexp {
-	b, _ := scriptFS.ReadFile("scripts/sd_integrity.sh")
-	out := map[string]*regexp.Regexp{}
-	for _, l := range strings.Split(string(b), "\n") {
-		for _, g := range []string{"GEN4", "GEN3"} {
-			if v, ok := strings.CutPrefix(l, g+"_RE='"); ok {
-				out[g] = regexp.MustCompile("(?i)" + strings.TrimSuffix(v, "'"))
-			}
-		}
-	}
-	return out
-}()
-
-func driveGen(model string) string {
-	switch {
-	case model == "":
-		return "unknown"
-	case driveGenRe["GEN4"] != nil && driveGenRe["GEN4"].MatchString(model):
-		return "gen4"
-	case driveGenRe["GEN3"] != nil && driveGenRe["GEN3"].MatchString(model):
-		return "gen3"
-	}
-	return "unknown"
 }
 
 // ---------------------------------------------------------------- scripts
@@ -214,6 +187,19 @@ func ensureScripts(force bool) ([]string, error) {
 			return done, err
 		}
 		done = append(done, ".ss1tool/ss1fb")
+	}
+	// NVMe drive list used by sd_integrity.sh (the newest of built-in and downloaded)
+	if dl := activeDriveList(); dl != nil {
+		sum := md5.Sum(dl.raw)
+		if out, _ := run("md5sum " + scriptsDir + "/.ss1tool/drive_list.txt 2>/dev/null | cut -d' ' -f1"); force || strings.TrimSpace(out) != hex.EncodeToString(sum[:]) {
+			if _, err := run("mkdir -p " + scriptsDir + "/.ss1tool"); err != nil {
+				return done, err
+			}
+			if err := upload(scriptsDir+"/.ss1tool/drive_list.txt", bytes.NewReader(dl.raw), "644"); err != nil {
+				return done, err
+			}
+			done = append(done, ".ss1tool/drive_list.txt")
+		}
 	}
 	for _, n := range scriptNames {
 		b, _ := scriptFS.ReadFile("scripts/" + n)
