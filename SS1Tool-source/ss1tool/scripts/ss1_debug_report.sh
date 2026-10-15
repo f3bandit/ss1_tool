@@ -299,11 +299,11 @@ collect() {
     p=$(part_of "$m")
     echo "$m -> ${p:-unknown}  exFAT state: $( [ -n "$p" ] && exfat_flags "$p" || echo unknown)"
     [ -n "$p" ] && [ "$(exfat_flags "$p")" = "MEDIA FAILURE" ] && finding "FAIL: $m filesystem reports MEDIA FAILURE"
-    # NVMe generation (lists in sd_integrity.sh): Gen 4 drives cause boot and file system problems in the SS1 dock
+    # NVMe generation (lists in sd_integrity.sh): Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock
     if [ "$m" != "$FAT" ] && [ -f "$FAT/Scripts/sd_integrity.sh" ]; then
       local g; g=$(bash "$FAT/Scripts/sd_integrity.sh" --run drivegen "$m" 2>/dev/null | grep -E '^(gen[34]|unknown|sd)' | head -n1)
       [ -n "$g" ] && echo "  drive: ${g#*$'\t'}  (${g%%$'\t'*})"
-      case "$g" in gen4*) finding "WARN: $m is a PCIe Gen 4 NVMe drive (${g#*$'\t'}): Gen 4 drives cause boot and file system problems in the SS1 dock, use a PCIe Gen 3 drive" ;; esac
+      case "$g" in gen4*) finding "WARN: $m is a PCIe Gen 4 NVMe drive (${g#*$'\t'}): Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock, use a PCIe Gen 3 drive" ;; esac
     fi
   done
   p=$(part_of "$FAT"); local disk=""

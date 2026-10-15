@@ -184,8 +184,8 @@ test_drive_type() {
   case "$kind" in
     sd)   echo "INFO: SD card - the NVMe generation check doesn't apply" ;;
     gen3) echo "PASS: PCIe Gen 3 NVMe drive - safe in the SS1 dock" ;;
-    gen4) echo "WARN: PCIe Gen 4 (or newer) NVMe drive - Gen 4 drives cause boot and file system problems in the SS1 dock. Use a PCIe Gen 3 drive" ;;
-    *)    echo "INFO: the drive's PCIe generation is unknown (the dock reports \"$model\"). Gen 3 drives are safe in the SS1 dock; Gen 4 drives cause boot and file system problems" ;;
+    gen4) echo "WARN: PCIe Gen 4 (or newer) NVMe drive - Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock. Use a PCIe Gen 3 drive" ;;
+    *)    echo "INFO: the drive's PCIe generation is unknown (the dock reports \"$model\"). Gen 3 drives are safe in the SS1 dock; Gen 4 drives cause sudden reboots, boot and file system problems" ;;
   esac
 }
 
