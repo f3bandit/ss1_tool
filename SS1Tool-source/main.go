@@ -188,6 +188,7 @@ func main() {
 	fmt.Println("SS1 Tool", appVersion, "running at", url)
 	appStart(url)
 	go advisoryWatch()
+	go driveListWatch()
 	if updStartup(url) && !startedInBackground() {
 		go func() {
 			time.Sleep(300 * time.Millisecond)

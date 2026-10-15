@@ -302,8 +302,13 @@ collect() {
     # NVMe generation (lists in sd_integrity.sh): Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock
     if [ "$m" != "$FAT" ] && [ -f "$FAT/Scripts/sd_integrity.sh" ]; then
       local g; g=$(bash "$FAT/Scripts/sd_integrity.sh" --run drivegen "$m" 2>/dev/null | grep -E '^(gen[34]|unknown|sd)' | head -n1)
-      [ -n "$g" ] && echo "  drive: ${g#*$'\t'}  (${g%%$'\t'*})"
-      case "$g" in gen4*) finding "WARN: $m is a PCIe Gen 4 NVMe drive (${g#*$'\t'}): Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock, use a PCIe Gen 3 drive" ;; esac
+      local gk gm gp; IFS=$'\t' read -r gk gm gp <<< "$g"
+      [ -n "$g" ] && echo "  drive: $gm  ($gk${gp:+, rated max $gp W})"
+      case "$gk" in
+        gen4) finding "WARN: $m is a PCIe Gen 4 NVMe drive ($gm): Gen 4 drives cause sudden reboots, boot and file system problems in the SS1 dock, use a PCIe Gen 3 drive" ;;
+        unknown) finding "INFO: $m drive \"$gm\"${gp:+ (rated max $gp W)} isn't in SS1 Tool's drive list: PCIe generation unknown" ;;
+      esac
+      [ "$gk" != gen4 ] && [ -n "$gp" ] && awk -v p="$gp" 'BEGIN{exit !(p+0 > 7)}' && finding "WARN: $m drive is rated up to $gp W: drives above 7 W can overload the SS1 dock and cause sudden reboots"
     fi
   done
   p=$(part_of "$FAT"); local disk=""

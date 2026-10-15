@@ -4,13 +4,14 @@ package main
 // bridge (JMS583 and similar), which otherwise reports only "JMicron Generic". It sends one
 // read-only NVMe Identify Controller command using JMicron's pass-through protocol, the same
 // three steps smartmontools uses for "-d sntjmicron" (lib/scsinvme.cpp).
-// Prints: model<TAB>firmware<TAB>PCI vendor id
+// Prints: model<TAB>firmware<TAB>PCI vendor id<TAB>max power in watts (highest operational power state)
 
 import (
 	"encoding/binary"
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
@@ -125,5 +126,32 @@ func nvmeIDMain(dev string) {
 		fmt.Fprintln(os.Stderr, "ss1fb -nvmeid: empty model")
 		os.Exit(1)
 	}
-	fmt.Printf("%s\t%s\t%04x\n", model, fw, binary.LittleEndian.Uint16(d[0:]))
+	fmt.Printf("%s\t%s\t%04x\t%s\n", model, fw, binary.LittleEndian.Uint16(d[0:]), maxPowerW(d))
+}
+
+// maxPowerW is the highest Max Power of the operational power state descriptors (Identify
+// Controller bytes 2048+, 32 bytes each; NPSS at byte 263 is the count minus one).
+func maxPowerW(d []byte) string {
+	n := int(d[263]) + 1
+	if n > 32 {
+		n = 32
+	}
+	best := 0.0
+	for i := 0; i < n; i++ {
+		p := d[2048+32*i:]
+		if p[3]&0x02 != 0 { // non-operational state
+			continue
+		}
+		w := float64(binary.LittleEndian.Uint16(p[0:])) / 100
+		if p[3]&0x01 != 0 { // MXPS: units of 0.0001 W
+			w = float64(binary.LittleEndian.Uint16(p[0:])) / 10000
+		}
+		if w > best {
+			best = w
+		}
+	}
+	if best == 0 {
+		return ""
+	}
+	return strconv.FormatFloat(best, 'f', 2, 64)
 }
