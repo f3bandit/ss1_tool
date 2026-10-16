@@ -52,6 +52,7 @@ label.ck{display:flex;gap:8px;align-items:center;padding:3px 0}
 .st{font-size:12.5px;margin-top:4px;min-height:17px}
 #credit{position:fixed;right:12px;bottom:8px;z-index:20;font-size:12px;line-height:1.3;color:var(--dim);opacity:.85;pointer-events:none;user-select:none;letter-spacing:.3px;text-align:right}
 #credit span{display:block;font-size:11px;opacity:.8}
+#credit{display:flex;align-items:center;gap:10px}#credit .kofi{pointer-events:auto;display:block;line-height:0;opacity:.9}#credit .kofi:hover{opacity:1}#credit .kofi img{display:block}
 a.discord{display:inline-block;text-decoration:none;background:#ffd33d;border-color:#ffd33d;color:#111;font-weight:600}
 a.discord:hover{background:#ffe066;border-color:#ffe066}
 .bkf{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:2px 0;font-family:Consolas,monospace;font-size:12.5px}
@@ -78,6 +79,8 @@ a.discord:hover{background:#ffe066;border-color:#ffe066}
 .sst{margin-top:10px;font-size:13px;display:flex;flex-wrap:wrap;gap:4px 18px}
 .adv{margin-top:12px;border:1px solid var(--line);border-left:4px solid var(--line);border-radius:6px;padding:10px 12px;font-size:13px}
 .adv.safe{border-left-color:var(--ok);background:#3fb9500d}.adv.warning{border-left-color:var(--warn);background:#e3b34112}.adv.unsafe{border-left-color:var(--bad);background:#f8514912}.adv h4{margin:0 0 4px;font-size:14px}
+.artspec{margin:0 0 10px;font-size:13px}.artspec summary{cursor:pointer;color:var(--accent,#79c0ff)}
+.artpick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.artpick .b{display:flex;flex-direction:column;align-items:center;width:112px;padding:4px;gap:4px;white-space:normal;font-size:11px;line-height:1.2}.artpick img{width:100px;height:100px;object-fit:contain;background:#0006;border-radius:4px}
 .adv .desc{white-space:pre-wrap;margin:6px 0;color:var(--text)}.adv a{color:#79c0ff}
 a.docs{display:inline-block;text-decoration:none;background:#58a6ff;border-color:#58a6ff;color:#0d1117;font-weight:600}
 a.docs:hover{background:#79b8ff;border-color:#79b8ff}
@@ -478,7 +481,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div class="adv" id="advBox"></div></div>
  <div class="card"><h3>Remove faulty overlap fix tool</h3><p>Deletes fix_sd_overlap.sh / exfat_fix_overlap, which misdetect the correct SS1 layout as overlapping and can destroy the card (SuperStation-Documentation #14).</p>
   <button class="b d" onclick="act('/api/overlap-cleanup')">Remove overlap tools</button><div class="sst" id="ssOverlap"></div></div>
- <div class="card"><h3>Console Mode scraper accounts</h3><p>Writes your own ScreenScraper login and TheGamesDB API key to /media/fat/ConsoleMode. Leave a field blank to keep the current value.</p>
+ <div class="card" id="scraperCard"><h3>Console Mode scraper accounts</h3><p>Writes your own ScreenScraper login and TheGamesDB API key to /media/fat/ConsoleMode. Leave a field blank to keep the current value.</p>
   <div class="row" style="align-items:flex-start;gap:14px">
    <div><input id="ssid" placeholder="ScreenScraper username" size="22"><div class="st" id="stSSID"></div></div>
    <div><input id="sspw" type="password" placeholder="ScreenScraper password" size="22"><div class="st" id="stSSPW"></div></div>
@@ -660,8 +663,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </div>
 </section>
 <section id="files">
- <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, and take and browse screenshots.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a></div>
+ <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, take and browse screenshots, and get artwork for Console Mode.</p>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a></div>
 <div class="subpage" id="fm">
  <h2>File manager</h2><p class="sub">Pick a drive on each side to move or copy files between the SD card and the NVMe/USB drive. Tick files, then use the arrows in the middle.</p>
  <div class="panes">
@@ -739,6 +742,35 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="card"><h3>&#128190; On the SD card</h3><p class="muted" style="margin:0 0 8px">Screenshots saved on the SuperStation in <code>/media/fat/screenshots</code>, including ones taken with its own screenshot button.</p>
   <div class="row"><button class="b" onclick="shotsSS1()">Refresh</button><button class="b" onclick="shotCopyAll()">Copy all to this PC</button><span class="muted" id="shSs1Count"></span></div>
   <div class="shgrid"><div class="shlist" id="shSs1List"></div><div class="shview" id="shSs1View"><span class="muted">Select a screenshot to view it.</span></div></div></div>
+</div>
+<div class="subpage pc-only win-only" id="art">
+ <h2>Artwork</h2><p class="sub">Box art and backgrounds for Console Mode, downloaded and sized on this PC instead of on the SuperStation, then copied over. Everything is kept in <code>scrapes</code> next to SS1Tool.exe, laid out like the SuperStation's folders, so the art can be put back after a reflash without downloading it again. Only pictures in the <code>media</code> folders are ever written or deleted: your games are never renamed, moved or deleted.</p>
+ <div class="card"><h3>1. Your games</h3>
+  <div class="row"><button class="b p" onclick="artScan()">Find my games</button><button class="b" onclick="api('/api/art/open',{})">Open scrapes folder</button><span class="muted" id="artScanInfo"></span></div>
+  <p class="muted" style="margin:8px 0 0">Reads the systems Console Mode knows and the games in their folders on the SD card and on USB/NVMe drives. In Console Mode, build the game database first so it lists the same games.</p>
+  <div id="artSystems" style="margin-top:10px"></div></div>
+ <div class="card"><h3>2. Download artwork</h3>
+  <div class="row"><label for="artSource">Source</label><select id="artSource"><option value="libretro">libretro (free, no account)</option><option value="thegamesdb">TheGamesDB (your saved API key)</option><option value="screenscraper">ScreenScraper (your saved login)</option></select>
+   <label for="artMedia">Get</label><select id="artMedia"><option value="both">Box art + backgrounds</option><option value="box">Box art only</option><option value="bg">Backgrounds only</option></select>
+   <label class="ck"><input type="checkbox" id="artMissing" checked> Only games without art</label></div>
+  <p class="muted" id="artAcct" style="margin:6px 0 0"></p>
+  <div class="row" style="margin-top:8px"><button class="b p" id="artGo" onclick="artStart()">Download artwork for the ticked systems</button><button class="b d" id="artStop" style="display:none" onclick="api('/api/art/cancel',{})">Stop</button></div>
+  <div class="bar" id="artBarWrap" style="display:none"><div id="artBar"></div></div><pre class="out" id="artOut" style="display:none"></pre></div>
+ <div class="card" id="artResultsCard"><h3>3. Results</h3><p class="muted" style="margin:0 0 8px">Every game by system, with the art it has. For a patched, translated or modded game that wasn't found, type a simpler name (for example the original game's title), search, and pick a match: the art is saved under your game's own name (for a game in its own folder, the folder's name, as Console Mode expects) and copied to the SuperStation straight away. Your game files aren't renamed. Reload Console Mode to see the new art there.</p>
+  <details class="artspec"><summary>Using your own picture (Upload)</summary><ul style="margin:6px 0 0;padding-left:20px">
+   <li><b>File:</b> PNG, JPG, GIF or WebP, up to 30 MB. It's saved as PNG under the game's own name, the way Console Mode expects.</li>
+   <li><b>Box art:</b> the front cover, about <b>512 pixels on its longest side</b> (for example 512&times;512, 512&times;720 or 720&times;512). Bigger pictures are fine: SS1 Tool also makes the 512&times;512 optimized copy Console Mode shows. Smaller than 256 pixels looks blurry on a TV.</li>
+   <li><b>Background:</b> a screenshot or wide picture, ideally <b>16:9 like 1280&times;720</b>; the game's own screenshot size (e.g. 320&times;240) also works.</li>
+   <li>Transparent parts show black in the optimized copy.</li></ul></details>
+  <div class="row" style="margin-bottom:8px"><button class="b" onclick="artReloadCM(this)" title="Restarts Console Mode so it shows new or removed art. A game that's running is closed.">&#8635; Reload Console Mode</button></div>
+  <div id="artResults"><span class="muted">Find your games first.</span></div></div>
+ <div class="card"><h3>4. Install on the SuperStation</h3>
+  <div class="row"><button class="b p" id="artInstBtn" onclick="artInstall()">Copy the art to the SuperStation</button><button class="b" onclick="artReloadCM(this)" title="Restarts Console Mode so it shows new or removed art. A game that's running is closed.">&#8635; Reload Console Mode</button><label class="ck"><input type="checkbox" id="artReloadAfter" checked> Reload Console Mode when done</label><span class="muted" id="artPending"></span></div>
+  <p class="muted" style="margin:8px 0 0">Copies only pictures the SuperStation doesn't have yet (or that changed) into each system's <code>media</code> folder, on the SD card or the USB/NVMe drive the games are on. Console Mode shows new art after it reloads.</p></div>
+ <div class="card"><h3>5. Clean up</h3>
+  <p class="muted" style="margin:0 0 8px">Finds pictures in the <code>media</code> folders whose game is no longer there, and lets you remove all backgrounds (Console Mode turns background downloads back on at every start). You see the list first; only pictures are deleted.</p>
+  <div class="row"><button class="b" onclick="artCleanScan()">Check for leftover art</button><button class="b" onclick="artReloadCM(this)" title="Restarts Console Mode so it shows new or removed art. A game that's running is closed.">&#8635; Reload Console Mode</button><label class="ck"><input type="checkbox" id="artCleanScrapes" checked> Also remove them from scrapes on this PC</label></div>
+  <div id="artClean" style="margin-top:10px"></div></div>
 </div>
 </section>
 <section id="devices">
@@ -973,7 +1005,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</pre></deta
  <div class="row" style="justify-content:flex-end"><button class="b" onclick="closeModal()">Close</button><button class="b p" id="mBtn" onclick="reconnect()">Reconnect</button></div>
 </div></div>
 <div id="toast"></div>
-<div id="credit">f3bandit<span>v{{VERSION}}</span></div>
+<div id="credit"><a class="kofi pc-only" href="https://ko-fi.com/W2V228VDIQ" target="_blank" rel="noopener" title="SS1 Tool is free - support it with a coffee on Ko-fi"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi" width="150" height="20"></a><div>f3bandit<span>v{{VERSION}}</span></div></div>
 <script>
 // Recent app errors, kept for the app problem report (addresses and other identifying details removed).
 const APPLOG=[];
@@ -1051,7 +1083,7 @@ async function loadSetupStatus(){const ok=t=>`<span class="pill good">&#10003; $
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
-const SUBLOAD={fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},
+const SUBLOAD={fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,
  sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
@@ -1692,6 +1724,61 @@ async function nbPoll(){if(nbPolling)return;nbPolling=true;try{for(;;){const j=a
   if(j.running)$("nbOut").textContent=(copying?`${j.msg}... ${pct}%\n${fmtB(j.bytes)} of about ${fmtB(j.total_bytes)}`+(j.total?` - ${j.done} of ${j.total} files checked`:""):`${j.msg}... please wait.`)+"\n\n"+tail;
   else{$("nbOut").textContent=(j.error?"Backup stopped: "+j.error:j.result)+"\n\n"+tail;nbLoad();break}
   await new Promise(r=>setTimeout(r,900))}}catch(e){toast(e.message,true)}nbPolling=false}
+// ---------- Artwork for Console Mode (Windows): scrape on this PC, install on the SuperStation, clean up
+let ART=null,artPolling=false;
+const artPct=(a,b)=>b?Math.round(100*a/b)+"%":"-";
+async function artLoad(){try{ART=await api("/api/art/state")}catch(e){return}artRender();if(ART.job&&ART.job.running)artPoll()}
+async function artScan(){if(!connectedHost)return toast("Connect to the SuperStation first",true);$("artScanInfo").textContent="Reading your games...";
+ try{ART_OPEN="";ART=await api("/api/art/scan",{});artRender()}catch(e){$("artScanInfo").textContent="";toast(e.message,true)}}
+function artMissingList(){const S=(ART&&ART.systems||[]).filter(s=>s.games>s.with_box);
+ return S.length?`<p style="margin:0 0 6px">Games without box art - pick a system to search for them by another name:</p><div class="row">`+S.map(s=>`<button class="b sm" onclick="artResults('${esc(s.key)}')">${esc(s.name)} (${s.games-s.with_box})</button>`).join("")+"</div>":'<span class="pill good">&#10003; Every game has box art</span>'}
+function artRender(){if(!ART)return;const S=ART.systems||[];if(!ART_OPEN&&S.length)$("artResults").innerHTML=artMissingList();
+ $("artScanInfo").textContent=ART.scanned?`${S.reduce((a,s)=>a+s.games,0)} games in ${S.length} systems · read ${new Date(ART.scanned*1000).toLocaleTimeString()}`:"";
+ $("artSystems").innerHTML=S.length?`<table><thead><tr><th><input type="checkbox" id="artAll" onchange="document.querySelectorAll('.artSys').forEach(c=>c.checked=this.checked)"></th><th>System</th><th>Games</th><th>Box art</th><th>Backgrounds</th><th></th></tr></thead><tbody>`+
+  S.map(s=>`<tr><td><input type="checkbox" class="artSys" value="${esc(s.key)}" ${s.games&&s.with_box<s.games?"checked":""}></td><td>${esc(s.name)}${!s.libretro?' <span class="pill muted" title="libretro has no collection for this system">no libretro</span>':""}<div class="muted" style="font-size:12px">${s.dirs.map(esc).join(", ")}</div></td><td>${s.games}</td><td>${s.with_box} (${artPct(s.with_box,s.games)})</td><td>${s.with_bg} (${artPct(s.with_bg,s.games)})</td><td><button class="b sm" onclick="artResults('${esc(s.key)}');jumpTo('artResultsCard')">${s.games-s.with_box?`Fix ${s.games-s.with_box} missing`:"Games"}</button></td></tr>`).join("")+"</tbody></table>"
+  :(ART.scanned?'<span class="pill warn">No games found in Console Mode\'s system folders</span>':"");
+ const a=ART.accounts||{};$("artAcct").innerHTML=connectedHost?`Saved accounts (Setup › Console Mode scraper accounts): TheGamesDB ${a.thegamesdb?'<span class="pill good">key saved</span>':'<span class="pill muted">no key</span>'} · ScreenScraper ${a.screenscraper?'<span class="pill good">login saved</span>':'<span class="pill muted">no login</span>'}${a.screenscraper&&!a.ss_dev?' <span class="pill warn" title="ScreenScraper also needs a developer ID; SS1 Tool doesn\'t have its own yet">needs a developer ID</span>':""} · <a href="#" onclick="openPart('setup','scraperCard');return false">change</a>`:"";
+ $("artPending").textContent=ART.pending?`${ART.pending} picture${ART.pending==1?"":"s"} ready to copy`:(ART.scanned?"Nothing new to copy":"");}
+async function artStart(){const sys=[...document.querySelectorAll(".artSys:checked")].map(c=>c.value);if(!sys.length)return toast("Tick at least one system",true);
+ try{await api("/api/art/start",{source:$("artSource").value,media:$("artMedia").value,systems:sys,missing_only:$("artMissing").checked});artPoll()}catch(e){toast(e.message,true)}}
+function artReloadCM(btn){busy(btn,async()=>{await api("/api/remote",{action:"menu"});toast("Console Mode is reloading - new art shows when it's back")})}
+async function artInstall(){try{await api("/api/art/install",{});artPoll()}catch(e){toast(e.message,true)}}
+async function artPoll(){if(artPolling)return;artPolling=true;try{for(;;){const j=await api("/api/art/progress");if(!j.id)break;
+  $("artBarWrap").style.display="block";$("artOut").style.display="block";$("artStop").style.display=j.running?"":"none";$("artGo").disabled=$("artInstBtn").disabled=j.running;
+  const pct=j.total?Math.floor(100*j.done/j.total):(j.total_bytes?Math.floor(100*j.bytes/j.total_bytes):0);$("artBarWrap").classList.toggle("ind",j.running&&!pct);$("artBar").style.width=(j.running?pct:100)+"%";
+  $("artOut").textContent=j.running?`${j.title}\n${j.msg}...`+(j.total?` ${j.done} of ${j.total}`:"")+(j.total_bytes?` ${fmtB(j.bytes)} of ${fmtB(j.total_bytes)}`:""):(j.error?"Stopped: "+j.error:j.result);
+  if(!j.running){if(/^Install/.test(j.title)&&!j.error&&/^Copied/.test(j.result||"")&&$("artReloadAfter").checked){try{await api("/api/remote",{action:"menu"});$("artOut").textContent+="\nConsole Mode reloaded: the new art shows when it's back."}catch(e){$("artOut").textContent+="\nCouldn't reload Console Mode ("+e.message+"): use Reload Console Mode."}}
+   await artLoad();if(!ART_OPEN&&/^Scrape/.test(j.title)){const t=[...document.querySelectorAll(".artSys:checked")].map(c=>c.value),S=(ART.systems||[]).filter(s=>t.includes(s.key)&&s.games>s.with_box).sort((a,b)=>(b.games-b.with_box)-(a.games-a.with_box));if(S[0])ART_OPEN=S[0].key}
+   if(ART_OPEN){artResults(ART_OPEN);if(/^Scrape/.test(j.title))setTimeout(()=>jumpTo("artResultsCard"),300)}break}await new Promise(r=>setTimeout(r,800))}}catch(e){}artPolling=false}
+let ART_OPEN="";
+async function artResults(key){ART_OPEN=key;let j;try{j=await api("/api/art/results?system="+encodeURIComponent(key))}catch(e){return toast(e.message,true)}
+ const G=j.games||[],miss=G.filter(g=>!g.has_box&&!g.box);
+ $("artResults").innerHTML=artMissingList()+`<hr style="border:0;border-top:1px solid var(--line);margin:10px 0"><h4 style="margin:0 0 6px">${esc(j.system.name)}: ${G.length} games, ${miss.length} without box art</h4><div class="row" style="margin-bottom:8px"><label class="ck"><input type="checkbox" id="artOnlyMiss" ${miss.length?"checked":""} onchange="artResults('${esc(key)}')"> Only games without box art</label></div>`+
+  `<table><thead><tr><th>Game</th><th>Box art</th><th>Background</th><th>Search under another name</th></tr></thead><tbody>`+
+  G.filter(g=>!($("artOnlyMiss")?$("artOnlyMiss").checked:miss.length)||(!g.has_box&&!g.box)).map((g,i)=>{const id="artq"+i;
+   const st=(has,src)=>src?`<span class="pill good">${esc(src)}</span>`:has?'<span class="pill good">on SS1</span>':'<span class="pill muted">none</span>';
+   return `<tr><td>${esc(g.title)}${g.folder?' <span class="pill muted">folder</span>':""}${g.miss?`<div class="muted" style="font-size:12px">${esc(g.miss)}</div>`:""}${g.match&&g.box?`<div class="muted" style="font-size:12px">found as ${esc(g.match)}</div>`:""}</td><td>${st(g.has_box,g.box)}</td><td>${st(g.has_bg,g.bg)}</td>
+   <td><div class="row" style="gap:6px;flex-wrap:nowrap"><input id="${id}" size="22" value="${esc(g.manual||"")}" placeholder="e.g. original game name"><button class="b sm" onclick="artSearch('${esc(key)}',${JSON.stringify(g.title).replace(/"/g,"&quot;")},'${id}')">Search</button></div>
+   <div class="row" style="gap:6px;margin-top:4px"><span class="muted" style="font-size:12px">or upload:</span><button class="b sm" onclick="artUploadPick('${esc(key)}',${JSON.stringify(g.title).replace(/"/g,"&quot;")},'box')">Box art</button><button class="b sm" onclick="artUploadPick('${esc(key)}',${JSON.stringify(g.title).replace(/"/g,"&quot;")},'bg')">Background</button></div><div id="${id}r"></div></td></tr>`}).join("")+"</tbody></table>"}
+async function artSearch(key,title,id){const q=$(id).value.trim();if(!q)return toast("Type a name to search for",true);const box=$(id+"r");box.innerHTML='<span class="muted">Searching...</span>';
+ try{const j=await api("/api/art/search",{system:key,query:q});const R=j.results||[];
+  box.innerHTML=R.length?`<div class="artpick">`+R.slice(0,12).map(r=>`<button class="b sm" title="${esc(r.name)}" onclick="artApply('${esc(key)}',${JSON.stringify(title).replace(/"/g,"&quot;")},${JSON.stringify(r.name).replace(/"/g,"&quot;")},this)"><img src="${esc(r.url)}" loading="lazy" alt=""><span>${esc(r.name)}</span></button>`).join("")+"</div>":'<span class="muted">Nothing found - try fewer words</span>'}catch(e){box.innerHTML="";toast(e.message,true)}}
+async function artApply(key,title,name,btn){busy(btn,async()=>{const j=await api("/api/art/apply",{system:key,title,name});toast(j.message);artLoad();artResults(key)})}
+function artUploadPick(key,title,kind){const inp=document.createElement("input");inp.type="file";inp.accept="image/png,image/jpeg,image/gif,image/webp";
+ inp.onchange=async()=>{const f=inp.files[0];if(!f)return;if(f.size>30*1048576)return toast("That picture is over 30 MB",true);
+  const fd=new FormData();fd.append("system",key);fd.append("title",title);fd.append("kind",kind);fd.append("file",f);toast("Uploading "+f.name+"...");
+  try{const r=await fetch("/api/art/upload",{method:"POST",headers:{"X-Token":TOKEN},body:fd});const j=await r.json();if(!r.ok)throw new Error(j.error);toast(j.message);artLoad();artResults(key)}catch(e){toast(e.message,true)}};inp.click()}
+let ARTCLEAN=[];
+async function artCleanScan(){const box=$("artClean");box.innerHTML='<span class="muted">Checking the media folders...</span>';
+ try{ARTCLEAN=(await api("/api/art/cleanup",{})).folders||[]}catch(e){box.innerHTML="";return toast(e.message,true)}
+ if(!ARTCLEAN.length){box.innerHTML='<span class="pill good">&#10003; No leftover art and no backgrounds</span>';return}
+ const tot=(k,b)=>ARTCLEAN.reduce((a,o)=>a+(o[k]||[]).length,0)+" ("+fmtB(ARTCLEAN.reduce((a,o)=>a+(o[b]||0),0))+")";
+ box.innerHTML=`<table><thead><tr><th><input type="checkbox" checked onchange="document.querySelectorAll('.artCl').forEach(c=>c.checked=this.checked)"></th><th>Folder</th><th>Art for games that are gone</th><th>Backgrounds</th></tr></thead><tbody>`+
+  ARTCLEAN.map((o,i)=>`<tr><td><input type="checkbox" class="artCl" value="${i}" checked></td><td>${esc(o.name)}<div class="muted" style="font-size:12px">${esc(o.dir)}</div></td><td>${(o.files||[]).length?`<details><summary>${o.files.length} (${fmtB(o.bytes)})</summary><div class="muted" style="font-size:12px;max-height:160px;overflow:auto">${o.files.map(esc).join("<br>")}</div></details>`:"none"}</td><td>${(o.bgs||[]).length} (${fmtB(o.bg_bytes)})</td></tr>`).join("")+
+  `</tbody></table><div class="row" style="margin-top:10px"><button class="b d" onclick="artDelete('orphans')">Delete leftover art (${tot("files","bytes")})</button><button class="b d" onclick="artDelete('backgrounds')">Delete all backgrounds (${tot("bgs","bg_bytes")})</button></div>`}
+async function artDelete(mode){const dirs=[...document.querySelectorAll(".artCl:checked")].map(c=>ARTCLEAN[+c.value].dir);if(!dirs.length)return toast("Tick at least one folder",true);
+ if(!confirm(mode==="backgrounds"?"Delete every background picture in the ticked folders? Box art and games stay.":"Delete the art of games that are no longer on the SuperStation? Games stay."))return;
+ try{const j=await api("/api/art/delete",{mode,dirs,scrapes:$("artCleanScrapes").checked});toast(j.message);artCleanScan();artLoad()}catch(e){toast(e.message,true)}}
 // ---------- WiFi connection quality (iw on the SuperStation)
 function wlQuality(dbm){return dbm>=-55?["good","Excellent"]:dbm>=-65?["good","Good"]:dbm>=-72?["warn","Fair"]:dbm>=-80?["warn","Weak"]:["bad","Very weak"]}
 let WL=null;
