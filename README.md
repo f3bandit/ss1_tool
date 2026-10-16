@@ -302,6 +302,16 @@ File manager, saves, SD card backup and screenshots on one page, with **Jump to*
 - Works while a game or core is running; the MiSTer menu and Console Mode's own screens can't be captured
 - New screenshots taken on the SuperStation (with the controller or keyboard) appear in the list by themselves
 
+#### Artwork (Console Mode)
+- **An external artwork scraper for Console Mode**, run on this PC instead of on the SuperStation. **Find my games** reads the systems Console Mode knows (from its own section files on the SS1) and the games in their folders on the SD card and on USB/NVMe drives. BIOS files are skipped
+- **Download artwork** for the systems you tick from **libretro** (free, no account), or **TheGamesDB** / **ScreenScraper** with the accounts saved in Setup › Console Mode scraper accounts, the same sources and system lists Console Mode uses. Box art, backgrounds or both, optionally only for games without art
+- Art is saved exactly the way Console Mode does it: `media/<game>.png` and `media/<game>-BG.png` next to the games (a game in its own folder uses the folder's name), and for pictures bigger than 512x512 an optimized copy in `media/optimized/` (fitted inside 512x512, JPEG quality 90, like Console Mode's Optimize Artwork)
+- Everything is built in `scrapes\` next to SS1Tool.exe with the same folders as on the SuperStation, so the art can be put back after a reflash without downloading it again. The downloaded originals are kept in `scrapes\_originals`
+- **Results** lists every game by system with its art. For patched, translated or modded games that weren't found, type a simpler name (for example the original game's), search, and pick the cover; or **upload your own picture** as box art or background. The art is saved under your game's own name, copied to the SuperStation straight away, and your game files are never renamed
+- **Install** copies only new or changed pictures to the SuperStation, then reloads Console Mode so the new art shows (or press **Reload Console Mode**)
+- **Clean up** finds art for games that are no longer there, and can remove all backgrounds (Console Mode turns background downloads back on at every start). Only pictures in `media` folders are ever deleted, after you see the list
+- Windows only
+
 ### Devices
 USB devices, Bluetooth and controllers on one page, with **Jump to** links at the top.
 
