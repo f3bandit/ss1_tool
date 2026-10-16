@@ -481,6 +481,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div class="adv" id="advBox"></div></div>
  <div class="card"><h3>Remove faulty overlap fix tool</h3><p>Deletes fix_sd_overlap.sh / exfat_fix_overlap, which misdetect the correct SS1 layout as overlapping and can destroy the card (SuperStation-Documentation #14).</p>
   <button class="b d" onclick="act('/api/overlap-cleanup')">Remove overlap tools</button><div class="sst" id="ssOverlap"></div></div>
+ <div class="card pc-only" id="mcSetupCard"><h3>Memory card core</h3><p>Installs the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core in <code>/media/fat/_Utility</code>: it backs up and writes the PlayStation memory card in front port 1. Files &rsaquo; Memory cards needs it. It shows in MiSTer's core list under Utility. SS1 Tool never installs or updates it by itself: that's this button.</p>
+  <button class="b p" id="mcSetupBtn" onclick="mcSetupInstall()">Install memory card core</button><div class="sst" id="ssMc"></div></div>
  <div class="card" id="scraperCard"><h3>Console Mode scraper accounts</h3><p>Writes your own ScreenScraper login and TheGamesDB API key to /media/fat/ConsoleMode. Leave a field blank to keep the current value.</p>
   <div class="row" style="align-items:flex-start;gap:14px">
    <div><input id="ssid" placeholder="ScreenScraper username" size="22"><div class="st" id="stSSID"></div></div>
@@ -664,7 +666,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="files">
  <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, take and browse screenshots, and get artwork for Console Mode.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a><a href="#" class="pc-only" onclick="jumpTo('mcards');return false">Memory cards</a></div>
 <div class="subpage" id="fm">
  <h2>File manager</h2><p class="sub">Pick a drive on each side to move or copy files between the SD card and the NVMe/USB drive. Tick files, then use the arrows in the middle.</p>
  <div class="panes">
@@ -754,7 +756,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
    <label for="artMedia">Get</label><select id="artMedia"><option value="both">Box art + backgrounds</option><option value="box">Box art only</option><option value="bg">Backgrounds only</option></select>
    <label class="ck"><input type="checkbox" id="artMissing" checked> Only games without art</label></div>
   <p class="muted" id="artAcct" style="margin:6px 0 0"></p>
-  <div class="row" style="margin-top:8px"><button class="b p" id="artGo" onclick="artStart()">Download artwork for the ticked systems</button><button class="b d" id="artStop" style="display:none" onclick="api('/api/art/cancel',{})">Stop</button></div>
+  <div class="row" style="margin-top:8px"><button class="b p" id="artGo" onclick="artStart()">Download artwork for the ticked systems</button><button class="b d" id="artStop" style="display:none" onclick="artCancel(this)">Stop</button></div>
   <div class="bar" id="artBarWrap" style="display:none"><div id="artBar"></div></div><pre class="out" id="artOut" style="display:none"></pre></div>
  <div class="card" id="artResultsCard"><h3>3. Results</h3><p class="muted" style="margin:0 0 8px">Every game by system, with the art it has. For a patched, translated or modded game that wasn't found, type a simpler name (for example the original game's title), search, and pick a match: the art is saved under your game's own name (for a game in its own folder, the folder's name, as Console Mode expects) and copied to the SuperStation straight away. Your game files aren't renamed. Reload Console Mode to see the new art there.</p>
   <details class="artspec"><summary>Using your own picture (Upload)</summary><ul style="margin:6px 0 0;padding-left:20px">
@@ -771,6 +773,28 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <p class="muted" style="margin:0 0 8px">Finds pictures in the <code>media</code> folders whose game is no longer there, and lets you remove all backgrounds (Console Mode turns background downloads back on at every start). You see the list first; only pictures are deleted.</p>
   <div class="row"><button class="b" onclick="artCleanScan()">Check for leftover art</button><button class="b" onclick="artReloadCM(this)" title="Restarts Console Mode so it shows new or removed art. A game that's running is closed.">&#8635; Reload Console Mode</button><label class="ck"><input type="checkbox" id="artCleanScrapes" checked> Also remove them from scrapes on this PC</label></div>
   <div id="artClean" style="margin-top:10px"></div></div>
+</div>
+<div class="subpage pc-only" id="mcards">
+ <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library on this PC, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works.</p>
+ <div class="card"><h3>The card in front port 1</h3>
+  <p class="muted" id="mcCore" style="margin:0 0 8px"></p>
+  <div class="row"><label for="mcAs">Keep the backup as</label><select id="mcAs" onchange="$('mcNew').style.display=this.value==='+'?'':'none'"></select><input id="mcNew" placeholder="Card name" style="display:none;width:180px">
+   <button class="b p" id="mcBackupBtn" onclick="mcRun('backup')">Back up the card</button></div>
+  <div class="row" style="margin-top:8px"><label for="mcVs">Check it against</label><select id="mcVs"></select><button class="b" onclick="mcRun('verify')">Check the card</button>
+   <label class="ck" title="Only when the job worked: if something goes wrong, the core stays on the TV so you can see what happened"><input type="checkbox" id="mcMenu" checked> <span id="mcMenuTxt">Go back to the menu when done</span></label></div>
+  <p class="muted" style="margin:8px 0 0">Starting a job closes whatever is running on the SuperStation. Dock users: set the SNAC Bypass switch to Disabled. Writing to the card is only done from the library below, and always after a fresh backup.</p>
+  <div id="mcJob" style="display:none;margin-top:12px"><div class="row" style="align-items:flex-start;gap:16px"><canvas id="mcMap" width="256" height="256" style="width:256px;height:256px;image-rendering:pixelated;border-radius:4px"></canvas>
+   <div style="flex:1;min-width:220px"><b id="mcTitle"></b><div id="mcStep" style="margin:4px 0"></div><div id="mcCounts" class="muted"></div><div id="mcLegend" class="muted" style="margin-top:8px;font-size:12px"></div><div id="mcMsg" style="margin-top:8px"></div><button class="b d sm" id="mcStop" style="display:none;margin-top:8px" onclick="mcStopJob()">Stop</button></div></div>
+   <pre class="out" id="mcLog" style="max-height:140px;margin-top:8px"></pre></div></div>
+ <div class="card"><h3>Library</h3>
+  <div class="row" style="margin-bottom:8px"><button class="b" onclick="mcNewCard()">New blank card</button><button class="b" onclick="api('/api/mc/open',{})">Open memcards folder</button><span class="muted">Kept in <code>memcards</code> next to SS1Tool.exe: one folder per card, one file per version (raw 128 KB .mcd, which PC emulators open too). Nothing is ever overwritten.</span></div>
+  <div id="mcLib"><span class="muted">No cards yet: back up a card, or make a blank one.</span></div></div>
+ <div class="card" id="mcCardBox" style="display:none"><h3 id="mcCardName"></h3>
+  <div class="row" style="margin-bottom:8px"><label for="mcVer">Version</label><select id="mcVer" onchange="mcShow(MC.sel,this.value)"></select><span class="muted" id="mcCardInfo"></span></div>
+  <div id="mcSaves"></div>
+  <div class="row" style="margin-top:10px"><label for="mcTo">Ticked saves:</label><select id="mcTo"></select><button class="b" onclick="mcEditSaves('copy')">Copy to that card</button><button class="b" onclick="mcEditSaves('move')">Move to that card</button><button class="b d" onclick="mcEditSaves('remove')">Remove</button></div>
+  <div class="row" style="margin-top:8px"><button class="b p" onclick="mcRun('copy')">Copy ticked saves to the card in front port 1</button><button class="b" onclick="mcRun('restore')" title="Makes the card in front port 1 exactly like this version">Put this whole card on the card in front port 1</button></div>
+  <div class="row" style="margin-top:8px"><button class="b" onclick="mcDownload()">Download this version (.mcd)</button><button class="b" onclick="mcRename()">Rename</button><button class="b d" onclick="mcDelVersion()">Delete this version</button><button class="b d" onclick="mcDelCard()">Delete the card</button></div></div>
 </div>
 </section>
 <section id="devices">
@@ -1069,7 +1093,7 @@ function renderAdvisory(){const a=ADV,box=$("advBox");if(!a||!box)return;const u
  else if(a.state==="unknown"){box.className="adv";box.innerHTML=`<h4>No Linux update advisory published right now</h4>`+src}
  else{box.className="adv";box.innerHTML=`<h4 class="muted">Couldn't check the Linux update advisory</h4><div class="muted">${esc(a.error||"No internet connection?")}</div>`+src}}
 function advChanged(){renderAdvisory();if(LASTSTATUS&&$("statusCard").style.display!=="none")showStatus(LASTSTATUS)}
-async function loadSetupStatus(){const ok=t=>`<span class="pill good">&#10003; ${t}</span>`,no=t=>`<span class="pill warn">&#10007; ${t}</span>`,bad=t=>`<span class="pill bad">&#10007; ${t}</span>`;
+async function loadSetupStatus(){mcSetupStatus();const ok=t=>`<span class="pill good">&#10003; ${t}</span>`,no=t=>`<span class="pill warn">&#10007; ${t}</span>`,bad=t=>`<span class="pill bad">&#10007; ${t}</span>`;
  const ids=["ssScripts","ssSamba","ssUA","ssOverlap"];
  try{const j=await api("/api/setup-status");
   $("ssScripts").innerHTML=Object.entries(j.scripts).map(([n,st])=>st==="current"?ok(n+" installed"):st==="outdated"?no(n+" older version - click Install / update"):no(n+" not installed")).join("");
@@ -1083,7 +1107,7 @@ async function loadSetupStatus(){const ok=t=>`<span class="pill good">&#10003; $
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
-const SUBLOAD={fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,
+const SUBLOAD={fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
  sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
@@ -1727,6 +1751,84 @@ async function nbPoll(){if(nbPolling)return;nbPolling=true;try{for(;;){const j=a
 // ---------- Artwork for Console Mode (Windows): scrape on this PC, install on the SuperStation, clean up
 let ART=null,artPolling=false;
 const artPct=(a,b)=>b?Math.round(100*a/b)+"%":"-";
+// ---------------------------------------------------------------- memory cards
+let MC={sel:"",ver:"",card:null,state:null};let mcPolling=false;
+const MCCOL=["#343a50","#38c058","#e8c030","#e84040","#d070e8","#4a9cf0"];
+const MCLEG=[[1,"read OK"],[2,"needed a retry"],[3,"failed"],[4,"differs"],[5,"written and checked"],[0,"not done yet"]];
+async function mcLoad(){try{MC.state=await api("/api/mc/state")}catch(e){return}mcRender();const j=MC.state.job;if(j&&j.id)mcJobShow(j);if(j&&j.running)mcPoll()}
+function mcVerName(v){const m=/^(\d{4})-(\d\d)-(\d\d)_(\d\d)(\d\d)(\d\d)/.exec(v);return m?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]).toLocaleString():v}
+function mcRender(){const S=MC.state;if(!S)return;const L=S.library||[];
+ const inst=S.installed,lat=S.latest;
+ $("mcCore").innerHTML=!connectedHost?"Connect to the SuperStation to use the card in front port 1.":
+  (!inst?`<span class="pill warn">&#10007; Core not installed</span> <button class="b sm" onclick="mcInstall()">Install the core</button>`
+   :S.update?`<span class="pill warn" title="Installed: ${esc(inst)}">&#9888; Core update available</span> <button class="b sm" onclick="mcInstall()">Update the core</button>`
+   :`<span class="pill good" title="${esc(inst)}">&#10003; Core installed</span>`)+
+  (lat&&lat.unstable?' <span class="pill muted" title="There\'s no release of the core yet: this is a test build">test build</span>':"")+
+  (S.latest_error&&inst?` <span class="muted">(couldn't check for updates)</span>`:"")+
+  (S.core?` <span class="muted">· running now: <b>${esc(S.core)}</b></span>`:"");
+ $("mcMenuTxt").textContent=S.console_mode===true?"Go back to Console Mode when done":S.console_mode===false?"Go back to MiSTer's menu when done":"Go back to the menu when done";
+ const real=L.filter(c=>c.real),keepAs=$("mcAs").value;
+ $("mcAs").innerHTML=`<option value="">Recognise it (or a new card)</option>`+real.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("")+`<option value="+">New card...</option>`;
+ if([...$("mcAs").options].some(o=>o.value===keepAs))$("mcAs").value=keepAs;
+ $("mcVs").innerHTML=L.length?L.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (latest)</option>`).join(""):`<option value="">No cards in the library yet</option>`;
+ $("mcTo").innerHTML=L.filter(c=>c.name!==MC.sel).map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.free} free)</option>`).join("");
+ $("mcLib").innerHTML=L.length?`<table><thead><tr><th>Card</th><th>Saves</th><th>Free blocks</th><th>Versions</th><th>Latest</th></tr></thead><tbody>`+
+  L.map(c=>`<tr style="cursor:pointer${c.name===MC.sel?";background:var(--hover,#ffffff10)":""}" onclick="mcShow('${esc(c.name).replace(/'/g,"\\'")}')"><td><b>${esc(c.name)}</b> ${c.real?'<span class="pill good">real card</span>':'<span class="pill muted">made here</span>'}</td><td>${c.saves}</td><td>${c.free} / 15</td><td>${c.versions.length}</td><td>${esc(mcVerName(c.latest))}</td></tr>`).join("")+"</tbody></table>"
+  :'<span class="muted">No cards yet: back up a card, or make a blank one.</span>';
+ if(MC.sel&&!L.some(c=>c.name===MC.sel)){MC.sel="";$("mcCardBox").style.display="none"}}
+async function mcShow(name,ver){MC.sel=name;MC.ver=ver||"";let d;try{d=await api(`/api/mc/card?name=${encodeURIComponent(name)}&version=${encodeURIComponent(MC.ver)}`)}catch(e){return toast(e.message,true)}
+ MC.card=d.card;const V=d.versions||[];if(!MC.ver)MC.ver=V[V.length-1]||"";
+ $("mcCardBox").style.display="";$("mcCardName").textContent=name;
+ $("mcVer").innerHTML=V.slice().reverse().map((v,i)=>`<option value="${esc(v)}">${esc(mcVerName(v))}${i==0?" (latest)":""}</option>`).join("");$("mcVer").value=MC.ver;
+ const c=d.card;$("mcCardInfo").textContent=c.formatted?`${c.saves?c.saves.length:0} saves · ${c.free} of 15 blocks free`:"Not formatted";
+ const S=c.saves||[];$("mcSaves").innerHTML=S.length?`<table><thead><tr><th><input type="checkbox" onchange="document.querySelectorAll('.mcSv').forEach(x=>x.checked=this.checked)"></th><th></th><th>Save</th><th>Game</th><th>Blocks</th><th></th></tr></thead><tbody>`+
+  S.map(s=>`<tr><td><input type="checkbox" class="mcSv" value="${s.slot}"></td><td>${s.icon?`<img src="${s.icon}" width="32" height="32" style="image-rendering:pixelated" alt="">`:""}</td><td><b>${esc(s.title)}</b>${s.broken?' <span class="pill bad">damaged</span>':""}<div class="muted" style="font-size:12px">${esc(s.name)}</div></td><td>${esc(s.product||"")}${s.region?` <span class="muted">(${esc(s.region)})</span>`:""}</td><td>${s.blocks.length}</td><td><button class="b sm" onclick="mcDownload(${s.slot})">Download (.mcs)</button></td></tr>`).join("")+"</tbody></table>"
+  :'<span class="muted">No saves on this card.</span>';
+ mcRender()}
+function mcTicked(){return [...document.querySelectorAll(".mcSv:checked")].map(x=>+x.value)}
+async function mcEditSaves(op){const slots=mcTicked();if(!slots.length)return toast("Tick the saves first",true);const to=$("mcTo").value;
+ if(op!=="remove"&&!to)return toast("Make or back up another card first",true);
+ if(op==="remove"&&!confirm(`Remove ${slots.length} save(s) from ${MC.sel}?\n\nA new version is made: the current one stays in the library.`))return;
+ try{await api("/api/mc/edit",{op,name:MC.sel,version:MC.ver,slots,to});toast(op==="remove"?"Removed (new version)":op==="move"?`Moved to ${to}`:`Copied to ${to}`);MC.state=await api("/api/mc/state");mcShow(MC.sel)}catch(e){toast(e.message,true)}}
+async function mcNewCard(){const n=prompt("Name for the new blank card:");if(!n)return;try{const r=await api("/api/mc/edit",{op:"new",new_name:n});MC.state=await api("/api/mc/state");mcShow(r.name)}catch(e){toast(e.message,true)}}
+async function mcRename(){const n=prompt("New name for "+MC.sel+":",MC.sel);if(!n||n===MC.sel)return;try{const r=await api("/api/mc/edit",{op:"rename",name:MC.sel,new_name:n});MC.state=await api("/api/mc/state");mcShow(r.name)}catch(e){toast(e.message,true)}}
+async function mcDelVersion(){if(!confirm(`Delete the version from ${mcVerName(MC.ver)} of ${MC.sel}?`))return;try{await api("/api/mc/edit",{op:"delversion",name:MC.sel,version:MC.ver});MC.state=await api("/api/mc/state");mcShow(MC.sel)}catch(e){toast(e.message,true)}}
+async function mcDelCard(){if(!confirm(`Delete ${MC.sel} and all its versions from this PC?\n\nThe real card isn't touched.`))return;try{await api("/api/mc/edit",{op:"delete",name:MC.sel});MC.sel="";$("mcCardBox").style.display="none";mcLoad()}catch(e){toast(e.message,true)}}
+function mcDownload(slot){location.href=`/api/mc/export?t=${encodeURIComponent(TOKEN)}&name=${encodeURIComponent(MC.sel)}&version=${encodeURIComponent(MC.ver)}${slot?"&slot="+slot:""}`}
+async function mcInstall(){if(!confirm("Install the newest memory card core on the SuperStation?\n\nIt goes in /media/fat/_Utility (Utility in MiSTer's core list)."))return;try{await api("/api/mc/install",{});mcPoll()}catch(e){toast(e.message,true)}}
+async function mcSetupStatus(){let S;try{S=await api("/api/mc/state")}catch(e){return}MC.state=S;const lat=S.latest,inst=S.installed;
+ $("mcSetupBtn").textContent=!inst?"Install memory card core":S.update?"Update memory card core":"Reinstall memory card core";
+ $("ssMc").innerHTML=!connectedHost?"":inst?(S.update?`<span class="pill warn" title="Installed: ${esc(inst)}">&#9888; Core update available</span>`:`<span class="pill good" title="${esc(inst)}">&#10003; Core installed</span>`):`<span class="pill warn">&#10007; Core not installed</span>`}
+async function mcSetupInstall(){if(!connectedHost)return toast("Connect to the SuperStation first",true);const b=$("mcSetupBtn");b.disabled=true;$("ssMc").textContent="Installing...";
+ try{await api("/api/mc/install",{});for(;;){await new Promise(r=>setTimeout(r,700));const j=await api("/api/mc/progress");$("ssMc").textContent=j.step||"";if(!j.running){if(j.error)toast(j.error,true);else toast("Memory card core installed");break}}}catch(e){toast(e.message,true)}
+ b.disabled=false;mcSetupStatus()}
+async function mcRun(action){if(!connectedHost)return toast("Connect to the SuperStation first",true);
+ const S=MC.state||{},core=S.core||"",body={action,menu:$("mcMenu").checked};
+ if(!S.installed)return toast("Install the memory card core first (button above, or Setup › Memory card core)",true);
+ if(S.update&&!confirm("A newer memory card core is out, and the one on the SuperStation may not work with this version of SS1 Tool.\n\nContinue with the installed core anyway? (Cancel, then Update the core first.)"))return;
+ const closes=!core?"":/^menu$/i.test(core)?(S.console_mode?"Console Mode closes while it works.":"MiSTer's menu closes while it works."):`The game that's running (${core}) closes: save your progress first.`;
+ if(action==="backup"){body.name=$("mcAs").value==="+"?$("mcNew").value.trim():$("mcAs").value;if($("mcAs").value==="+"&&!body.name)return toast("Type a name for the card",true);
+  if(!confirm(`Back up the memory card in front port 1?\n\n${closes}\nThe card is only read.`))return}
+ else if(action==="verify"){body.name=$("mcVs").value;if(!body.name)return toast("Back up a card first",true);if(!confirm(`Check the card in front port 1 against ${body.name}?\n\n${closes}\nThe card is only read.`))return}
+ else{body.name=MC.sel;body.version=MC.ver;
+  if(action==="copy"){body.slots=mcTicked();if(!body.slots.length)return toast("Tick the saves to copy",true);
+   if(!confirm(`Copy ${body.slots.length} save(s) from ${MC.sel} to the memory card in front port 1?\n\n${closes}\nSS1 Tool first backs the card up (it lands in the library), adds the saves to that copy, then the core writes only the sectors that change and reads each one back. Don't remove the card while it works.`))return}
+  else if(!confirm(`Make the memory card in front port 1 exactly like ${MC.sel} (${mcVerName(MC.ver)})?\n\nEverything on that card is replaced. ${closes}\nSS1 Tool first backs the card up (it lands in the library), then the core writes only the sectors that differ and reads each one back. Don't remove the card while it works.`))return}
+ try{await api("/api/mc/run",body);mcPoll()}catch(e){toast(e.message,true)}}
+function mcDraw(map){const cv=$("mcMap"),g=cv.getContext("2d");g.fillStyle="#101428";g.fillRect(0,0,256,256);
+ for(let i=0;i<1024;i++){g.fillStyle=MCCOL[+map[i]||0];g.fillRect((i%32)*8,Math.floor(i/32)*8,7,7)}}
+async function mcStopJob(){if(!confirm("Stop and close the memory card core?\n\nIf it's writing to the card, the card can be left half done: its backup from just before is in the library."))return;try{await api("/api/mc/stop",{})}catch(e){toast(e.message,true)}}
+function mcJobShow(j){$("mcJob").style.display="";$("mcStop").style.display=j.running?"":"none";$("mcTitle").textContent=j.title||"";
+ $("mcStep").innerHTML=j.running?`&#9203; ${esc(j.step||"")}${j.phase==3?` · sector ${j.sector+1} / 1024`:""}`:esc(j.error?"Stopped":"Finished");
+ mcDraw(j.map||"");
+ $("mcCounts").textContent=j.done?`${j.done} of 1024 sectors · OK ${j.ok} · retried ${j.retried} · failed ${j.failed}${j.differ?` · different ${j.differ}`:""}${j.written?` · written ${j.written}`:""}`:"";
+ $("mcLegend").innerHTML=MCLEG.map(([v,t])=>`<span style="display:inline-block;width:10px;height:10px;background:${MCCOL[v]};border-radius:2px;margin:0 4px 0 10px"></span>${t}`).join("");
+ $("mcMsg").innerHTML=j.error?`<span class="pill bad">${esc(j.error)}</span>`:(!j.running&&j.id?`<span class="pill good">${esc(j.message||"Done")}</span>${j.card?` · in the library as <a href="#" onclick="mcShow('${esc(j.card).replace(/'/g,"\\'")}');return false">${esc(j.card)}</a>`:""}`:"");
+ $("mcLog").textContent=(j.log||[]).join("\n");$("mcLog").scrollTop=1e9}
+let mcAsked=0;
+async function mcPoll(){if(mcPolling)return;mcPolling=true;try{for(;;){const j=await api("/api/mc/progress");mcJobShow(j);if(!j.running)break;
+  if(j.ask&&j.ask_id!==mcAsked){mcAsked=j.ask_id;const yes=confirm(j.ask+"\n\nOK = yes, Cancel = no");await api("/api/mc/answer",{yes})}await new Promise(r=>setTimeout(r,500))}}catch(e){}mcPolling=false;
+ try{MC.state=await api("/api/mc/state");mcRender();if(MC.sel)mcShow(MC.sel)}catch(e){}}
 async function artLoad(){try{ART=await api("/api/art/state")}catch(e){return}artRender();if(ART.job&&ART.job.running)artPoll()}
 async function artScan(){if(!connectedHost)return toast("Connect to the SuperStation first",true);$("artScanInfo").textContent="Reading your games...";
  try{ART_OPEN="";ART=await api("/api/art/scan",{});artRender()}catch(e){$("artScanInfo").textContent="";toast(e.message,true)}}
@@ -1742,9 +1844,10 @@ function artRender(){if(!ART)return;const S=ART.systems||[];if(!ART_OPEN&&S.leng
 async function artStart(){const sys=[...document.querySelectorAll(".artSys:checked")].map(c=>c.value);if(!sys.length)return toast("Tick at least one system",true);
  try{await api("/api/art/start",{source:$("artSource").value,media:$("artMedia").value,systems:sys,missing_only:$("artMissing").checked});artPoll()}catch(e){toast(e.message,true)}}
 function artReloadCM(btn){busy(btn,async()=>{await api("/api/remote",{action:"menu"});toast("Console Mode is reloading - new art shows when it's back")})}
+async function artCancel(b){b.disabled=true;b.textContent="Stopping...";try{await api('/api/art/cancel',{})}catch(e){toast(e.message,true)}}
 async function artInstall(){try{await api("/api/art/install",{});artPoll()}catch(e){toast(e.message,true)}}
 async function artPoll(){if(artPolling)return;artPolling=true;try{for(;;){const j=await api("/api/art/progress");if(!j.id)break;
-  $("artBarWrap").style.display="block";$("artOut").style.display="block";$("artStop").style.display=j.running?"":"none";$("artGo").disabled=$("artInstBtn").disabled=j.running;
+  $("artBarWrap").style.display="block";$("artOut").style.display="block";$("artStop").style.display=j.running?"":"none";if(!j.running){$("artStop").disabled=false;$("artStop").textContent="Stop"}$("artGo").disabled=$("artInstBtn").disabled=j.running;
   const pct=j.total?Math.floor(100*j.done/j.total):(j.total_bytes?Math.floor(100*j.bytes/j.total_bytes):0);$("artBarWrap").classList.toggle("ind",j.running&&!pct);$("artBar").style.width=(j.running?pct:100)+"%";
   $("artOut").textContent=j.running?`${j.title}\n${j.msg}...`+(j.total?` ${j.done} of ${j.total}`:"")+(j.total_bytes?` ${fmtB(j.bytes)} of ${fmtB(j.total_bytes)}`:""):(j.error?"Stopped: "+j.error:j.result);
   if(!j.running){if(/^Install/.test(j.title)&&!j.error&&/^Copied/.test(j.result||"")&&$("artReloadAfter").checked){try{await api("/api/remote",{action:"menu"});$("artOut").textContent+="\nConsole Mode reloaded: the new art shows when it's back."}catch(e){$("artOut").textContent+="\nCouldn't reload Console Mode ("+e.message+"): use Reload Console Mode."}}

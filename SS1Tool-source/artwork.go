@@ -13,6 +13,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -374,8 +375,32 @@ func artFind(key string) *artSystem {
 
 var artHTTP = &http.Client{Timeout: 40 * time.Second}
 
+// artCtx is cancelled by Stop, so downloads that are already under way end at once too.
+var (
+	artCtxMu sync.Mutex
+	artCtx                      = context.Background()
+	artStopF context.CancelFunc = func() {}
+)
+
+func artNewRun() {
+	artCtxMu.Lock()
+	artCtx, artStopF = context.WithCancel(context.Background())
+	artCtxMu.Unlock()
+	artStop.Store(false)
+}
+
+func artCancel() {
+	artStop.Store(true)
+	artCtxMu.Lock()
+	artStopF()
+	artCtxMu.Unlock()
+}
+
 func artGet(u string) ([]byte, error) {
-	req, _ := http.NewRequest("GET", u, nil)
+	artCtxMu.Lock()
+	ctx := artCtx
+	artCtxMu.Unlock()
+	req, _ := http.NewRequestWithContext(ctx, "GET", u, nil)
 	req.Header.Set("User-Agent", "SS1Tool/"+appVersion)
 	resp, err := artHTTP.Do(req)
 	if err != nil {
@@ -897,7 +922,8 @@ func artFetchOne(req artReq, acc artAccounts, s *artSystem, g *artGame, name str
 }
 
 func artRun(req artReq) (string, error) {
-	artStop.Store(false)
+	artNewRun()
+	defer artNewRun() // later downloads (searches, the core release list) aren't cancelled
 	artJob.Next("Reading your games")
 	if err := artScan(); err != nil {
 		return "", err
@@ -948,6 +974,9 @@ func artRun(req artReq) (string, error) {
 		go func() {
 			defer wg.Done()
 			for it := range ch {
+				if artStop.Load() {
+					continue // stopped: let the rest go by
+				}
 				name := it.g.Title
 				manual := false
 				artMu.Lock()
@@ -957,6 +986,9 @@ func artRun(req artReq) (string, error) {
 					name, manual, it.g.Manual = m, true, m
 				}
 				err := artFetchOne(req, acc, it.s, it.g, name, manual)
+				if artStop.Load() {
+					continue // a download cut short by Stop isn't a miss
+				}
 				switch {
 				case err == nil:
 					atomic.AddInt64(&found, 1)
@@ -1069,7 +1101,11 @@ func artInstall(systems map[string]bool) (string, error) {
 	}
 	artJob.Next(fmt.Sprintf("Copying %d pictures (%s)", n, humanBytes(total)))
 	var sent int64
+	artNewRun()
 	for root, items := range pend {
+		if artStop.Load() {
+			return fmt.Sprintf("Stopped after copying %s of %s.", humanBytes(sent), humanBytes(total)), nil
+		}
 		base := sent
 		if err := tarUpload(root, items, func(b int64) { artJob.Progress(0, n, base+b, total) }); err != nil {
 			return "", err
@@ -1174,7 +1210,7 @@ func registerArtworkRoutes(mux *http.ServeMux) {
 	h("/api/art/start", apiArtStart)
 	h("/api/art/progress", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, artJob.Snapshot()) })
 	h("/api/art/cancel", func(w http.ResponseWriter, r *http.Request) {
-		artStop.Store(true)
+		artCancel()
 		writeJSON(w, map[string]bool{"ok": true})
 	})
 	h("/api/art/results", apiArtResults)
