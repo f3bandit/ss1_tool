@@ -49,7 +49,7 @@ It's built around three jobs:
 
 ### What it isn't
 
-SS1 Tool is **not a replacement for [MiSTer Companion](https://github.com/Anime0t4ku/mister-companion)** or other general MiSTer management apps. It doesn't try to manage your game library, saves, artwork or cores. It focuses on the SuperStation One's setup, diagnostics and support needs, and works alongside whatever other tools you already use. The remote control and file manager are there to help with setup and troubleshooting.
+SS1 Tool is **not a replacement for [MiSTer Companion](https://github.com/Anime0t4ku/mister-companion)** or other general MiSTer management apps. It doesn't try to manage your game library or cores; its artwork and memory card tools are there for Console Mode and the SuperStation's own front port. It focuses on the SuperStation One's setup, diagnostics and support needs, and works alongside whatever other tools you already use. The remote control and file manager are there to help with setup and troubleshooting.
 
 ### Linux kernel updates and the stable lane
 
@@ -178,6 +178,7 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Shows the current [Linux update advisory](#linux-update-advisory) from this repo
 - Remove the faulty `fix_sd_overlap.sh` / `exfat_fix_overlap` tool, which misreads the correct SS1 partition layout as overlapping ([SuperStation-Documentation #14](https://github.com/Takiiiiiiii/SuperStation-Documentation/issues/14))
 - Save your own ScreenScraper login and TheGamesDB API key for Console Mode, with the installed values shown under each field
+- **Memory card core:** installs or updates the [SS1 Memory Card Tool](https://github.com/f3bandit/SS1_MemCard_MiSTer) core in `_Utility`, which Files › Memory cards uses. A bubble shows whether it's installed and whether a newer build is out; SS1 Tool never installs or updates it by itself
 - **RetroAchievements account:** your [retroachievements.org](https://retroachievements.org) login for the RetroAchievements build of MiSTer (by odelot), saved in `/media/fat/retroachievements.cfg` where that build reads it
   - Shows whether the RetroAchievements build is installed (`MiSTer_RA` and the `[RA_*] main=MiSTer_RA` block in MiSTer.ini), which account is saved, and warns if the file still has the build's example login (`odelot`)
   - **Test login** checks the username and password with RetroAchievements from the PC, the same way the build logs in, and shows your points
@@ -262,7 +263,7 @@ For players without a NAS or an NVMe drive: keep your games on your PC, so a fai
 - Keep the PC switched on and awake while you play
 
 ### Files
-File manager, saves, SD card backup and screenshots on one page, with **Jump to** links at the top. Each part loads when you scroll to it.
+File manager, saves, SD card backup, screenshots, artwork and memory cards on one page, with **Jump to** links at the top. Each part loads when you scroll to it.
 
 #### File manager
 - Two-pane file manager with a drive picker on each side
@@ -310,7 +311,18 @@ File manager, saves, SD card backup and screenshots on one page, with **Jump to*
 - **Results** lists every game by system with its art. For patched, translated or modded games that weren't found, type a simpler name (for example the original game's), search, and pick the cover; or **upload your own picture** as box art or background. The art is saved under your game's own name, copied to the SuperStation straight away, and your game files are never renamed
 - **Install** copies only new or changed pictures to the SuperStation, then reloads Console Mode so the new art shows (or press **Reload Console Mode**)
 - **Clean up** finds art for games that are no longer there, and can remove all backgrounds (Console Mode turns background downloads back on at every start). Only pictures in `media` folders are ever deleted, after you see the list
+- **Stop** ends a download straight away, including the pictures already being downloaded
 - Windows only
+
+#### Memory cards
+- **Back up the PlayStation memory card in the SuperStation's front port 1** (SNAC) to this PC. SS1 Tool starts the [SS1 Memory Card Tool](https://github.com/f3bandit/SS1_MemCard_MiSTer) core, which reads all 1024 sectors (retrying any that come back broken) while a live map of the card fills in on the TV and on the page
+- **A library on this PC:** every card has its own folder in `memcards\` next to SS1Tool.exe, with one raw 128 KB `.mcd` file per version (PC emulators open them too). Nothing is ever overwritten: each backup or change is a new version. A card that's backed up again is recognised by its saves
+- Each card shows its saves with their icon, title, game code, region and blocks. **Copy** or **move** ticked saves to another card in the library, **remove** them, **download** one save (`.mcs`) or a whole card (`.mcd`), make a **new blank card**, rename or delete
+- **Copy ticked saves to the card in front port 1:** SS1 Tool backs the card up first (step 1 of 2, nothing is written yet), adds the saves to that copy, and the core writes only the sectors that change and reads each one back (step 2 of 2). If the card already has that save, you're asked whether to overwrite it. **Put a whole card version on the card in front port 1** works the same way
+- **Check the card** against any card in the library, sector by sector
+- Asks before starting, says what closes on the SuperStation, and goes back to Console Mode (or MiSTer's menu, if Console Mode isn't installed) a few seconds after a job that worked. If the core itself fails, it stays on the TV so you can see why. **Stop** closes the core at any time
+- The core is installed from Setup › Memory card core (or the button on this page); SS1 Tool never installs it by itself
+- On a dock, set the SNAC Bypass switch to Disabled. PC only
 
 ### Devices
 USB devices, Bluetooth and controllers on one page, with **Jump to** links at the top.
@@ -466,12 +478,14 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | Screenshots | `backups\screenshots\<core>\` next to `SS1Tool.exe` |
 | Previous `cifs_mount.ini` files (contain the share password) | `backups\cifs\` next to `SS1Tool.exe` |
 | Save backups | `backups\saves\<name>_<date-time>\` next to `SS1Tool.exe` |
+| Artwork for Console Mode | `scrapes\` next to `SS1Tool.exe` (originals in `scrapes\_originals`) |
+| Memory card library | `memcards\<card name>\<date_time>.mcd` next to `SS1Tool.exe` |
 | Bluetooth pairing backups | `backups\bluetooth\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Controller mapping backups | `backups\controller-maps\<name>_<date-time>\` next to `SS1Tool.exe` |
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_video_changes_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer` (MiSTer.ini, the `MiSTer_*.ini` video profiles and `yc.txt`), `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
-| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/` |
+| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/`; the memory card core in `/media/fat/_Utility/` and its job files in `/media/fat/games/SS1_MemCard/` |
 
 ## Privacy and security
 
@@ -531,6 +545,8 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `saves.go` | Saves and save states: scan, backup and restore |
 | `discover.go` | Find my SuperStation: scans the local network for SSH devices |
 | `bios.go` | BIOS and game folder check, using Update All's databases |
+| `artwork.go`, `art_tables.go` | Artwork for Console Mode: find games, download, size, install, clean up |
+| `memcard.go`, `mcformat.go` | Memory cards: driving the memory card core, the library, and reading and editing card images (saves, icons, titles) |
 | `restore.go` | Reflash and restore: restores settings and data from an SD card backup |
 | `appwindow.go` | Keeps SS1 Tool to one window |
 | `app_windows.go` | Windows app shell: tray icon, one running copy, app window, message boxes |
