@@ -7,9 +7,8 @@ uses) publishes a new Linux image, this:
      and root file system commits (MiSTer-devel/Linux_Image_creator_MiSTer);
   2. flags the parts that matter on a SuperStation One (exFAT/SD card, USB storage, WiFi,
      Bluetooth, controllers, HDMI...) and spots a jump to a new kernel series;
-  3. sets update_flags/linux_update.ini: "unsafe" for a new kernel series, otherwise "warning"
-     (not checked on the SS1 yet). It never lowers the flag: only f3bandit marks an update safe;
-  4. opens a GitHub issue with the report. Reply "/flag safe|warning|unsafe <note>" to set it.
+  3. opens a GitHub issue with the report, which emails f3bandit. It never changes the flag:
+     f3bandit reviews the report and sets update_flags himself.
 
 State lives in update_flags/linux_watch.ini (SS1 Tool ignores that file).
 """
@@ -156,7 +155,8 @@ def main():
               f"- Image: {linux['url']}",
               f"- Kernel branch: `{br}`" + (f" (**new kernel series**, was `{w.get('kernel_branch')}`)" if jump else ""),
               f"- Kernel commits since {prev}: {len(kc)} · root file system commits: {len(rc)}", "",
-              f"SS1 Tool's flag was set to **{new}** (was {old}).", "",
+              f"SS1 Tool's flag is still **{old}**: nothing was changed. Suggested flag from this report: **{new}**"
+              + (f" ({'; '.join(why)})" if why else "") + ".", "",
               "## What it touches on a SuperStation One", ""]
     if not areas:
         report.append("Nothing in the areas SS1 Tool watches.")
@@ -170,20 +170,13 @@ def main():
     report += [f"- `{h}` {dd} {s}" for h, dd, s, _ in kc] or ["(none)"]
     report += ["", "</details>", "", "<details><summary>Root file system</summary>", ""]
     report += [f"- `{h}` {dd} {s}" for h, dd, s, _ in rc] or ["(none)"]
-    report += ["", "</details>", "", "## Set the flag", "",
-               "Reply to this issue with one of these (only f3bandit's replies count):", "",
-               "```", "/flag safe Tested on the SS1, no problems", "/flag warning <what to watch out for>",
-               "/flag unsafe <what breaks>", "```", "",
-               "The text after the state becomes the note SS1 Tool shows next to the flag."]
+    report += ["", "</details>", "", "## Next step", "", "Go over this report with Claude, then set the flag together."]
 
-    print(note)
     print("\n".join(report))
     if dry:
         return
-    open(FLAG, "w", encoding="utf-8").write(f"Linux_update = {new}\n")
-    open(NOTE, "w", encoding="utf-8").write(note + "\n")
     save_watch(ver, br, linux)
-    open(os.environ.get("GITHUB_OUTPUT", os.devnull), "a").write(f"changed=true\nversion={ver}\nstate={new}\n")
+    open(os.environ.get("GITHUB_OUTPUT", os.devnull), "a").write(f"changed=true\nversion={ver}\nsuggested={new}\n")
     open(os.path.join(ROOT, ".linux_watch_issue.md"), "w", encoding="utf-8").write("\n".join(report) + "\n")
 
 
