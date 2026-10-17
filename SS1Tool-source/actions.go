@@ -106,6 +106,7 @@ func apiConnect(w http.ResponseWriter, r *http.Request) {
 	cfg.Host, cfg.User = req.Host, req.User
 	cfgMu.Unlock()
 	saveConfig()
+	go syncAfterConnect() // "Auto sync on startup"
 	// keep already-installed SS1 scripts and helpers current (the status below uses the helper)
 	if out, _ := run("[ -d " + scriptsDir + "/.ss1tool ] && echo yes"); strings.TrimSpace(out) == "yes" {
 		_, _ = ensureScripts(false)

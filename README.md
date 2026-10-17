@@ -172,7 +172,7 @@ Open **★ Wizard** (bottom left of the menu, always visible). It walks a new ow
 - **Board buses (I2C):** the SuperStation's I2C buses and the devices on them, listed only (nothing is read or written)
 
 ### Setup
-One-click fixes and installs, in tabs: **Scripts and cores**, **Update All**, **PSX SNAC settings**, **Accounts** (Console Mode scraper and RetroAchievements), **Samba and cleanup**, **MiSTer settings** and **Flash SD card**.
+One-click fixes and installs, in tabs: **Scripts and cores**, **Update All**, **PSX SNAC settings**, **Accounts** (Console Mode scraper and RetroAchievements), **Samba and cleanup**, **Sync**, **MiSTer settings** and **Flash SD card**.
 
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
@@ -191,6 +191,13 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
   - **Test login** checks the username and password with RetroAchievements from the PC, the same way the build logs in, and shows your points
   - **Save** checks the login first, so a typo is never saved. If RetroAchievements can't be reached, it saves anyway and says the login wasn't checked. Leave the password blank to keep the saved one
   - Only the `username=` and `password=` lines are changed; every other setting and comment in the file stays as it is. **Remove login** clears them
+- **Sync:** keeps your backups, the memory card library, saved SuperStations and USB port labels the same in every copy of SS1 Tool that connects to the SuperStation, on Windows and on [Android](https://ss1-tools.github.io/android.html). The SuperStation holds the shared copy in an `SS1Tool_sync` folder, so nothing leaves your home network and no account is needed
+  - **Sync now**, and **Auto sync on startup** (once each time SS1 Tool starts and connects)
+  - **Store synced files on:** the NVMe (the default), a USB drive or the SD card, each with its free space. **Migrate** moves the sync folder to the drive you pick: it's copied and checked before the old one is removed. Every copy of SS1 Tool uses the drive the folder is on, so your other devices follow by themselves
+  - Nothing is overwritten: when both sides have a file with different contents, both are kept, and this device's copy gets "(from <device name>)" in its name. For a memory card's `card.json`, the newer one wins
+  - A backup you delete is removed from the shared copy and noted there. Your other devices list it under **Deleted on another device** instead of sending it back, and remove it only when you tick it and press **Remove**
+  - Saved SuperStations and port labels: the copy that changed them last wins
+  - Not synced: SD card backups (too big), screenshots, artwork and passwords (SS1 Tool doesn't store any)
 
 #### Flash SD Card
 - Choose the **Console Mode** or **Regular** image from the latest official [SuperStation One SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer/releases) release, or use an image file you already have; it's written to the card and read back to verify
@@ -486,7 +493,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 
 | What | Where |
 |---|---|
-| Settings and saved devices | `%APPDATA%\SS1Tool\config.json` |
+| Settings and saved devices | `%APPDATA%\SS1Tool\config.json` (and `sync_last.json`, what was there at the last sync, next to it) |
 | SD card backups | `backups\sdcard\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Screenshots | `backups\screenshots\<core>\` next to `SS1Tool.exe` |
 | Previous `cifs_mount.ini` files (contain the share password) | `backups\cifs\` next to `SS1Tool.exe` |
@@ -498,7 +505,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_video_changes_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer` (MiSTer.ini, the `MiSTer_*.ini` video profiles and `yc.txt`), `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
-| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/`; the memory card core and the controller tester core in `/media/fat/_Utility/`, their job and report files in `/media/fat/games/SS1_MemCard/` and `/media/fat/games/SS1_Controller_Tester/`; copies of `PSX.CFG` from before each PSX SNAC settings change in `/media/fat/config/ss1tool_backup/` |
+| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/`; the memory card core and the controller tester core in `/media/fat/_Utility/`, their job and report files in `/media/fat/games/SS1_MemCard/` and `/media/fat/games/SS1_Controller_Tester/`; copies of `PSX.CFG` from before each PSX SNAC settings change in `/media/fat/config/ss1tool_backup/`; Sync's shared copy in `SS1Tool_sync/` on the drive picked in Setup › Sync (the NVMe unless you choose another) |
 
 ## Privacy and security
 
@@ -563,6 +570,7 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `snacport2.go` | SNAC controller tester: runs the controller tester core and reads both front ports from it |
 | `cores.go` | The MiSTer cores SS1 Tool installs (memory card core, controller tester core): newest build on GitHub, install, up to date or not |
 | `psxcfg.go` | PSX SNAC settings: reads and changes the SNAC options in the PSX core's settings file |
+| `sync.go` | Sync: the shared copy on the SuperStation, which drive it's on (Migrate), and keeping backups, memory cards and settings the same on every device |
 | `restore.go` | Reflash and restore: restores settings and data from an SD card backup |
 | `appwindow.go` | Keeps SS1 Tool to one window |
 | `app_windows.go` | Windows app shell: tray icon, one running copy, app window, message boxes |

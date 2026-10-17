@@ -154,6 +154,9 @@ hr.abouthr{border:0;border-top:1px solid var(--line);margin:14px -18px 12px}
 .subpage+.subpage{margin-top:30px;padding-top:22px;border-top:1px solid var(--line)}
 section > .subpage > h2{font-size:19px}
 .jump{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:-4px 0 16px;font-size:13px}
+.sub a,.card p a{color:#79c0ff}
+#psxCfgCard td:first-child{white-space:nowrap;padding-right:10px}
+#psxCfgCard td select{max-width:100%}
 .jump a{color:#79c0ff;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--panel)}
 .jump a:hover{border-color:#79c0ff}
 /* Tabs: the parts of a page, one at a time. Active = solid red, the others dark grey with a red
@@ -164,8 +167,11 @@ html:not([data-platform=android]) .jump.tabs a{color:var(--text);background:var(
 html:not([data-platform=android]) .jump.tabs a:hover{background:var(--panel2);border-color:var(--acc)}
 html:not([data-platform=android]) .jump.tabs a.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
 html:not([data-platform=android]) .jump.tabs a:focus-visible{outline:2px solid #fff;outline-offset:2px}
-html:not([data-platform=android]) section.tabbed>.subpage{display:none}
-html:not([data-platform=android]) section.tabbed>.subpage.tabon{display:block;margin-top:0;padding-top:0;border-top:0}
+section.tabbed>.subpage{display:none}
+section.tabbed>.subpage.tabon{display:block;margin-top:0;padding-top:0;border-top:0}
+/* Android: the same tabs in its scrolling chip row: active solid red, the others outlined in red */
+html[data-platform=android] .jump.tabs a{border-color:var(--acc)}
+html[data-platform=android] .jump.tabs a.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
 .rfstep{display:flex;gap:12px;align-items:flex-start;margin:10px 0}.rfnum{flex:0 0 26px;height:26px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700}
 #rpCats .ck{display:flex;gap:8px;align-items:flex-start;margin:6px 0}#rpCats .ck.off{opacity:.5}
 .ethgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 18px;margin-top:12px}
@@ -480,13 +486,13 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="setup">
  <h2>Setup</h2><p class="sub">One-click fixes and installs for a SuperStation One.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('stScripts');return false">Scripts and cores</a><a href="#" onclick="jumpTo('stUA');return false">Update All</a><a href="#" class="pc-only" onclick="jumpTo('stPsx');return false">PSX SNAC settings</a><a href="#" onclick="jumpTo('stAcc');return false">Accounts</a><a href="#" onclick="jumpTo('stSamba');return false">Samba and cleanup</a><a href="#" onclick="jumpTo('settings');return false">MiSTer settings</a><a href="#" class="pc-only win-only" onclick="jumpTo('flash');return false">Flash SD card</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('stScripts');return false">Scripts and cores</a><a href="#" onclick="jumpTo('stUA');return false">Update All</a><a href="#" onclick="jumpTo('stPsx');return false">PSX SNAC settings</a><a href="#" onclick="jumpTo('stAcc');return false">Accounts</a><a href="#" onclick="jumpTo('stSamba');return false">Samba and cleanup</a><a href="#" onclick="jumpTo('stSync');return false">Sync</a><a href="#" onclick="jumpTo('settings');return false">MiSTer settings</a><a href="#" class="pc-only win-only" onclick="jumpTo('flash');return false">Flash SD card</a></div>
 <div class="subpage" id="stScripts">
  <div class="card"><h3>Install scripts and cores</h3><p>Installs sd_integrity.sh, shutdown.sh and ss1_debug_report.sh into /media/fat/Scripts.</p>
   <button class="b p" onclick="act('/api/install-scripts')">Install / update scripts</button><div class="sst" id="ssScripts"></div>
-  <div class="pc-only" id="mcSetupCard"><h4 style="margin:18px 0 4px">Memory card core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core in <code>/media/fat/_Utility</code>: it backs up and writes the PlayStation memory card in the front port. Files &rsaquo; Memory cards needs it. It shows in MiSTer's core list under Utility. SS1 Tool never installs or updates it by itself: that's this button.</p>
+  <div id="mcSetupCard"><h4 style="margin:18px 0 4px">Memory card core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core in <code>/media/fat/_Utility</code>: it backs up and writes the PlayStation memory card in the front port. Files &rsaquo; Memory cards needs it. It shows in MiSTer's core list under Utility. SS1 Tool never installs or updates it by itself: that's this button.</p>
   <div class="row" style="gap:8px"><button class="b p" id="mcSetupBtn" onclick="mcSetupInstall()">Install memory card core</button><button class="b" onclick="mcCheckUpdates(this)">Check for updates</button></div><div class="sst" id="ssMc"></div></div>
-  <div class="pc-only" id="padSetupCard"><h4 style="margin:18px 0 4px">Controller tester core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_Controller_Tester_MiSTer" target="_blank" rel="noopener">SS1 Controller Tester</a> core in <code>/media/fat/_Utility</code>: it reads the PlayStation controllers in front ports 1 and 2, analog sticks included. Diag &rsaquo; SNAC controller tester needs it, and it works on its own from MiSTer's core list under Utility too. SS1 Tool never installs or updates it by itself: that's this button.</p>
+  <div id="padSetupCard"><h4 style="margin:18px 0 4px">Controller tester core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_Controller_Tester_MiSTer" target="_blank" rel="noopener">SS1 Controller Tester</a> core in <code>/media/fat/_Utility</code>: it reads the PlayStation controllers in front ports 1 and 2, analog sticks included. Diag &rsaquo; SNAC controller tester needs it, and it works on its own from MiSTer's core list under Utility too. SS1 Tool never installs or updates it by itself: that's this button.</p>
   <div class="row" style="gap:8px"><button class="b p" id="padSetupBtn" onclick="ptCoreInstall()">Install controller tester core</button><button class="b" onclick="padCheckUpdates(this)">Check for updates</button></div><div class="sst" id="ssPad"></div></div>
   <h4 style="margin:18px 0 4px">Community scripts</h4><p>Downloads the latest version from the author's GitHub and installs it into /media/fat/Scripts. Run them from the MiSTer Scripts menu.</p>
   <table><tbody id="commList"></tbody></table></div>
@@ -496,8 +502,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div class="row"><button class="b p" onclick="act('/api/update-all')">Install Update All + apply settings</button><button class="b" onclick="term('update_all')">Run Update All (terminal)</button></div><div class="sst" id="ssUA"></div>
   <div class="adv" id="advBox"></div></div>
 </div>
-<div class="subpage pc-only" id="stPsx">
- <div class="card pc-only" id="psxCfgCard"><h3>PSX SNAC settings</h3><p>Sets which front ports the PlayStation core reads real controllers and memory cards from, right in its settings file (<code>/media/fat/config/PSX.CFG</code>). Every PSX core on the SS1 shares that file, Console Mode included. For real controllers in both front ports, SNAC has to be on for port 1 and port 2. Only these options are changed: all your other PSX settings stay as they are, and a copy of the file is kept in <code>config/ss1tool_backup</code> first.</p>
+<div class="subpage" id="stPsx">
+ <div class="card" id="psxCfgCard"><h3>PSX SNAC settings</h3><p>Sets which front ports the PlayStation core reads real controllers and memory cards from, right in its settings file (<code>/media/fat/config/PSX.CFG</code>). Every PSX core on the SS1 shares that file, Console Mode included. For real controllers in both front ports, SNAC has to be on for port 1 and port 2. Only these options are changed: all your other PSX settings stay as they are, and a copy of the file is kept in <code>config/ss1tool_backup</code> first.</p>
   <div class="row" id="psxPills"><span class="muted">-</span></div>
   <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
    <button class="b" onclick="psxPreset(10,0,1)">Real controller + card in port 1</button>
@@ -532,6 +538,25 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   </div>
   <div class="row" style="margin-top:10px"><button class="b" onclick="raTest()">Test login</button><button class="b p" onclick="raSave()">Save</button><button class="b d" id="raClear" style="display:none" onclick="raClearLogin()">Remove login</button><span id="raResult"></span></div>
   <p class="muted" style="margin:8px 0 0">Save checks the login with RetroAchievements first, so a typo isn't saved. The build stores the password in plain text on the SD card; SS1 Tool doesn't keep a copy. No account yet? <a href="https://retroachievements.org/createaccount.php" target="_blank" rel="noopener">Create one for free</a>.</p></div>
+</div>
+<div class="subpage" id="stSync">
+ <div class="card"><h3>Sync with SS1 Tool on your other devices</h3>
+  <p>Keeps your backups, the memory card library and your saved SuperStations the same in every copy of SS1 Tool that connects to this SuperStation, on Windows and Android. The SuperStation holds the shared copy, in <code>SS1Tool_sync</code> on the drive you pick below (the NVMe unless you choose another): nothing leaves your home network and no account is needed.</p>
+  <ul class="muted" style="margin:0 0 10px;padding-left:18px;line-height:1.6">
+   <li><b>Synced:</b> ini backups, saves, Bluetooth, controller mapping and Cifs backups, the memory card library, saved SuperStations and USB port labels.</li>
+   <li><b>Not synced:</b> SD card backups (too big), screenshots, artwork and passwords (SS1 Tool doesn't store any).</li>
+   <li>Nothing is overwritten: a file both sides have with different contents is kept twice (this device's copy gets <i>(from &lt;device name&gt;)</i> in its name). A backup you delete here is removed from the shared copy, and your other devices list it so you can remove it there too.</li>
+  </ul>
+  <div class="row" style="gap:12px;align-items:center;flex-wrap:wrap"><button class="b p" id="syncBtn" onclick="syncNow()">Sync now</button>
+   <label class="ck"><input type="checkbox" id="syncAuto" onchange="syncSetAuto(this.checked)"> Auto sync on startup</label><span id="syncPills"></span></div>
+  <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px"><label for="syncDrive">Store synced files on</label>
+   <select id="syncDrive" onchange="syncDriveSel()" style="min-width:240px"><option value="">Connect to the SuperStation first</option></select>
+   <button class="b" id="syncMig" onclick="syncMigrate()" style="display:none">Migrate</button></div>
+  <p class="muted" id="syncDriveNote" style="margin:6px 0 0">Every copy of SS1 Tool uses the drive the sync folder is on, so changing it here changes it for your other devices too.</p>
+  <p class="muted" id="syncStep" style="margin:10px 0 0"></p>
+  <div id="syncElse" style="display:none;margin-top:12px"><h4 style="margin:0 0 6px">Deleted on another device</h4><p class="muted" style="margin:0 0 6px">These were deleted in SS1 Tool on another device, but are still here. They won't be sent back to the shared copy.</p>
+   <div id="syncElseList" style="max-height:220px;overflow:auto"></div>
+   <div class="row" style="margin-top:8px"><button class="b d" onclick="syncRemove()">Remove the ticked ones here too</button></div></div></div>
 </div>
 <div class="subpage" id="stSamba">
  <div class="card"><h3>Samba file sharing</h3><p>Enables the built-in Samba add-on at boot and starts it, so the card shows up in Windows as \\IP\sdcard.</p>
@@ -702,7 +727,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="files">
  <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, take and browse screenshots, and get artwork for Console Mode.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a><a href="#" class="pc-only" onclick="jumpTo('mcards');return false">Memory cards</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a><a href="#" onclick="jumpTo('mcards');return false">Memory cards</a></div>
 <div class="subpage" id="fm">
  <h2>File manager</h2><p class="sub">Pick a drive on each side to move or copy files between the SD card and the NVMe/USB drive. Tick files, then use the arrows in the middle.</p>
  <div class="panes">
@@ -810,8 +835,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div class="row"><button class="b" onclick="artCleanScan()">Check for leftover art</button><button class="b" onclick="artReloadCM(this)" title="Restarts Console Mode so it shows new or removed art. A game that's running is closed.">&#8635; Reload Console Mode</button><label class="ck"><input type="checkbox" id="artCleanScrapes" checked> Also remove them from scrapes on this PC</label></div>
   <div id="artClean" style="margin-top:10px"></div></div>
 </div>
-<div class="subpage pc-only" id="mcards">
- <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library on this PC, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works.</p>
+<div class="subpage" id="mcards">
+ <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works.</p>
  <div class="card"><h3>The card in front port 1</h3>
   <p class="muted" id="mcCore" style="margin:0 0 8px"></p>
   <div class="row"><label for="mcAs">Keep the backup as</label><select id="mcAs" onchange="$('mcNew').style.display=this.value==='+'?'':'none'"></select><input id="mcNew" placeholder="Card name" style="display:none;width:180px">
@@ -823,7 +848,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
    <div style="flex:1;min-width:220px"><b id="mcTitle"></b><div id="mcStep" style="margin:4px 0"></div><div id="mcCounts" class="muted"></div><div id="mcLegend" class="muted" style="margin-top:8px;font-size:12px"></div><div id="mcMsg" style="margin-top:8px"></div><button class="b d sm" id="mcStop" style="display:none;margin-top:8px" onclick="mcStopJob()">Stop</button></div></div>
    <pre class="out" id="mcLog" style="max-height:140px;margin-top:8px"></pre></div></div>
  <div class="card"><h3>Library</h3>
-  <div class="row" style="margin-bottom:8px"><button class="b" onclick="mcNewCard()">New blank card</button><button class="b" onclick="api('/api/mc/open',{})">Open memcards folder</button><span class="muted">Kept in <code>memcards</code> next to SS1Tool.exe: one folder per card, one file per version (raw 128 KB .mcd, which PC emulators open too). Nothing is ever overwritten.</span></div>
+  <div class="row" style="margin-bottom:8px"><button class="b" onclick="mcNewCard()">New blank card</button><button class="b pc-only" onclick="api('/api/mc/open',{})">Open memcards folder</button><span class="muted">Kept in <code>memcards</code> <span class="pc-only">next to SS1Tool.exe</span><span class="android-only">in SS1 Tool's folder on this phone</span>: one folder per card, one file per version (raw 128 KB .mcd, which PC emulators open too). Nothing is ever overwritten.</span></div>
   <div id="mcLib"><span class="muted">No cards yet: back up a card, or make a blank one.</span></div></div>
  <div class="card" id="mcCardBox" style="display:none"><h3 id="mcCardName"></h3>
   <div class="row" style="margin-bottom:8px"><label for="mcVer">Version</label><select id="mcVer" onchange="mcShow(MC.sel,this.value)"></select><span class="muted" id="mcCardInfo"></span></div>
@@ -956,7 +981,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="row ptlegend"><span><i class="ptdot has"></i> the controller has this input</span><span><i class="ptdot no"></i> it doesn't have it</span><span><i class="ptdot on"></i> pressed or moved now</span></div>
  <div class="card" id="ptSnacCard"><h3>SNAC controllers (front ports)</h3>
   <p style="margin:0 0 8px">Tests the PlayStation controllers in the SuperStation's front ports 1 and 2, and sets the PSX core's SNAC options, all from this card. SS1 Tool loads the <b>controller tester core</b> to read the ports: nothing is read until you start the test, and while it runs nothing you press reaches Console Mode or MiSTer's menu.</p>
-  <div class="pc-only" id="ptPsx" style="margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#333);border-radius:10px">
+  <div id="ptPsx" style="margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#333);border-radius:10px">
    <b>&#9888; SNAC has to be on for both ports</b>
    <p class="muted" style="margin:4px 0 8px">The PSX core only reads real controllers (and real memory cards) in the front ports when SNAC is switched on for that port. Switch it on for port 1 and port 2 here, without loading the PSX core. Every PSX core on the SS1 uses these settings, Console Mode included. Only these options change, and a copy of the settings is kept first. More options (other controller types, presets): Setup &rsaquo; PSX SNAC settings.</p>
    <div class="row" style="gap:16px;flex-wrap:wrap;align-items:center">
@@ -1166,7 +1191,7 @@ async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const 
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
-const SUBLOAD={fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
+const SUBLOAD={stSync:()=>{syncLoad();syncDrives()},fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
  sddiag:loadTargets,padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
@@ -1182,9 +1207,9 @@ function openPage(s){
   const parts=[...document.querySelectorAll(`#${s} .subpage`)].filter(d=>SUBLOAD[d.id]);
   if(parts.length){subObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){subObs.unobserve(e.target);SUBLOAD[e.target.id]()}}),{rootMargin:"300px 0px"});parts.forEach(d=>subObs.observe(d))}
 }
-// Tabs (everywhere but Android): a page's "Jump to" row becomes tabs, and only the part of the
+// Tabs (Windows and Android): a page's "Jump to" row becomes tabs, and only the part of the
 // chosen tab shows. Each page remembers its tab. A part loads the first time it's shown.
-const TABMODE=document.documentElement.dataset.platform!=="android";
+const TABMODE=true;
 const TABLEAVE={padsnac:()=>{if(PT.sn&&PT.sn.on)ptSnacStop()}};   // leaving the SNAC tester stops the test
 function tabsInit(){if(!TABMODE)return;
  document.querySelectorAll("main > section").forEach(sec=>{const row=sec.querySelector(":scope > .jump");if(!row)return;
@@ -1198,6 +1223,8 @@ function showTab(s,id,keepScroll){const sec=$(s);if(!sec||!sec.classList.contain
  sec.querySelectorAll(":scope > .subpage").forEach(d=>d.classList.toggle("tabon",d.id===id));
  sec.querySelectorAll(":scope > .jump.tabs a[data-tab]").forEach(a=>{const on=a.dataset.tab===id;a.classList.toggle("on",on);a.setAttribute("aria-selected",on)});
  try{localStorage.setItem("tab_"+s,id)}catch(e){}
+ // Android's tab row scrolls sideways: bring the open tab into view
+ const on=sec.querySelector(":scope > .jump.tabs a.on");if(on&&document.documentElement.dataset.platform==="android"){const row=on.parentElement,r=row.getBoundingClientRect(),o=on.getBoundingClientRect();row.scrollLeft+=o.left-r.left-(r.width-o.width)/2}
  if(!keepScroll)window.scrollTo(0,0)}
 // the tab a page opens on: the one used last, or the first one this platform shows
 function tabOpen(s){const sec=$(s);if(!TABMODE||!sec||!sec.classList.contains("tabbed"))return;
@@ -3115,6 +3142,44 @@ async function ptPsxSave(){const S=PT.psx;if(!S)return;
  ["ptPsx1","ptPsx2","ptPsxMc"].forEach(i=>$(i).disabled=true);
  try{const j=await api("/api/psxcfg/save",body);ptPsxShow(j.settings,j.running);toast(j.message);if($("psxPad1")&&PSX.pads.length){PSX.running=j.running;psxShow(j.settings)}}
  catch(e){toast(e.message,true);ptPsxLoad()}}
+// ---------- Sync (Setup › Sync)
+let SYNCPOLL=null;
+function syncShow(j){const S=j.state||{};$("syncAuto").checked=!!j.auto;$("syncBtn").disabled=!!S.running||!connectedHost;
+ const when=S.last?new Date(S.last*1000).toLocaleString():"";
+ $("syncPills").innerHTML=(S.error?`<span class="pill bad">&#10007; ${esc(S.error)}</span>`:"")+(S.running?`<span class="pill warn">Syncing...</span>`:when?`<span class="pill good">&#10003; Synced ${esc(when)}</span>`:`<span class="pill muted">Not synced yet</span>`)
+  +(S.last&&!S.running&&(S.sent||S.received)?`<span class="pill muted">Sent ${S.sent} &middot; received ${S.received}</span>`:"")+(S.where?`<span class="pill muted" title="On the SuperStation">${esc(S.where)}</span>`:"");
+ $("syncStep").textContent=S.running?S.step||"":(S.kept&&S.kept.length?"Kept both copies (this device's renamed): "+S.kept.join(", "):(connectedHost?"":"Connect to the SuperStation to sync."));
+ const E=S.elsewhere||[];$("syncElse").style.display=E.length?"":"none";
+ $("syncElseList").innerHTML=E.map(d=>`<label class="ck" style="display:flex;gap:8px;margin:2px 0"><input type="checkbox" class="syncDel" value="${esc(d.path)}" checked> <span><code>${esc(d.path)}</code> <span class="muted">deleted on ${esc(d.by||"another device")}${d.at?", "+esc(new Date(d.at*1000).toLocaleString()):""}</span></span></label>`).join("");
+ if(S.running&&!SYNCPOLL)SYNCPOLL=setInterval(syncLoad,700);if(!S.running&&(SYNCPOLL||SYNCMOVE)){clearInterval(SYNCPOLL);SYNCPOLL=null;if(typeof mcLoad==="function"&&$("mcLib"))mcLoad();loadDevices();syncDrives();
+  if(SYNCMOVE){SYNCMOVE=false;if(!S.error)toast("The sync folder is on the new drive")}}
+ $("syncMig").disabled=!!S.running;$("syncDrive").disabled=!!S.running||!SYNCDR}
+async function syncLoad(){try{syncShow(await api("/api/sync/state"))}catch(e){}}
+// Store synced files on: the drive with SS1Tool_sync; Migrate moves it (or starts it on the drive picked)
+let SYNCDR=null,SYNCMOVE=false;
+const syncMB=kb=>kb>=1048576?(kb/1048576).toFixed(1)+" GB":Math.max(1,Math.round(kb/1024))+" MB";
+async function syncDrives(){const sel=$("syncDrive");if(!connectedHost){SYNCDR=null;sel.innerHTML='<option value="">Connect to the SuperStation first</option>';sel.disabled=true;syncDriveSel();return}
+ try{SYNCDR=await api("/api/sync/drives")}catch(e){SYNCDR=null;sel.innerHTML=`<option value="">${esc(e.message)}</option>`;sel.disabled=true;syncDriveSel();return}
+ sel.disabled=false;sel.innerHTML=SYNCDR.drives.map(d=>`<option value="${esc(d.path)}"${d.writable?"":" disabled"}>${esc(d.label)} &middot; ${syncMB(d.free_kb)} free${d.path===SYNCDR.current?(SYNCDR.folder?" (in use)":" (default)"):""}${d.writable?"":" (read-only)"}</option>`).join("");
+ sel.value=SYNCDR.current||"";syncDriveSel()}
+function syncDriveSel(){const b=$("syncMig"),n=$("syncDriveNote"),sel=$("syncDrive"),D=SYNCDR;b.disabled=false;
+ const base="Every copy of SS1 Tool uses the drive the sync folder is on, so changing it here changes it for your other devices too.";
+ if(!D||!sel.value){b.style.display="none";n.textContent=base;return}
+ const to=D.drives.find(d=>d.path===sel.value),cur=D.drives.find(d=>d.path===D.current);
+ if(!to||sel.value===D.current){b.style.display="none";n.textContent=D.folder&&cur?`The sync folder is on the ${cur.label} (${cur.used_kb<16?"empty so far":syncMB(cur.used_kb)}). `+base:base;return}
+ b.style.display="";
+ if(to.folder){b.textContent="Use this one";n.textContent=`There's already a sync folder on the ${to.label}. Using it sets the one on the ${cur?cur.label:"other drive"} aside (renamed, nothing is deleted).`}
+ else if(D.folder&&cur){const room=to.free_kb>=cur.used_kb+1024;b.textContent="Migrate";b.disabled=!room;n.textContent=`Moves the sync folder (${syncMB(cur.used_kb)}) from the ${cur.label} to the ${to.label}.`+(room?"":` Not enough room there: it needs ${syncMB(cur.used_kb+1024)}.`);return}
+ else{b.textContent="Use this drive";n.textContent=`Starts the sync folder on the ${to.label}.`}}
+async function syncMigrate(){const D=SYNCDR,to=D&&D.drives.find(d=>d.path===$("syncDrive").value);if(!to)return;
+ const cur=D.drives.find(d=>d.path===D.current);
+ if(D.folder&&cur&&!to.folder&&!confirm(`Move the sync folder from the ${cur.label} to the ${to.label}?\n\nIt's copied and checked first; the old one is removed only after that. Don't sync from another device until it's done.`))return;
+ try{await api("/api/sync/drive",{path:to.path});SYNCMOVE=true;syncLoad()}catch(e){toast(e.message,true)}}
+async function syncNow(){if(!connectedHost)return toast("Connect to the SuperStation first",true);try{await api("/api/sync/run",{});syncLoad()}catch(e){toast(e.message,true)}}
+async function syncSetAuto(on){try{await api("/api/sync/auto",{on});toast(on?"SS1 Tool syncs by itself once it connects after starting":"Auto sync is off")}catch(e){toast(e.message,true)}}
+async function syncRemove(){const ps=[...document.querySelectorAll(".syncDel:checked")].map(e=>e.value);if(!ps.length)return toast("Tick what to remove",true);
+ if(!confirm(`Remove ${ps.length} file${ps.length>1?"s":""} from this ${ANDROID?"phone":"PC"}? They were deleted on another device.`))return;
+ try{const j=await api("/api/sync/remove",{paths:ps});toast(`Removed ${j.removed}`);syncLoad()}catch(e){toast(e.message,true)}}
 // the controller tester core: installed, out of date, or missing (SS1 Tool never installs it by
 // itself); shown in the tester and in Setup › Install scripts and cores
 function padCorePills(S){return S.installed?(S.update?`<span class="pill warn" title="Installed: ${esc(S.installed)}">&#9888; Core update available</span>`:`<span class="pill good" title="${esc(S.installed)}">&#10003; Core installed</span>`):`<span class="pill warn">&#10007; Core not installed</span>`}
