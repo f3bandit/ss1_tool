@@ -751,7 +751,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </div>
 <div class="subpage pc-only win-only" id="sdbackup">
  <h2>SD card backup</h2><p class="sub">Copies everything on the SuperStation's SD card <b>except the games folder</b> to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on.</p>
- <div class="card"><h3>New backup</h3><p>Backups are saved in <code>backup\sdcard\&lt;name&gt;_&lt;date-time&gt;</code> next to SS1Tool.exe, with the same folders and file names as on the card. The SuperStation stays usable while it runs, but avoid saving games or changing settings until it finishes.</p>
+ <div class="card"><h3>New backup</h3><p>Backups are saved in <code>backups\sdcard\&lt;name&gt;_&lt;date-time&gt;</code> next to SS1Tool.exe, with the same folders and file names as on the card. The SuperStation stays usable while it runs, but avoid saving games or changing settings until it finishes.</p>
   <div class="row"><input id="sbName" size="34" placeholder="Backup name (optional), e.g. before update"><button class="b p" onclick="sdBackupStart()">Back up SD card</button><button class="b d" id="sbCancel" style="display:none" onclick="sdBackupCancel()">Cancel</button><button class="b" onclick="sdBackupOpen('')">Open backups folder</button></div>
   <div class="bar" id="sbBarWrap" style="display:none"><div id="sbBar"></div></div><pre class="out" id="sbOut" style="display:none"></pre></div>
  <div class="card"><h3>Backups on this PC</h3><p class="muted" id="sbDir"></p>

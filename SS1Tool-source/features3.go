@@ -119,7 +119,41 @@ func apiCommunityInstall(w http.ResponseWriter, r *http.Request) {
 
 // ================================================================ SD card backup to this PC
 
-func sdBackupRoot() string { return filepath.Join(dataDir(), "backup", "sdcard") }
+// sdBackupRoot is backups\sdcard next to SS1Tool.exe. Versions up to 1.28.19 kept SD card
+// backups in backup\sdcard (every other backup was already in backups): the first time it's
+// needed, those are moved over (renamed, never copied or overwritten), and the old folder goes
+// only if it's empty afterwards.
+func sdBackupRoot() string {
+	sdBackupMove.Do(func() { sdBackupMigrate(dataDir()) })
+	return filepath.Join(dataDir(), "backups", "sdcard")
+}
+
+var sdBackupMove sync.Once
+
+func sdBackupMigrate(base string) {
+	old, dst := filepath.Join(base, "backup", "sdcard"), filepath.Join(base, "backups", "sdcard")
+	ents, err := os.ReadDir(old)
+	if err != nil {
+		return
+	}
+	if _, err := os.Stat(dst); os.IsNotExist(err) {
+		_ = os.MkdirAll(filepath.Dir(dst), 0o755)
+		if os.Rename(old, dst) == nil {
+			_ = os.Remove(filepath.Join(base, "backup"))
+			return
+		}
+	}
+	_ = os.MkdirAll(dst, 0o755)
+	for _, e := range ents {
+		to := filepath.Join(dst, e.Name())
+		if _, err := os.Stat(to); err == nil {
+			continue // a backup with that name is already there: leave this one where it is
+		}
+		_ = os.Rename(filepath.Join(old, e.Name()), to)
+	}
+	_ = os.Remove(old)                           // only if it's empty now
+	_ = os.Remove(filepath.Join(base, "backup")) // likewise
+}
 
 type sdBackupJob struct {
 	Running  bool   `json:"running"`
