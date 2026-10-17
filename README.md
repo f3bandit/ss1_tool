@@ -10,7 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><b>⬇ Download the latest release</b></a>
+  <a href="https://github.com/f3bandit/ss1_tool/releases/latest/download/SS1Tool.exe"><b>⬇ Download SS1Tool.exe</b></a>
+  &nbsp;·&nbsp;
+  <a href="../../releases/latest"><b>Release notes</b></a>
   &nbsp;·&nbsp;
   <a href="https://discord.gg/74pb5PJRxX"><b>💬 Taki Udon Discord</b></a>
 </p>
