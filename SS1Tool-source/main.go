@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.28.17"
+const appVersion = "1.28.18"
 
 // displayVersion is the version shown in the app: SS1 Tool for Android has its own numbers,
 // passed on by the Android app.
@@ -187,6 +187,7 @@ func main() {
 	registerMemcardRoutes(mux)
 	registerSnacPort2Routes(mux)
 	registerPsxCfgRoutes(mux)
+	registerCoreRoutes(mux)
 	registerNightlyRoutes(mux)
 	registerPadRoutes(mux)
 	registerVideoRoutes(mux)

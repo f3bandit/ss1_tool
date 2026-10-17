@@ -180,7 +180,9 @@ Each item shows its current status on the SS1 (installed, up to date, enabled, r
 - Shows the current [Linux update advisory](#linux-update-advisory) from this repo
 - Remove the faulty `fix_sd_overlap.sh` / `exfat_fix_overlap` tool, which misreads the correct SS1 partition layout as overlapping ([SuperStation-Documentation #14](https://github.com/Takiiiiiiii/SuperStation-Documentation/issues/14))
 - Save your own ScreenScraper login and TheGamesDB API key for Console Mode, with the installed values shown under each field
-- **Install scripts and cores:** the SS1 scripts, the community scripts and the **memory card core**: installs or updates the [SS1 Memory Card Tool](https://github.com/f3bandit/SS1_MemCard_MiSTer) core in `_Utility`, which Files › Memory cards and the SNAC controller tester use. A bubble shows whether it's installed and whether a newer build is out, and **Check for updates** asks GitHub straight away (the same button is in the controller tester and Files › Memory cards). SS1 Tool never installs or updates it by itself
+- **Install scripts and cores:** the SS1 scripts, the community scripts and two MiSTer cores, each installed or updated in `_Utility` with its own bubble (installed, update available), button and **Check for updates** (which asks GitHub straight away). SS1 Tool never installs or updates them by itself:
+  - **Memory card core:** the [SS1 Memory Card Tool](https://github.com/f3bandit/SS1_MemCard_MiSTer), which Files › Memory cards uses (its bubble and buttons are there too)
+  - **Controller tester core:** the [SS1 Controller Tester](https://github.com/f3bandit/SS1_Controller_Tester_MiSTer), which the SNAC controller tester uses (its bubble and buttons are there too)
 - **PSX SNAC settings:** shows and changes the PlayStation core's SNAC options without loading the PSX core: Pad1 and Pad2 (SNAC on the front port, or a USB controller type), SNAC MemCard (real cards in the front ports or card files) and Multitap (SNAC doesn't work while it's on), with presets (real controller and card in port 1, both ports SNAC, all USB). For real controllers in both front ports, SNAC has to be on for port 1 and port 2. Every PSX core on the SS1 (PSX, PSX2XCPU, the RetroAchievements PSX) and Console Mode use one settings file, `config/PSX.CFG`: SS1 Tool changes only those options, keeps every other setting as it is, and saves a copy in `config/ss1tool_backup` first. If the PSX core is running, reload it afterwards
 - **RetroAchievements account:** your [retroachievements.org](https://retroachievements.org) login for the RetroAchievements build of MiSTer (by odelot), saved in `/media/fat/retroachievements.cfg` where that build reads it
   - Shows whether the RetroAchievements build is installed (`MiSTer_RA` and the `[RA_*] main=MiSTer_RA` block in MiSTer.ini), which account is saved, and warns if the file still has the build's example login (`odelot`)
@@ -396,8 +398,9 @@ Shows what every controller on the SuperStation is pressing, live, without loadi
 - **USB controllers:** wired controllers and wireless ones through a USB dongle, on the SuperStation or its dock, plus Bluetooth controllers paired with the SuperStation. Plugging one in or switching it on shows it within a couple of seconds
 - **SNAC controllers (front ports 1 and 2):** everything for the front ports is on one card:
   - **SNAC on both ports:** switches for SNAC on port 1, SNAC on port 2 and real memory cards in the PSX core, saved without loading the PSX core (the same settings as Setup › PSX SNAC settings)
-  - **Start controller test** loads the memory card core, which reads both front ports; nothing is read until it's running, and while it runs nothing you press reaches Console Mode or MiSTer's menu. **Stop** (or leaving the page) brings the menu back. The TV shows the test for both ports too
+  - **Start controller test** loads the [SS1 Controller Tester](https://github.com/f3bandit/SS1_Controller_Tester_MiSTer) core, which reads both front ports; nothing is read until it's running, and while it runs nothing you press reaches Console Mode or MiSTer's menu. **Stop** (or leaving the page) brings the menu back. The TV shows the test for both ports too
   - **Show** picks port 1 or port 2. Analog controllers (DualShock, or a wireless receiver acting as one) are switched to analog mode by the core, so the sticks and L3/R3 show; it asks again every second while a pad stays digital, for receivers whose controller pairs late
+  - The controller is drawn as a DualShock, with an **ANALOG** light where the PS button would be: red while the controller is in analog mode, off in digital mode (sticks not sent). A PlayStation port has no PS or Home button; a controller's own Home or star button never reaches it
   - Pills show the controller type and ID, whether the sticks are on, and whether there's a memory card in that port
   - The core bubble, **Update core** and **Check for updates** are next to Start, and a How to use list walks through it: SNAC Bypass switch on Disabled, core installed, start, pick the port, stop
 - Each controller is drawn on a mock controller: **green** = it has that input, **red** = it doesn't have it, **yellow** = pressed or moved now. The USB card only draws the inputs the controller actually has. Sticks move with the real stick, analog triggers fill as you press them, and inputs the mock doesn't show are listed below it with the raw axis values
@@ -493,7 +496,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_video_changes_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer` (MiSTer.ini, the `MiSTer_*.ini` video profiles and `yc.txt`), `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
-| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/`; the memory card core in `/media/fat/_Utility/` and its job files in `/media/fat/games/SS1_MemCard/`; copies of `PSX.CFG` from before each PSX SNAC settings change in `/media/fat/config/ss1tool_backup/` |
+| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/`; the memory card core and the controller tester core in `/media/fat/_Utility/`, their job and report files in `/media/fat/games/SS1_MemCard/` and `/media/fat/games/SS1_Controller_Tester/`; copies of `PSX.CFG` from before each PSX SNAC settings change in `/media/fat/config/ss1tool_backup/` |
 
 ## Privacy and security
 
@@ -555,7 +558,8 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `bios.go` | BIOS and game folder check, using Update All's databases |
 | `artwork.go`, `art_tables.go` | Artwork for Console Mode: find games, download, size, install, clean up |
 | `memcard.go`, `mcformat.go` | Memory cards: driving the memory card core, the library, and reading and editing card images (saves, icons, titles) |
-| `snacport2.go` | SNAC controller tester: runs the memory card core's controller test and reads both front ports from it |
+| `snacport2.go` | SNAC controller tester: runs the controller tester core and reads both front ports from it |
+| `cores.go` | The MiSTer cores SS1 Tool installs (memory card core, controller tester core): newest build on GitHub, install, up to date or not |
 | `psxcfg.go` | PSX SNAC settings: reads and changes the SNAC options in the PSX core's settings file |
 | `restore.go` | Reflash and restore: restores settings and data from an SD card backup |
 | `appwindow.go` | Keeps SS1 Tool to one window |
