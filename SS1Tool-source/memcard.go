@@ -337,105 +337,13 @@ func mcStart(title string, fn func() error) error {
 	return nil
 }
 
-// mcCoreInstalled returns the core file on the SuperStation ("" when there's none).
-func mcCoreInstalled() string {
-	out, _ := run("ls -1 " + mcCoreGlob + " 2>/dev/null | sort | tail -n1")
-	return strings.TrimSpace(out)
-}
+// mcCoreInstalled returns the memory card core file on the SuperStation ("" when there's none).
+func mcCoreInstalled() string { return mcCore.installed() }
 
-type mcRelease struct {
-	Tag   string `json:"tag"`
-	Name  string `json:"name"`
-	URL   string `json:"url"`
-	Size  int64  `json:"size"`
-	Unst  bool   `json:"unstable"`
-	Built string `json:"built"`
-}
+// mcLatestCore asks GitHub for the newest memory card core build.
+func mcLatestCore(force bool) (*mcRelease, error) { return mcCore.latest(force) }
 
-var (
-	mcRelMu   sync.Mutex
-	mcRelLast time.Time
-	mcRelVal  *mcRelease
-)
-
-// mcLatestCore asks GitHub for the newest core build: the latest release, or the "unstable"
-// test build while there's no release yet.
-func mcLatestCore(force bool) (*mcRelease, error) {
-	mcRelMu.Lock()
-	defer mcRelMu.Unlock()
-	if !force && mcRelVal != nil && time.Since(mcRelLast) < 30*time.Minute {
-		return mcRelVal, nil
-	}
-	b, err := artGet("https://api.github.com/repos/" + mcRepo + "/releases?per_page=20")
-	if err != nil {
-		return nil, fmt.Errorf("couldn't reach GitHub: %v", err)
-	}
-	var rels []struct {
-		Tag        string `json:"tag_name"`
-		Prerelease bool   `json:"prerelease"`
-		Published  string `json:"published_at"`
-		Assets     []struct {
-			Name string `json:"name"`
-			URL  string `json:"browser_download_url"`
-			Size int64  `json:"size"`
-		} `json:"assets"`
-	}
-	if err := json.Unmarshal(b, &rels); err != nil {
-		return nil, err
-	}
-	var pick *mcRelease
-	for _, stable := range []bool{true, false} {
-		for _, r := range rels {
-			if r.Prerelease == stable {
-				continue
-			}
-			for _, a := range r.Assets {
-				if strings.HasPrefix(a.Name, "SS1_MemCard_") && strings.HasSuffix(a.Name, ".rbf") {
-					pick = &mcRelease{Tag: r.Tag, Name: a.Name, URL: a.URL, Size: a.Size, Unst: r.Prerelease, Built: r.Published}
-					break
-				}
-			}
-			if pick != nil {
-				break
-			}
-		}
-		if pick != nil {
-			break
-		}
-	}
-	if pick == nil {
-		return nil, errors.New("no core build has been published yet")
-	}
-	mcRelVal, mcRelLast = pick, time.Now()
-	return pick, nil
-}
-
-func mcInstallCore() error {
-	rel, err := mcLatestCore(true)
-	if err != nil {
-		return err
-	}
-	mcStep("Downloading " + rel.Name)
-	b, err := artGet(rel.URL)
-	if err != nil {
-		return fmt.Errorf("download failed: %v", err)
-	}
-	if rel.Size > 0 && int64(len(b)) != rel.Size {
-		return fmt.Errorf("download incomplete (%d of %d bytes)", len(b), rel.Size)
-	}
-	mcStep("Copying it to the SuperStation")
-	if _, err := run("mkdir -p /media/fat/_Utility " + shq(mcRemoteDir)); err != nil {
-		return err
-	}
-	dst := "/media/fat/_Utility/" + rel.Name
-	if err := upload(dst, bytes.NewReader(b), "644"); err != nil {
-		return err
-	}
-	// only one copy of the core in the list
-	_, _ = run("for f in " + mcCoreGlob + "; do [ \"$f\" = " + shq(dst) + " ] || rm -f \"$f\"; done; sync")
-	mcStep("Installed " + rel.Name)
-	return nil
-}
+func mcInstallCore() error { return mcCore.install(mcStep) }
 
 // mcRunCore does one job with the core: card is the card file to mount (for a backup its
 // contents don't matter). It returns the report and, for a backup, the card read.

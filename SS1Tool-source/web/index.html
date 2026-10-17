@@ -181,7 +181,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 .ptpad{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px}
 .ptpad h4{margin:0 0 6px;font-size:14px}.ptpad.idle h4{font-weight:400;color:var(--dim)}.ptpad .pill{margin:0 6px 4px 0}
 .ptpad svg{width:100%;height:auto;display:block;margin:6px 0}
-.ptc{stroke-width:2.5;transition:fill .05s}.ptc.has{fill:#3fb95033;stroke:#3fb950}.ptc.no{fill:#f8514926;stroke:#f85149;stroke-dasharray:4 3}.ptc.on{fill:#f2cc60;stroke:#f2cc60}
+.ptc{stroke-width:2.5;transition:fill .05s}.ptc.has{fill:#3fb95033;stroke:#3fb950}.ptc.no{fill:#f8514926;stroke:#f85149;stroke-dasharray:4 3}.ptc.on{fill:#f2cc60;stroke:#f2cc60}.ptc.led{fill:#2a1416;stroke:#7a3a3a;stroke-dasharray:none}.ptc.led.lit{fill:#ff3b30;stroke:#ff6b60;filter:drop-shadow(0 0 6px #ff3b30)}
 .ptl{fill:#e6e8ec;font:600 13px "Segoe UI",system-ui,sans-serif;text-anchor:middle;dominant-baseline:central;pointer-events:none}.ptl.sm{font-size:10px}
 .ptfill{fill:#f2cc60}.ptcross.has{fill:none}.ptcross.no{fill:none}.ptdbase{fill:#262b35}.ptg.gone{display:none}.pthide .ptarm.no{fill:transparent}.ptarm{fill:transparent}.ptarm.has{fill:#3fb95026}.ptarm.no{fill:#f8514914}.ptarm.on{fill:#f2cc60}.ptpad.idle .ptarm{fill:transparent}.ptknob{fill:#9aa3b2}.ptknob.on{fill:#f2cc60}.ptpad.idle .ptc{fill:#2a2f3a;stroke:#4a5263;stroke-dasharray:none}
 .ptx{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.ptx span{font-size:11px;padding:1px 7px;border-radius:9px;border:1px solid #3fb950;color:var(--dim)}.ptx span.on{background:#f2cc60;border-color:#f2cc60;color:#000}
@@ -472,8 +472,10 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <h2>Setup</h2><p class="sub">One-click fixes and installs for a SuperStation One.</p>
  <div class="card"><h3>Install scripts and cores</h3><p>Installs sd_integrity.sh, shutdown.sh and ss1_debug_report.sh into /media/fat/Scripts.</p>
   <button class="b p" onclick="act('/api/install-scripts')">Install / update scripts</button><div class="sst" id="ssScripts"></div>
-  <div class="pc-only" id="mcSetupCard"><h4 style="margin:18px 0 4px">Memory card core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core in <code>/media/fat/_Utility</code>: it backs up and writes the PlayStation memory card in the front ports, and runs the SNAC controller test. Files &rsaquo; Memory cards and Diag &rsaquo; Controller tester need it. It shows in MiSTer's core list under Utility. SS1 Tool never installs or updates it by itself: that's this button.</p>
+  <div class="pc-only" id="mcSetupCard"><h4 style="margin:18px 0 4px">Memory card core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core in <code>/media/fat/_Utility</code>: it backs up and writes the PlayStation memory card in the front port. Files &rsaquo; Memory cards needs it. It shows in MiSTer's core list under Utility. SS1 Tool never installs or updates it by itself: that's this button.</p>
   <div class="row" style="gap:8px"><button class="b p" id="mcSetupBtn" onclick="mcSetupInstall()">Install memory card core</button><button class="b" onclick="mcCheckUpdates(this)">Check for updates</button></div><div class="sst" id="ssMc"></div></div>
+  <div class="pc-only" id="padSetupCard"><h4 style="margin:18px 0 4px">Controller tester core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_Controller_Tester_MiSTer" target="_blank" rel="noopener">SS1 Controller Tester</a> core in <code>/media/fat/_Utility</code>: it reads the PlayStation controllers in front ports 1 and 2, analog sticks included. Diag &rsaquo; Controller tester (SNAC controllers) needs it, and it works on its own from MiSTer's core list under Utility too. SS1 Tool never installs or updates it by itself: that's this button.</p>
+  <div class="row" style="gap:8px"><button class="b p" id="padSetupBtn" onclick="ptCoreInstall()">Install controller tester core</button><button class="b" onclick="padCheckUpdates(this)">Check for updates</button></div><div class="sst" id="ssPad"></div></div>
   <h4 style="margin:18px 0 4px">Community scripts</h4><p>Downloads the latest version from the author's GitHub and installs it into /media/fat/Scripts. Run them from the MiSTer Scripts menu.</p>
   <table><tbody id="commList"></tbody></table></div>
  <div class="card"><h3>Samba file sharing</h3><p>Enables the built-in Samba add-on at boot and starts it, so the card shows up in Windows as \\IP\sdcard.</p>
@@ -929,7 +931,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <label class="row" style="gap:6px">Show as <select id="ptLayoutUsb" onchange="ptSetLayout('usb',this.value)"></select></label></div>
   <div id="ptUsb" class="ptlist"></div></div>
  <div class="card" id="ptSnacCard"><h3>SNAC controllers (front ports)</h3>
-  <p style="margin:0 0 8px">Tests the PlayStation controllers in the SuperStation's front ports 1 and 2, and sets the PSX core's SNAC options, all from this card. SS1 Tool loads the <b>memory card core</b> to read the ports: nothing is read until you start the test, and while it runs nothing you press reaches Console Mode or MiSTer's menu.</p>
+  <p style="margin:0 0 8px">Tests the PlayStation controllers in the SuperStation's front ports 1 and 2, and sets the PSX core's SNAC options, all from this card. SS1 Tool loads the <b>controller tester core</b> to read the ports: nothing is read until you start the test, and while it runs nothing you press reaches Console Mode or MiSTer's menu.</p>
   <div class="pc-only" id="ptPsx" style="margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#333);border-radius:10px">
    <b>&#9888; SNAC has to be on for both ports</b>
    <p class="muted" style="margin:4px 0 8px">The PSX core only reads real controllers (and real memory cards) in the front ports when SNAC is switched on for that port. Switch it on for port 1 and port 2 here, without loading the PSX core. Every PSX core on the SS1 uses these settings, Console Mode included. Only these options change, and a copy of the settings is kept first. More options (other controller types, presets): Setup &rsaquo; PSX SNAC settings.</p>
@@ -941,13 +943,13 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <details open style="margin:0 0 12px"><summary><b>How to use the tester</b></summary>
    <ol style="margin:6px 0 0;padding-left:20px;line-height:1.6">
     <li>Set the dock's <b>SNAC Bypass</b> switch to <b>Disabled</b>. SuperStations ship with it enabled, and while it is, the front ports are switched off.</li>
-    <li>Check the core bubble next to Start says <b>Core installed</b>. If it says not installed or update available, click <b>Install core</b> / <b>Update core</b>. <b>Check for updates</b> asks GitHub straight away.</li>
+    <li>Check the controller tester core's bubble next to Start says <b>Core installed</b>. If it says not installed or update available, click <b>Install core</b> / <b>Update core</b>. <b>Check for updates</b> asks GitHub straight away.</li>
     <li>Plug your controllers into front port 1 and/or port 2, then click <b>Start controller test</b>. Whatever is on the TV closes, and the TV shows the test for both ports.</li>
     <li>Pick <b>Port 1</b> or <b>Port 2</b> under <b>Show</b>. Press buttons and move the sticks: they light up here and on the TV. Analog controllers are switched to analog mode by the core; if the sticks still move the D-pad, press the controller's <b>ANALOG</b> button.</li>
     <li>Click <b>Stop</b> when you're done: the menu comes back. Leaving this page stops the test too.</li>
    </ol></details>
   <div class="row" style="gap:12px;flex-wrap:wrap"><label class="row" style="gap:6px">Show <select id="ptSnacPort" onchange="ptSnacDraw()"><option value="1">Port 1</option><option value="2">Port 2</option></select></label><label class="row" style="gap:6px">Show as <select id="ptLayoutSnac" onchange="ptSetLayout('snac',this.value)"></select></label></div>
-  <div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap"><button class="b p" id="ptSnacStart" onclick="ptSnacStart()">Start controller test</button><button class="b" id="ptSnacStop" onclick="ptSnacStop()" disabled>Stop</button><span id="ptCoreSt"></span><button class="b" id="ptCoreBtn" onclick="ptCoreInstall()" style="display:none">Update core</button><button class="b" onclick="mcCheckUpdates(this)">Check for updates</button></div>
+  <div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap"><button class="b p" id="ptSnacStart" onclick="ptSnacStart()">Start controller test</button><button class="b" id="ptSnacStop" onclick="ptSnacStop()" disabled>Stop</button><span id="ptCoreSt"></span><button class="b" id="ptCoreBtn" onclick="ptCoreInstall()" style="display:none">Update core</button><button class="b" onclick="padCheckUpdates(this)">Check for updates</button></div>
   <div id="ptSnac" class="ptlist"></div>
   <p class="muted" id="ptWire" style="margin:8px 0 0;font-family:monospace;font-size:12px;display:none"></p>
   <p class="muted" style="margin:10px 0 0">Nothing shows up? Check the SNAC Bypass switch first (step 1), and that the TV shows the test (if it doesn't, the core didn't start: click Start again). A controller that shows here but not in a PS1 game: make sure SNAC is on for that port (above) and reload the PSX core.</p></div>
@@ -1126,7 +1128,7 @@ function renderAdvisory(){const a=ADV,box=$("advBox");if(!a||!box)return;const u
  else if(a.state==="unknown"){box.className="adv";box.innerHTML=`<h4>No Linux update advisory published right now</h4>`+src}
  else{box.className="adv";box.innerHTML=`<h4 class="muted">Couldn't check the Linux update advisory</h4><div class="muted">${esc(a.error||"No internet connection?")}</div>`+src}}
 function advChanged(){renderAdvisory();if(LASTSTATUS&&$("statusCard").style.display!=="none")showStatus(LASTSTATUS)}
-async function loadSetupStatus(){mcSetupStatus();psxLoad();const ok=t=>`<span class="pill good">&#10003; ${t}</span>`,no=t=>`<span class="pill warn">&#10007; ${t}</span>`,bad=t=>`<span class="pill bad">&#10007; ${t}</span>`;
+async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const ok=t=>`<span class="pill good">&#10003; ${t}</span>`,no=t=>`<span class="pill warn">&#10007; ${t}</span>`,bad=t=>`<span class="pill bad">&#10007; ${t}</span>`;
  const ids=["ssScripts","ssSamba","ssUA","ssOverlap"];
  try{const j=await api("/api/setup-status");
   $("ssScripts").innerHTML=Object.entries(j.scripts).map(([n,st])=>st==="current"?ok(n+" installed"):st==="outdated"?no(n+" older version - click Install / update"):no(n+" not installed")).join("");
@@ -1847,7 +1849,7 @@ async function psxSave(){if(!connectedHost)return toast("Connect to the SuperSta
 // place the core is shown: Setup, Files › Memory cards and the controller tester
 async function mcCheckUpdates(btn){if(!connectedHost)return toast("Connect to the SuperStation first",true);
  await busy(btn,async()=>{const S=await api("/api/mc/state?refresh=1");MC.state=S;
-  mcSetupStatus();ptCoreStatus();if($("mcCore"))mcRender();
+  mcSetupStatus();if($("mcCore"))mcRender();
   const lat=S.latest;
   if(S.latest_error)toast("Couldn't check for updates: "+S.latest_error,true);
   else if(!S.installed)toast(`The memory card core isn't installed. Newest: ${lat.name}${lat.built?" ("+new Date(lat.built).toLocaleString()+")":""}`);
@@ -2926,15 +2928,15 @@ const PTAUTO=[[/hit ?box|haute|snack ?box|leverless|all.?button/i,"leverless"],[
  [/fighting commander|fight ?pad|fusion/i,"fight8"],[/n64|nintendo 64/i,"n64"],[/gamecube|\bgc\b/i,"gamecube"],[/dreamcast/i,"dreamcast"],[/snes|super famicom|sfc|^retro controller$/i,"snes"],[/\bnes\b|famicom/i,"nes"],
  [/pc ?engine|turbo ?grafx/i,"pce"],[/neo ?geo/i,"neogeo"],[/jaguar/i,"jaguar"],[/dual ?shock|dualsense|playstation|ps[345]|sony/i,"dualshock"],[/switch|pro controller|joy-?con|nintendo/i,"switchpro"],[/xbox|x-box|xinput/i,"xbox"]];
 const PT={vis:false,run:false,layout:{usb:"auto",snac:"auto"},last:null,err:0,sn:{on:false,d:null}};
-try{const s=JSON.parse(localStorage.getItem("ptLayout")||"{}");if(s.usb)PT.layout.usb=s.usb;if(s.snac&&s.snac!=="psx")PT.layout.snac=s.snac}catch(e){} // "psx" was the old default: now Automatic
+try{const s=JSON.parse(localStorage.getItem("ptLayout")||"{}");if(s.usb)PT.layout.usb=s.usb;if(s.snac&&s.snac!=="psx")PT.layout.snac=s.snac}catch(e){} // "psx" was the old default: now Automatic (the DualShock)
 function ptOptions(){let h='<option value="auto">Automatic (from the controller)</option>';for(const g of["Modern","Retro","Fight"]){h+=`<optgroup label="${g==="Fight"?"Fight pads and sticks":g}">`;for(const[k,l]of Object.entries(PTL))if(l.g===g)h+=`<option value="${k}">${esc(l.n)}</option>`;h+="</optgroup>"}return h}
 function ptSetLayout(w,v){PT.layout[w]=v;try{localStorage.setItem("ptLayout",JSON.stringify(PT.layout))}catch(e){}$(w==="usb"?"ptUsb":"ptSnac").innerHTML="";if(PT.last)ptRender(PT.last);else ptIdle()}
 const PTVID={"045e":"xbox","054c":"dualshock","057e":"switchpro","057e:2017":"snes","057e:2019":"n64","057e:201e":"gen6","057e:0337":"gamecube"};
 function ptPick(w,d){const v=PT.layout[w];
  // a SNAC controller in analog mode has sticks: the digital PlayStation drawing has none
- if(w==="snac"&&d&&d.ctl&&d.ctl.ls&&d.ctl.ls.has&&(v==="psx"||v==="auto"))return "dualshock";
- // no controller to look at (test not running, port empty): every button and both sticks, like the TV
- if(w==="snac"&&!d&&(v==="psx"||v==="auto"))return "dualshock";
+ // SNAC: always the DualShock, like the TV; its ANALOG light shows the mode (digital mode: light
+ // off, sticks not sent). "PlayStation (digital)" can still be picked by hand
+ if(w==="snac"&&v==="auto")return "dualshock";
  if(v!=="auto"&&PTL[v])return v;if(w==="snac"||!d)return w==="snac"?"psx":"generic";
  for(const n of[d.db_name,d.name])if(n)for(const[re,k]of PTAUTO)if(re.test(n))return k;
  const vp=(d.vidpid||"").toLowerCase();if(PTVID[vp])return PTVID[vp];if(PTVID[vp.slice(0,4)])return PTVID[vp.slice(0,4)];
@@ -2986,24 +2988,29 @@ function ptPaint(el,ctl,hide){
 const ptKind={usb:"USB",bt:"Bluetooth",virtual:"Built-in",other:"Built-in"};
 function ptPanel(w,d,key){const k=ptPick(w,d);const id=`pt_${w}_${key}`;let el=$(id);
  if(!el||el.dataset.l!==k){const box=$(w==="usb"?"ptUsb":"ptSnac");const html=`<div class="ptpad" id="${id}" data-l="${k}"><h4></h4><div class="pills"></div>${ptSVG(k)}<div class="ptx"></div><div class="ptaxes"></div></div>`;
-  if(el)el.outerHTML=html;else box.insertAdjacentHTML("beforeend",html);el=$(id)}
+  if(el)el.outerHTML=html;else box.insertAdjacentHTML("beforeend",html);el=$(id);
+  // a PlayStation port has no PS button: on the SNAC drawing that circle is the ANALOG light
+  if(w==="snac"){const g=el.querySelector('[data-c="guide"]');if(g){const t=g.parentNode.querySelector("text");if(t){t.textContent="ANALOG";t.classList.add("sm")}}}}
  return el}
+// the ANALOG light: lit while the controller is in analog mode (its ID says sticks are sent)
+function ptLed(el,on){const g=el.querySelector('[data-c="guide"]');if(!g)return;g.classList.remove("has","no","on");g.classList.add("led");g.classList.toggle("lit",!!on)}
 function ptFill(w,list,box){const seen=new Set();
  for(const d of list){const el=ptPanel(w,d,d.id);seen.add(el.id);el.classList.remove("idle");
   el.querySelector("h4").textContent=d.db_name||d.name||"Controller";
   const L=PTL[el.dataset.l];
   const sp=d.kind==="snaccore"&&PT.sn.port;
-  el.querySelector(".pills").innerHTML=w==="snac"&&sp?`<span class="pill good">Front port ${sp.port}, read by the memory card core</span><span class="pill muted">${esc(sp.type||"")} (ID ${esc(sp.id||"")})</span>${sp.analog?`<span class="pill good">Analog sticks on</span>`:`<span class="pill muted">Digital mode: no sticks</span>`}<span class="pill ${sp.card?"good":"muted"}">Memory card in port ${sp.port}: ${sp.card===1?"yes":sp.card===2?"yes (not formatted)":"no"}</span><span class="pill muted">Shown as ${esc(L.n)}</span>`:w==="snac"?(d.kind==="snacmem"?`<span class="pill good">Front port 1 (SNAC), read from MiSTer (MiSTer menu mode)</span>`:`<span class="pill good">Front port 1 (SNAC), read by Console Mode</span>`)+`<span class="pill muted">Digital buttons and D-pad only</span><span class="pill muted">Works in Console Mode and MiSTer's menu</span>`
+  el.querySelector(".pills").innerHTML=w==="snac"&&sp?`<span class="pill good">Front port ${sp.port}, read by the controller tester core</span><span class="pill muted">${esc(sp.type||"")} (ID ${esc(sp.id||"")})</span>${sp.analog?`<span class="pill good">Analog sticks on</span>`:`<span class="pill muted">Digital mode: no sticks</span>`}<span class="pill ${sp.card?"good":"muted"}">Memory card in port ${sp.port}: ${sp.card===1?"yes":sp.card===2?"yes (not formatted)":"no"}</span><span class="pill muted">Shown as ${esc(L.n)}</span>`:w==="snac"?(d.kind==="snacmem"?`<span class="pill good">Front port 1 (SNAC), read from MiSTer (MiSTer menu mode)</span>`:`<span class="pill good">Front port 1 (SNAC), read by Console Mode</span>`)+`<span class="pill muted">Digital buttons and D-pad only</span><span class="pill muted">Works in Console Mode and MiSTer's menu</span>`
    +(PT.last&&PT.last.core&&PT.last.core.toUpperCase()!=="MENU"?`<span class="pill warn">A core is running (${esc(PT.last.core)}): the core reads the port now, so nothing changes here until you're back in the menu</span>`:"")+`<span class="pill muted">Shown as ${esc(L.n)}</span>`
    :`<span class="pill muted">${ptKind[d.kind]||d.kind}</span><span class="pill muted">${esc(d.vidpid)}</span>`
    +(d.db_name?`<span class="pill good">In the controller database${d.db_user?" (your own entry)":""}</span>`:`<span class="pill warn">Not in the controller database - standard Linux button names</span>`)
    +(d.db_name&&d.name&&d.name!==d.db_name?`<span class="pill muted">Reports itself as ${esc(d.name)}</span>`:"")+`<span class="pill muted">Shown as ${esc(L.n)}</span>`;
   ptPaint(el,d.ctl,w==="usb");
+  if(w==="snac")ptLed(el,sp&&sp.analog);
   el.querySelector(".ptx").innerHTML=(d.extra||[]).map(x=>`<span class="${x.on?"on":""}">${esc(x.name)}</span>`).join("");
   el.querySelector(".ptaxes").textContent=((d.axes||[]).length?"Axes: "+d.axes.map(a=>a.name+" "+(a.v>=0?"+":"")+a.v.toFixed(2)).join("  ")+"   ":"")+"Held (Linux codes): "+((d.held||[]).join(", ")||"none")}
  box.querySelectorAll(".ptpad").forEach(e=>{if(!seen.has(e.id))e.remove()})}
 function ptIdleBox(w,box,msg){if(box.querySelector(".ptpad:not(.idle)"))box.innerHTML="";const el=ptPanel(w,null,"none");el.classList.add("idle");el.querySelector("h4").textContent=msg;el.querySelector(".pills").innerHTML="";el.querySelector(".ptx").innerHTML="";el.querySelector(".ptaxes").textContent="";
- el.querySelectorAll(".ptc,.ptarm").forEach(e=>e.classList.remove("has","no","on"))}
+ el.querySelectorAll(".ptc,.ptarm").forEach(e=>e.classList.remove("has","no","on"));if(w==="snac")ptLed(el,false)}
 function ptIdle(msg){ptIdleBox("usb",$("ptUsb"),msg||"Connect to the SuperStation to test its controllers");ptIdleBox("snac",$("ptSnac"),msg||"Connect to the SuperStation to test its controllers")}
 function ptRender(m){PT.last=m;
  if(m.usb&&m.usb.length)ptFill("usb",m.usb,$("ptUsb"));else ptIdleBox("usb",$("ptUsb"),"No USB or Bluetooth controller found. Plug one in or switch it on: it shows up here within a couple of seconds.");
@@ -3021,20 +3028,20 @@ async function ptLoop(){if(PT.run)return;PT.run=true;let retry=false;
   }catch(e){$("ptStatus").textContent=""}
   await new Promise(r=>setTimeout(r,40))}}
  finally{PT.run=false;if(PT.sn.on&&!(PT.vis&&$("diag").classList.contains("on")))ptSnacStop()}}
-// SNAC tester: shows nothing until the memory card core runs the controller test
+// SNAC tester: shows nothing until the controller tester core is running
 function ptSnacButtons(){$("ptSnacStart").disabled=PT.sn.on;$("ptSnacStop").disabled=!PT.sn.on}
 function ptSnacDraw(){const box=$("ptSnac"),d=PT.sn.d||{},n=+$("ptSnacPort").value;PT.sn.port=null;
  const w=d.running&&d.wiring,pl=a=>a&&a.length?a.map(x=>"IN"+x).join("+"):"none",wb=$("ptWire");
  wb.style.display=w?"":"none";if(w)wb.textContent=`Wiring check (pins pulled low while reading): port 1 ${pl(w.port1)} · port 2 ${pl(w.port2)} · pin 6 as select ${pl(w.pin6)}${w.pin6_answer?` · a controller answered on pin 6 (ID ${w.pin6_id})`:""}. A port with a controller or card normally shows IN3+IN4.`;
  if(!PT.sn.on)return ptIdleBox("snac",box,connectedHost?"Click Start controller test to read the front ports. Nothing is read until the core is running.":"Connect to the SuperStation to test its controllers");
  if(d.error)return ptIdleBox("snac",box,d.error);
- if(!d.running)return ptIdleBox("snac",box,"Starting the memory card core...");
+ if(!d.running)return ptIdleBox("snac",box,"Starting the controller tester core...");
  const p=(d.ports||[])[n-1]||{};PT.sn.port=p;
  if(p.present&&p.snac&&p.snac.length)ptFill("snac",p.snac,box);
  else{const o=(d.ports||[])[2-n]||{};ptIdleBox("snac",box,`No controller in port ${n}. Plug one in: it shows up here straight away.${p.card?` (There's a memory card in port ${n}.)`:""}${o.present?` There's one in port ${3-n}: pick Port ${3-n} above.`:""}`)}}
 async function ptSnacStart(){if(!connectedHost)return toast("Connect to the SuperStation first",true);
  const core=(PT.last&&PT.last.core)||"";
- if(!confirm(`Start the controller test?\n\nSS1 Tool loads the memory card core to read the front ports. ${core&&!/^menu$/i.test(core)?`The game that's running (${core}) closes.`:"Console Mode or the menu closes while you test."} Stop brings the menu back.`))return;
+ if(!confirm(`Start the controller test?\n\nSS1 Tool loads the controller tester core to read the front ports. ${core&&!/^menu$/i.test(core)?`The game that's running (${core}) closes.`:"Console Mode or the menu closes while you test."} Stop brings the menu back.`))return;
  $("ptSnacStart").disabled=true;
  try{await api("/api/snactest/start",{});PT.sn={on:true,d:{on:true}};$("ptSnac").innerHTML="";ptSnacDraw()}catch(e){toast(e.message,true)}
  ptSnacButtons();ptCoreStatus()}
@@ -3054,14 +3061,24 @@ async function ptPsxSave(){const S=PT.psx;if(!S)return;
  ["ptPsx1","ptPsx2","ptPsxMc"].forEach(i=>$(i).disabled=true);
  try{const j=await api("/api/psxcfg/save",body);ptPsxShow(j.settings,j.running);toast(j.message);if($("psxPad1")&&PSX.pads.length){PSX.running=j.running;psxShow(j.settings)}}
  catch(e){toast(e.message,true);ptPsxLoad()}}
-// the memory card core: installed, out of date, or missing (SS1 Tool never installs it by itself)
-async function ptCoreStatus(){const st=$("ptCoreSt"),b=$("ptCoreBtn");if(!connectedHost){st.innerHTML="";b.style.display="none";return}
- let S;try{S=await api("/api/mc/state")}catch(e){return}
- st.innerHTML=S.installed?(S.update?`<span class="pill warn" title="Installed: ${esc(S.installed)}">&#9888; Core update available</span>`:`<span class="pill good" title="${esc(S.installed)}">&#10003; Core installed</span>`):`<span class="pill warn">&#10007; Core not installed</span>`;
- b.textContent=S.installed?"Update core":"Install core";b.style.display=!S.installed||S.update?"":"none"}
-async function ptCoreInstall(){if(!connectedHost)return toast("Connect to the SuperStation first",true);if(PT.sn.on)await ptSnacStop();const b=$("ptCoreBtn");b.disabled=true;$("ptCoreSt").textContent="Installing...";
- try{await api("/api/mc/install",{});for(;;){await new Promise(r=>setTimeout(r,700));const j=await api("/api/mc/progress");$("ptCoreSt").textContent=j.step||"";if(!j.running){if(j.error)toast(j.error,true);else toast("Memory card core installed");break}}}catch(e){toast(e.message,true)}
- b.disabled=false;ptCoreStatus();if(typeof mcSetupStatus==="function")mcSetupStatus()}
+// the controller tester core: installed, out of date, or missing (SS1 Tool never installs it by
+// itself); shown in the tester and in Setup › Install scripts and cores
+function padCorePills(S){return S.installed?(S.update?`<span class="pill warn" title="Installed: ${esc(S.installed)}">&#9888; Core update available</span>`:`<span class="pill good" title="${esc(S.installed)}">&#10003; Core installed</span>`):`<span class="pill warn">&#10007; Core not installed</span>`}
+async function ptCoreStatus(S){const st=$("ptCoreSt"),b=$("ptCoreBtn");if(!connectedHost){st.innerHTML="";b.style.display="none";$("ssPad").innerHTML="";return}
+ if(!S)try{S=await api("/api/padcore/state")}catch(e){return}
+ st.innerHTML=padCorePills(S);$("ssPad").innerHTML=padCorePills(S);
+ b.textContent=S.installed?"Update core":"Install core";b.style.display=!S.installed||S.update?"":"none";
+ $("padSetupBtn").textContent=!S.installed?"Install controller tester core":S.update?"Update controller tester core":"Reinstall controller tester core"}
+async function ptCoreInstall(){if(!connectedHost)return toast("Connect to the SuperStation first",true);if(PT.sn.on)await ptSnacStop();
+ const bs=[$("ptCoreBtn"),$("padSetupBtn")];bs.forEach(b=>b.disabled=true);$("ptCoreSt").textContent=$("ssPad").textContent="Installing...";
+ try{await api("/api/padcore/install",{});for(;;){await new Promise(r=>setTimeout(r,700));const j=await api("/api/mc/progress");$("ptCoreSt").textContent=$("ssPad").textContent=j.step||"";if(!j.running){if(j.error)toast(j.error,true);else toast("Controller tester core installed");break}}}catch(e){toast(e.message,true)}
+ bs.forEach(b=>b.disabled=false);ptCoreStatus()}
+async function padCheckUpdates(btn){if(!connectedHost)return toast("Connect to the SuperStation first",true);
+ await busy(btn,async()=>{const S=await api("/api/padcore/state?refresh=1");ptCoreStatus(S);const lat=S.latest;
+  if(S.latest_error)toast("Couldn't check for updates: "+S.latest_error,true);
+  else if(!S.installed)toast(`The controller tester core isn't installed. Newest: ${lat.name}${lat.built?" ("+new Date(lat.built).toLocaleString()+")":""}`);
+  else if(S.update)toast(`Core update available: ${lat.name}${lat.built?" built "+new Date(lat.built).toLocaleString():""}. Click Update to install it.`);
+  else toast("The controller tester core is up to date")})}
 function ptInit(){if(PT.init)return;PT.init=true;$("ptLayoutUsb").innerHTML=ptOptions();$("ptLayoutSnac").innerHTML=ptOptions();$("ptLayoutUsb").value=PT.layout.usb;$("ptLayoutSnac").value=PT.layout.snac;ptIdle(connectedHost?"Looking for controllers...":"");ptSnacDraw();ptCoreStatus();ptPsxLoad();
  new IntersectionObserver(es=>{const was=PT.vis;PT.vis=es[0].isIntersecting;if(PT.vis){ptLoop();if(!was){ptPsxLoad();ptCoreStatus()}}}).observe($("padtest"));
  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&PT.vis)ptLoop()})}
