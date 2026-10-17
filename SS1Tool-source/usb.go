@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // USB devices connected to the SuperStation and its dock, read from /sys/bus/usb.
@@ -461,6 +462,7 @@ func apiUSBLabel(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cfg.PortLabels[req.Port] = label
 	}
+	cfg.SettingsUpdated = time.Now().Unix()
 	cfgMu.Unlock()
 	saveConfig()
 	writeJSON(w, map[string]bool{"ok": true})

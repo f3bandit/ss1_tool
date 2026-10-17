@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.28.20"
+const appVersion = "1.28.21"
 
 // displayVersion is the version shown in the app: SS1 Tool for Android has its own numbers,
 // passed on by the Android app.
@@ -59,6 +59,10 @@ type Config struct {
 	TrayPromoted bool              `json:"tray_promoted"`
 	AdvisorySeen string            `json:"advisory_seen"`
 	PCShare      PCShare           `json:"pc_share"`
+	// Sync
+	DeviceID        string `json:"device_id"`        // this copy of SS1 Tool
+	SyncAuto        bool   `json:"sync_auto"`        // sync once when SS1 Tool connects after starting
+	SettingsUpdated int64  `json:"settings_updated"` // when saved SuperStations or port labels last changed here
 }
 
 var (
@@ -188,6 +192,7 @@ func main() {
 	registerSnacPort2Routes(mux)
 	registerPsxCfgRoutes(mux)
 	registerCoreRoutes(mux)
+	registerSyncRoutes(mux)
 	registerNightlyRoutes(mux)
 	registerPadRoutes(mux)
 	registerVideoRoutes(mux)

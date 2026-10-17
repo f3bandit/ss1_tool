@@ -846,6 +846,7 @@ func apiDevices(w http.ResponseWriter, r *http.Request) {
 	sort.Slice(cfg.Devices, func(i, j int) bool {
 		return strings.ToLower(cfg.Devices[i].Name) < strings.ToLower(cfg.Devices[j].Name)
 	})
+	cfg.SettingsUpdated = time.Now().Unix() // for Sync: the newest settings win
 	cfgMu.Unlock()
 	saveConfig()
 	verb := "Saved"
@@ -869,6 +870,9 @@ func apiDeviceDelete(w http.ResponseWriter, r *http.Request) {
 		out = append(out, d)
 	}
 	cfg.Devices = out
+	if found {
+		cfg.SettingsUpdated = time.Now().Unix()
+	}
 	cfgMu.Unlock()
 	if !found {
 		fail(w, 404, "device not found")
