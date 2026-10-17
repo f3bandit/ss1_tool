@@ -156,6 +156,16 @@ section > .subpage > h2{font-size:19px}
 .jump{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin:-4px 0 16px;font-size:13px}
 .jump a{color:#79c0ff;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 11px;background:var(--panel)}
 .jump a:hover{border-color:#79c0ff}
+/* Tabs: the parts of a page, one at a time. Active = solid red, the others dark grey with a red
+   outline. The row stays under the header while the page scrolls. */
+html:not([data-platform=android]) section.tabbed>.jump.tabs{position:sticky;top:var(--hdrh,57px);z-index:15;background:var(--bg);margin:0 -2px 16px;padding:8px 2px;gap:8px}
+html:not([data-platform=android]) .jump.tabs>.muted{display:none}
+html:not([data-platform=android]) .jump.tabs a{color:var(--text);background:var(--panel);border:1px solid var(--acc);border-radius:8px;padding:6px 14px;font-size:13.5px;line-height:1.3;transition:background .1s}
+html:not([data-platform=android]) .jump.tabs a:hover{background:var(--panel2);border-color:var(--acc)}
+html:not([data-platform=android]) .jump.tabs a.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+html:not([data-platform=android]) .jump.tabs a:focus-visible{outline:2px solid #fff;outline-offset:2px}
+html:not([data-platform=android]) section.tabbed>.subpage{display:none}
+html:not([data-platform=android]) section.tabbed>.subpage.tabon{display:block;margin-top:0;padding-top:0;border-top:0}
 .rfstep{display:flex;gap:12px;align-items:flex-start;margin:10px 0}.rfnum{flex:0 0 26px;height:26px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700}
 #rpCats .ck{display:flex;gap:8px;align-items:flex-start;margin:6px 0}#rpCats .ck.off{opacity:.5}
 .ethgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 18px;margin-top:12px}
@@ -470,21 +480,23 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="setup">
  <h2>Setup</h2><p class="sub">One-click fixes and installs for a SuperStation One.</p>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('stScripts');return false">Scripts and cores</a><a href="#" onclick="jumpTo('stUA');return false">Update All</a><a href="#" class="pc-only" onclick="jumpTo('stPsx');return false">PSX SNAC settings</a><a href="#" onclick="jumpTo('stAcc');return false">Accounts</a><a href="#" onclick="jumpTo('stSamba');return false">Samba and cleanup</a><a href="#" onclick="jumpTo('settings');return false">MiSTer settings</a><a href="#" class="pc-only win-only" onclick="jumpTo('flash');return false">Flash SD card</a></div>
+<div class="subpage" id="stScripts">
  <div class="card"><h3>Install scripts and cores</h3><p>Installs sd_integrity.sh, shutdown.sh and ss1_debug_report.sh into /media/fat/Scripts.</p>
   <button class="b p" onclick="act('/api/install-scripts')">Install / update scripts</button><div class="sst" id="ssScripts"></div>
   <div class="pc-only" id="mcSetupCard"><h4 style="margin:18px 0 4px">Memory card core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core in <code>/media/fat/_Utility</code>: it backs up and writes the PlayStation memory card in the front port. Files &rsaquo; Memory cards needs it. It shows in MiSTer's core list under Utility. SS1 Tool never installs or updates it by itself: that's this button.</p>
   <div class="row" style="gap:8px"><button class="b p" id="mcSetupBtn" onclick="mcSetupInstall()">Install memory card core</button><button class="b" onclick="mcCheckUpdates(this)">Check for updates</button></div><div class="sst" id="ssMc"></div></div>
-  <div class="pc-only" id="padSetupCard"><h4 style="margin:18px 0 4px">Controller tester core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_Controller_Tester_MiSTer" target="_blank" rel="noopener">SS1 Controller Tester</a> core in <code>/media/fat/_Utility</code>: it reads the PlayStation controllers in front ports 1 and 2, analog sticks included. Diag &rsaquo; Controller tester (SNAC controllers) needs it, and it works on its own from MiSTer's core list under Utility too. SS1 Tool never installs or updates it by itself: that's this button.</p>
+  <div class="pc-only" id="padSetupCard"><h4 style="margin:18px 0 4px">Controller tester core</h4><p>Installs the <a href="https://github.com/f3bandit/SS1_Controller_Tester_MiSTer" target="_blank" rel="noopener">SS1 Controller Tester</a> core in <code>/media/fat/_Utility</code>: it reads the PlayStation controllers in front ports 1 and 2, analog sticks included. Diag &rsaquo; SNAC controller tester needs it, and it works on its own from MiSTer's core list under Utility too. SS1 Tool never installs or updates it by itself: that's this button.</p>
   <div class="row" style="gap:8px"><button class="b p" id="padSetupBtn" onclick="ptCoreInstall()">Install controller tester core</button><button class="b" onclick="padCheckUpdates(this)">Check for updates</button></div><div class="sst" id="ssPad"></div></div>
   <h4 style="margin:18px 0 4px">Community scripts</h4><p>Downloads the latest version from the author's GitHub and installs it into /media/fat/Scripts. Run them from the MiSTer Scripts menu.</p>
   <table><tbody id="commList"></tbody></table></div>
- <div class="card"><h3>Samba file sharing</h3><p>Enables the built-in Samba add-on at boot and starts it, so the card shows up in Windows as \\IP\sdcard.</p>
-  <div class="row"><button class="b p" onclick="act('/api/samba')">Enable Samba</button><button class="b" onclick="act('/api/open-share')">Open share in Explorer</button></div><div class="sst" id="ssSamba"></div></div>
+</div>
+<div class="subpage" id="stUA">
  <div class="card" id="uaCard"><h3>Update All</h3><p>Downloads the latest update_all.sh and sets downloader.ini to the MiSTer-devel main distribution with <b>update_linux = false</b>. That keeps your SS1 in a stable lane: cores and the menu still update, but the Linux kernel stays as it is, so a breaking kernel change can't force you to reflash your SD card. A backup of downloader.ini is kept.</p>
   <div class="row"><button class="b p" onclick="act('/api/update-all')">Install Update All + apply settings</button><button class="b" onclick="term('update_all')">Run Update All (terminal)</button></div><div class="sst" id="ssUA"></div>
   <div class="adv" id="advBox"></div></div>
- <div class="card"><h3>Remove faulty overlap fix tool</h3><p>Deletes fix_sd_overlap.sh / exfat_fix_overlap, which misdetect the correct SS1 layout as overlapping and can destroy the card (SuperStation-Documentation #14).</p>
-  <button class="b d" onclick="act('/api/overlap-cleanup')">Remove overlap tools</button><div class="sst" id="ssOverlap"></div></div>
+</div>
+<div class="subpage pc-only" id="stPsx">
  <div class="card pc-only" id="psxCfgCard"><h3>PSX SNAC settings</h3><p>Sets which front ports the PlayStation core reads real controllers and memory cards from, right in its settings file (<code>/media/fat/config/PSX.CFG</code>). Every PSX core on the SS1 shares that file, Console Mode included. For real controllers in both front ports, SNAC has to be on for port 1 and port 2. Only these options are changed: all your other PSX settings stay as they are, and a copy of the file is kept in <code>config/ss1tool_backup</code> first.</p>
   <div class="row" id="psxPills"><span class="muted">-</span></div>
   <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
@@ -499,6 +511,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   </tbody></table>
   <div class="row" style="margin-top:8px"><button class="b p" id="psxSaveBtn" onclick="psxSave()">Save PSX settings</button><button class="b" onclick="psxLoad()">Reload</button></div>
   <p class="muted" id="psxCores" style="margin:8px 0 0"></p></div>
+</div>
+<div class="subpage" id="stAcc">
  <div class="card" id="scraperCard"><h3>Console Mode scraper accounts</h3><p>Writes your own ScreenScraper login and TheGamesDB API key to /media/fat/ConsoleMode. Leave a field blank to keep the current value.</p>
   <div class="row" style="align-items:flex-start;gap:14px">
    <div><input id="ssid" placeholder="ScreenScraper username" size="22"><div class="st" id="stSSID"></div></div>
@@ -518,7 +532,13 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   </div>
   <div class="row" style="margin-top:10px"><button class="b" onclick="raTest()">Test login</button><button class="b p" onclick="raSave()">Save</button><button class="b d" id="raClear" style="display:none" onclick="raClearLogin()">Remove login</button><span id="raResult"></span></div>
   <p class="muted" style="margin:8px 0 0">Save checks the login with RetroAchievements first, so a typo isn't saved. The build stores the password in plain text on the SD card; SS1 Tool doesn't keep a copy. No account yet? <a href="https://retroachievements.org/createaccount.php" target="_blank" rel="noopener">Create one for free</a>.</p></div>
- <div class="jump" style="margin-top:18px"><span class="muted">Further down:</span><a href="#" class="win-only" onclick="jumpTo('flash');return false">Flash SD card</a><a href="#" onclick="jumpTo('settings');return false">MiSTer settings</a></div>
+</div>
+<div class="subpage" id="stSamba">
+ <div class="card"><h3>Samba file sharing</h3><p>Enables the built-in Samba add-on at boot and starts it, so the card shows up in Windows as \\IP\sdcard.</p>
+  <div class="row"><button class="b p" onclick="act('/api/samba')">Enable Samba</button><button class="b" onclick="act('/api/open-share')">Open share in Explorer</button></div><div class="sst" id="ssSamba"></div></div>
+ <div class="card"><h3>Remove faulty overlap fix tool</h3><p>Deletes fix_sd_overlap.sh / exfat_fix_overlap, which misdetect the correct SS1 layout as overlapping and can destroy the card (SuperStation-Documentation #14).</p>
+  <button class="b d" onclick="act('/api/overlap-cleanup')">Remove overlap tools</button><div class="sst" id="ssOverlap"></div></div>
+</div>
 <div class="subpage pc-only win-only" id="flash">
  <h2>Flash SD card (SuperStation One)</h2><p class="sub">Writes the official SuperStation One SD Card Installer image. <b class="bad">Everything on the selected card is erased.</b></p>
  <div class="card pc-only" id="reflashCard"><h3>Reflash without losing anything</h3>
@@ -890,7 +910,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="diag">
  <h2>Diag</h2><p class="sub">Check the SD card, the BIOS files and games folders, collect a debug report when something isn't right, and test controllers.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('sddiag');return false">SD diagnostics</a><a href="#" onclick="jumpTo('bioscheck');return false">BIOS and game folders</a><a href="#" onclick="jumpTo('debug');return false">Debug report</a><a href="#" onclick="jumpTo('padtest');return false">Controller tester</a><a href="#" class="android-only" onclick="openPage('about');setTimeout(()=>jumpTo('appReport'),50);return false">App problem report</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('sddiag');return false">SD diagnostics</a><a href="#" onclick="jumpTo('bioscheck');return false">BIOS and game folders</a><a href="#" onclick="jumpTo('debug');return false">Debug report</a><a href="#" onclick="jumpTo('padtest');return false">USB controller tester</a><a href="#" onclick="jumpTo('padsnac');return false">SNAC controller tester</a><a href="#" class="android-only" onclick="openPage('about');setTimeout(()=>jumpTo('appReport'),50);return false">App problem report</a></div>
 <div class="subpage" id="sddiag">
  <h2>SD diagnostics</h2><p class="sub">Runs the sd_integrity checks on the SuperStation. Everything here only reads, except <b>Repair file system</b>. Results are also logged to /media/fat/sd_integrity.log.</p>
  <div class="card"><div class="row"><span>Drive:</span><select id="diagTarget"></select><button class="b" onclick="loadTargets()">Refresh drives</button></div>
@@ -925,11 +945,15 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <pre class="out" id="dbgOut">Upload the generated file to your GitHub issue or the Discord support channel.</pre></div>
 </div>
 <div class="subpage" id="padtest">
- <h2>Controller tester</h2><p class="sub">Shows what each controller on the SuperStation is pressing, live, without loading a core. SS1 Tool only watches: the controllers keep working in MiSTer and Console Mode while you test.</p>
+ <h2>USB controller tester</h2><p class="sub">Shows what each controller on the SuperStation is pressing, live, without loading a core. SS1 Tool only watches: the controllers keep working in MiSTer and Console Mode while you test.</p>
  <div class="row ptlegend"><span><i class="ptdot has"></i> the controller has this input</span><span><i class="ptdot no"></i> it doesn't have it</span><span><i class="ptdot on"></i> pressed or moved now</span><span class="muted" id="ptStatus"></span></div>
  <div class="card"><div class="row" style="justify-content:space-between"><div><h3>USB controllers</h3><p style="margin:0">Wired controllers and wireless ones through a USB dongle, plugged into the SuperStation or its dock. Bluetooth controllers paired with the SuperStation are shown here too.</p></div>
   <label class="row" style="gap:6px">Show as <select id="ptLayoutUsb" onchange="ptSetLayout('usb',this.value)"></select></label></div>
   <div id="ptUsb" class="ptlist"></div></div>
+</div>
+<div class="subpage" id="padsnac">
+ <h2>SNAC controller tester</h2>
+ <div class="row ptlegend"><span><i class="ptdot has"></i> the controller has this input</span><span><i class="ptdot no"></i> it doesn't have it</span><span><i class="ptdot on"></i> pressed or moved now</span></div>
  <div class="card" id="ptSnacCard"><h3>SNAC controllers (front ports)</h3>
   <p style="margin:0 0 8px">Tests the PlayStation controllers in the SuperStation's front ports 1 and 2, and sets the PSX core's SNAC options, all from this card. SS1 Tool loads the <b>controller tester core</b> to read the ports: nothing is read until you start the test, and while it runs nothing you press reaches Console Mode or MiSTer's menu.</p>
   <div class="pc-only" id="ptPsx" style="margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#333);border-radius:10px">
@@ -946,7 +970,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
     <li>Check the controller tester core's bubble next to Start says <b>Core installed</b>. If it says not installed or update available, click <b>Install core</b> / <b>Update core</b>. <b>Check for updates</b> asks GitHub straight away.</li>
     <li>Plug your controllers into front port 1 and/or port 2, then click <b>Start controller test</b>. Whatever is on the TV closes, and the TV shows the test for both ports.</li>
     <li>Pick <b>Port 1</b> or <b>Port 2</b> under <b>Show</b>. Press buttons and move the sticks: they light up here and on the TV. Analog controllers are switched to analog mode by the core; if the sticks still move the D-pad, press the controller's <b>ANALOG</b> button.</li>
-    <li>Click <b>Stop</b> when you're done: the menu comes back. Leaving this page stops the test too.</li>
+    <li>Click <b>Stop</b> when you're done: the menu comes back. Leaving this tab or page stops the test too.</li>
    </ol></details>
   <div class="row" style="gap:12px;flex-wrap:wrap"><label class="row" style="gap:6px">Show <select id="ptSnacPort" onchange="ptSnacDraw()"><option value="1">Port 1</option><option value="2">Port 2</option></select></label><label class="row" style="gap:6px">Show as <select id="ptLayoutSnac" onchange="ptSetLayout('snac',this.value)"></select></label></div>
   <div class="row" style="margin-top:10px;gap:8px;align-items:center;flex-wrap:wrap"><button class="b p" id="ptSnacStart" onclick="ptSnacStart()">Start controller test</button><button class="b" id="ptSnacStop" onclick="ptSnacStop()" disabled>Stop</button><span id="ptCoreSt"></span><button class="b" id="ptCoreBtn" onclick="ptCoreInstall()" style="display:none">Update core</button><button class="b" onclick="padCheckUpdates(this)">Check for updates</button></div>
@@ -1143,19 +1167,49 @@ async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const 
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
 const SUBLOAD={fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
- sddiag:loadTargets,padtest:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
+ sddiag:loadTargets,padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
 function openPage(s){
   document.querySelectorAll("nav#nav button").forEach(x=>x.classList.toggle("on",x.dataset.s===s));
   if(window.anavSync)anavSync(s);if(window.aLayoutKick)setTimeout(aLayoutKick,0);
   document.querySelectorAll("main > section").forEach(x=>x.classList.toggle("on",x.id===s));
+  // leaving the page that's on its SNAC tester tab stops the test
+  document.querySelectorAll("main > section.tabbed").forEach(x=>{if(x.id!==s){const t=tabCur(x.id);if(t&&TABLEAVE[t])TABLEAVE[t]()}});
+  tabOpen(s);
   if(PAGELOAD[s])PAGELOAD[s]();
   if(subObs)subObs.disconnect();
   const parts=[...document.querySelectorAll(`#${s} .subpage`)].filter(d=>SUBLOAD[d.id]);
   if(parts.length){subObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){subObs.unobserve(e.target);SUBLOAD[e.target.id]()}}),{rootMargin:"300px 0px"});parts.forEach(d=>subObs.observe(d))}
 }
-function jumpTo(id){const el=$(id);if(!el)return;const h=document.querySelector("header").offsetHeight+(ANDROID?((el.closest("section")||document).querySelector(".jump")?.offsetHeight||0):0);window.scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-h-12),behavior:"smooth"})}
+// Tabs (everywhere but Android): a page's "Jump to" row becomes tabs, and only the part of the
+// chosen tab shows. Each page remembers its tab. A part loads the first time it's shown.
+const TABMODE=document.documentElement.dataset.platform!=="android";
+const TABLEAVE={padsnac:()=>{if(PT.sn&&PT.sn.on)ptSnacStop()}};   // leaving the SNAC tester stops the test
+function tabsInit(){if(!TABMODE)return;
+ document.querySelectorAll("main > section").forEach(sec=>{const row=sec.querySelector(":scope > .jump");if(!row)return;
+  sec.classList.add("tabbed");row.classList.add("tabs");row.setAttribute("role","tablist");
+  row.querySelectorAll("a").forEach(a=>{const m=/jumpTo\('([^']+)'\)/.exec(a.getAttribute("onclick")||"");if(!m||!$(m[1])||$(m[1]).parentElement!==sec)return;a.dataset.tab=m[1];a.setAttribute("role","tab")})})
+ const fit=()=>document.documentElement.style.setProperty("--hdrh",document.querySelector("header").offsetHeight+"px");fit();addEventListener("resize",fit)}
+const tabShown=a=>getComputedStyle(a).display!=="none";
+function tabCur(s){const a=document.querySelector(`#${s} > .jump.tabs a.on`);return a?a.dataset.tab:""}
+function showTab(s,id,keepScroll){const sec=$(s);if(!sec||!sec.classList.contains("tabbed"))return;
+ const was=tabCur(s);if(was&&was!==id&&TABLEAVE[was])TABLEAVE[was]();
+ sec.querySelectorAll(":scope > .subpage").forEach(d=>d.classList.toggle("tabon",d.id===id));
+ sec.querySelectorAll(":scope > .jump.tabs a[data-tab]").forEach(a=>{const on=a.dataset.tab===id;a.classList.toggle("on",on);a.setAttribute("aria-selected",on)});
+ try{localStorage.setItem("tab_"+s,id)}catch(e){}
+ if(!keepScroll)window.scrollTo(0,0)}
+// the tab a page opens on: the one used last, or the first one this platform shows
+function tabOpen(s){const sec=$(s);if(!TABMODE||!sec||!sec.classList.contains("tabbed"))return;
+ const ok=[...sec.querySelectorAll(":scope > .jump.tabs a[data-tab]")].filter(tabShown).map(a=>a.dataset.tab);if(!ok.length)return;
+ let id="";try{id=localStorage.getItem("tab_"+s)||""}catch(e){}
+ showTab(s,ok.includes(id)?id:ok[0],true)}
+function jumpTo(id){const el=$(id);if(!el)return;
+ if(TABMODE){const sec=el.closest("section"),part=el.classList.contains("subpage")&&el.parentElement===sec?el:el.closest("section > .subpage");
+  if(sec&&part&&sec.classList.contains("tabbed")){showTab(sec.id,part.id,true);if(el===part){window.scrollTo(0,0);return}}}
+ const row=(el.closest("section")||document).querySelector(":scope > .jump");
+ const h=document.querySelector("header").offsetHeight+((ANDROID||TABMODE)&&row?row.offsetHeight:0);
+ window.scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-h-12),behavior:"smooth"})}
 // Open a part of a page from anywhere (for example the update pill -> About).
 function openPart(page,part){openPage(page);if(part)setTimeout(()=>jumpTo(part),60)}
 document.querySelectorAll("nav#nav button").forEach(b=>b.onclick=()=>{openPage(b.dataset.s);window.scrollTo(0,0)});
@@ -1354,7 +1408,7 @@ async function pollFlash(){if(polling)return;polling=true;try{for(;;){const s=aw
   $("flashOut").textContent=(s.error?"ERROR: "+s.error:(s.message||"Idle."))+(s.running&&s.total?`\n${s.phase}: ${pct}% (${fmtSize(s.done)} of ${fmtSize(s.total)})`:"");
   if(!s.running)break;await new Promise(r=>setTimeout(r,700))}}catch(e){$("flashOut").textContent=e.message}polling=false}
 async function quitApp(){if(confirm("Quit SS1 Tool?")){await api("/api/quit",{}).catch(()=>{});const cr=$("credit").outerHTML;document.body.innerHTML='<p style="padding:40px">SS1 Tool has closed. You can close this tab.</p>'+cr}}
-init();loadAdvisory();
+tabsInit();init();loadAdvisory();
 // ---------- USB devices
 const UICON={optical:"&#128191;",ir:"&#128225;",wifibt:"&#128246;",serial:"&#128268;",controller:"&#127918;",keyboard:"&#9000;",mouse:"&#128433;",storage:"&#128190;",hub:"&#128268;",bluetooth:"&#128246;",wifi:"&#128225;",audio:"&#127925;",other:"&#128268;"};
 const UKIND={optical:"CD/DVD drive",ir:"TV remote receiver",wifibt:"WiFi + Bluetooth adapter",serial:"USB serial adapter",controller:"Controller",keyboard:"Keyboard",mouse:"Mouse",storage:"Storage",hub:"Hub",bluetooth:"Bluetooth adapter",wifi:"WiFi adapter",audio:"Audio",other:"Other device"};
@@ -3080,7 +3134,9 @@ async function padCheckUpdates(btn){if(!connectedHost)return toast("Connect to t
   else if(S.update)toast(`Core update available: ${lat.name}${lat.built?" built "+new Date(lat.built).toLocaleString():""}. Click Update to install it.`);
   else toast("The controller tester core is up to date")})}
 function ptInit(){if(PT.init)return;PT.init=true;$("ptLayoutUsb").innerHTML=ptOptions();$("ptLayoutSnac").innerHTML=ptOptions();$("ptLayoutUsb").value=PT.layout.usb;$("ptLayoutSnac").value=PT.layout.snac;ptIdle(connectedHost?"Looking for controllers...":"");ptSnacDraw();ptCoreStatus();ptPsxLoad();
- new IntersectionObserver(es=>{const was=PT.vis;PT.vis=es[0].isIntersecting;if(PT.vis){ptLoop();if(!was){ptPsxLoad();ptCoreStatus()}}}).observe($("padtest"));
+ const ptSeen=new Set();
+ const ptObs=new IntersectionObserver(es=>{const was=PT.vis;es.forEach(e=>{if(e.isIntersecting)ptSeen.add(e.target.id);else ptSeen.delete(e.target.id)});PT.vis=ptSeen.size>0;if(PT.vis){ptLoop();if(!was){ptPsxLoad();ptCoreStatus()}}});
+ ptObs.observe($("padtest"));ptObs.observe($("padsnac"));
  document.addEventListener("visibilitychange",()=>{if(!document.hidden&&PT.vis)ptLoop()})}
 </script>
 <button id="toTop" class="b" onclick="goTop()" aria-label="Back to the top" title="Back to the top">&#8593;</button>
