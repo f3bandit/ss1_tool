@@ -5,7 +5,7 @@ package main
 // library of cards on this PC.
 //
 // A job on the SuperStation:
-//   0. The user installs the core (Setup › Memory card core); SS1 Tool never installs or updates
+//   0. The user installs the core (Setup › Install scripts and cores); SS1 Tool never installs or updates
 //      it by itself.
 //   1. SS1 Tool puts a card file and a job file in /media/fat/games/SS1_MemCard and writes an MGL
 //      that loads the core with both mounted (the job file first, so the core reads the request
@@ -453,7 +453,7 @@ var mcCoreVersion atomic.Int32
 func mcRunCore(job int, card []byte, o mcOpts) (rep []byte, img []byte, err error) {
 	// installing and updating the core is left to the user (Setup, or the button on the page)
 	if mcCoreInstalled() == "" {
-		return nil, nil, errors.New("the memory card core isn't installed: install it in Setup › Memory card core first")
+		return nil, nil, errors.New("the memory card core isn't installed: install it in Setup › Install scripts and cores first")
 	}
 	mcStopReq.Store(false)
 	id := rand.Uint32()
@@ -472,8 +472,8 @@ func mcRunCore(job int, card []byte, o mcOpts) (rep []byte, img []byte, err erro
 	}
 	mgl := fmt.Sprintf(`<mistergamedescription>
 	<rbf>_Utility/SS1_MemCard</rbf>
-	<file delay="1" type="s" index="1" path=%q/>
-	<file delay="1" type="s" index="0" path=%q/>
+	<file delay="2" type="s" index="1" path=%q/>
+	<file delay="3" type="s" index="0" path=%q/>
 </mistergamedescription>
 `, mcJobFile, mcCardFile)
 
@@ -491,9 +491,10 @@ func mcRunCore(job int, card []byte, o mcOpts) (rep []byte, img []byte, err erro
 		return nil, nil, err
 	}
 	mcStep("Starting the memory card core")
-	if out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core ` + mcMGL + `" > /dev/MiSTer_cmd' && echo ok`); err != nil || !strings.Contains(out, "ok") {
-		return nil, nil, fmt.Errorf("couldn't start the core: %s", strings.TrimSpace(out))
+	if err := mcLaunch(); err != nil {
+		return nil, nil, err
 	}
+	relaunched := false
 
 	start := time.Now()
 	lastProgress := time.Now()
@@ -526,6 +527,28 @@ func mcRunCore(job int, card []byte, o mcOpts) (rep []byte, img []byte, err erro
 			continue
 		}
 		since := time.Since(start)
+		// the first start after the core was installed or updated can be slow enough for the job
+		// file to be mounted before the core is ready, and then the job is lost (the core just
+		// backs the card up to the file, as when it's started from the menu): put the files back
+		// and start it once more
+		if !relaunched && since > 10*time.Second {
+			core, _ := run("cat /tmp/CORENAME 2>/dev/null")
+			if strings.EqualFold(strings.TrimSpace(core), "SS1_MemCard") {
+				relaunched = true
+				mcStep("Starting the memory card core again (it missed the job)")
+				if err := upload(mcCardFile, bytes.NewReader(card), "644"); err != nil {
+					return nil, nil, err
+				}
+				if err := upload(mcJobFile, bytes.NewReader(req), "644"); err != nil {
+					return nil, nil, err
+				}
+				if err := mcLaunch(); err != nil {
+					return nil, nil, err
+				}
+				start = time.Now()
+				continue
+			}
+		}
 		switch {
 		case since > 3*time.Minute:
 			return nil, nil, errors.New("the core didn't start the job: is there a memory card in front port 1? (Dock: SNAC Bypass switch on Disabled)")
@@ -554,6 +577,14 @@ func mcRunCore(job int, card []byte, o mcOpts) (rep []byte, img []byte, err erro
 		img = buf.Bytes()
 	}
 	return rep, img, nil
+}
+
+// mcLaunch starts the core with the MGL file (it mounts the job file, then the card file).
+func mcLaunch() error {
+	if out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core ` + mcMGL + `" > /dev/MiSTer_cmd' && echo ok`); err != nil || !strings.Contains(out, "ok") {
+		return fmt.Errorf("couldn't start the core: %s", strings.TrimSpace(out))
+	}
+	return nil
 }
 
 // mcTakeReport copies the core's progress or report into the job state.
@@ -919,7 +950,7 @@ func apiMcRun(w http.ResponseWriter, r *http.Request) {
 				return nil
 			}
 			if len(force) > 0 && mcCoreVersion.Load() < 2 {
-				return errors.New("to write a save that's already on the card, update the memory card core first (Setup › Memory card core)")
+				return errors.New("to write a save that's already on the card, update the memory card core first (Setup › Install scripts and cores)")
 			}
 			step2 := mcOpts{Step: 2, Force: force, Label: "Step 2 of 2: writing to the card"}
 			mcStep(step2.Label)
