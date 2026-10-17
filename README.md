@@ -115,7 +115,7 @@ In menu order.
 | **Setup: RetroAchievements account** | **Setup: Flash SD card** |
 | ![Setup: RetroAchievements account card with a tested login](docs/screenshots/retroachievements.png) | ![Setup: flashing the SuperStation One SD card image](docs/screenshots/flash.png) |
 | **Setup: MiSTer settings** | **Network** |
-| ![Setup: editing MiSTer.ini and its backups](docs/screenshots/settings.png) | ![Network: Ethernet connection details, with Jump to links for WiFi and Cifs](docs/screenshots/network.png) |
+| ![Setup: editing MiSTer.ini and its backups](docs/screenshots/settings.png) | ![Network: Ethernet connection details, with tabs for WiFi and Cifs](docs/screenshots/network.png) |
 | **Video** | **Video: trying a change** |
 | ![Video: every video setting explained, with its risk and controls to try another value](docs/screenshots/video.png) | ![Video: a change being tried, with Keep and Undo now and the countdown until it goes back by itself](docs/screenshots/video-try.png) |
 | **Video: setup wizard** | **Video: something looks wrong?** |
@@ -125,17 +125,17 @@ In menu order.
 | **Network: Cifs share settings** | **Network: share a folder from this PC** |
 | ![Network: Cifs share settings, startup options and which system folders MiSTer uses](docs/screenshots/cifs-settings.png) | ![Network: sharing a folder from this Windows PC for the SuperStation to play games from](docs/screenshots/pcshare.png) |
 | **Files** | **Files: Saves** |
-| ![Files: file manager, saves, SD card backup and screenshots on one page, with Jump to links](docs/screenshots/files.png) | ![Files: game saves and save states per system, ready to back up](docs/screenshots/saves.png) |
+| ![Files: the file manager tab, with tabs for saves, backups, screenshots, artwork and memory cards](docs/screenshots/files.png) | ![Files: game saves and save states per system, ready to back up](docs/screenshots/saves.png) |
 | **Files: Saves backup in progress** | **Files: SD card backup** |
 | ![Files: progress bar, files and megabytes copied while backing up saves](docs/screenshots/saves-progress.png) | ![Files: SD card backup to this PC](docs/screenshots/sdbackup.png) |
 | **Files: Screenshots** | **Devices** |
-| ![Files: taking and browsing screenshots](docs/screenshots/screenshots.png) | ![Devices: USB devices on the SuperStation and its dock, with Jump to links for Bluetooth and Controllers](docs/screenshots/devices.png) |
+| ![Files: taking and browsing screenshots](docs/screenshots/screenshots.png) | ![Devices: USB devices on the SuperStation and its dock, with tabs for Bluetooth and Controllers](docs/screenshots/devices.png) |
 | **Devices: Bluetooth** | **Devices: Bluetooth restore in progress** |
 | ![Devices: paired controllers with connected, trusted and button-mapping status](docs/screenshots/bluetooth.png) | ![Devices: progress bar, current step and log while restoring a Bluetooth backup](docs/screenshots/bluetooth-progress.png) |
 | **Devices: Controllers** | **Remote** |
 | ![Devices: controller mappings and profiles](docs/screenshots/controllers.png) | ![Remote: on-screen controller and keyboard](docs/screenshots/remote.png) |
 | **Diag** | **Diag: BIOS and game folders** |
-| ![Diag: SD diagnostics, BIOS and game folders, debug report and controller tester on one page, with Jump to links](docs/screenshots/diag.png) | ![Diag: BIOS status per system and the games folder MiSTer uses](docs/screenshots/bios.png) |
+| ![Diag: the SD diagnostics tab, with tabs for BIOS and game folders, the debug report and the USB and SNAC controller testers](docs/screenshots/diag.png) | ![Diag: BIOS status per system and the games folder MiSTer uses](docs/screenshots/bios.png) |
 | **Diag: Controller tester** | **Diag: Controller tester, Show as a leverless controller** |
 | ![Diag: live button and stick state of USB controllers on mock controllers, green for inputs the controller has and yellow for pressed](docs/screenshots/padtest.png) | ![Diag: a controller shown on the leverless all-button layout](docs/screenshots/padtest-layouts.png) |
 | **Diag: Controller tester, SNAC front ports** | |
@@ -146,6 +146,8 @@ In menu order.
 | ![About: update available, what's new, update and restart, automatic updates setting](docs/screenshots/updates.png) | ![Update offer: a bar at the top offers the new version with Update now, What's new and Not now](docs/screenshots/update-offer.png) |
 
 ## Features
+
+Pages with several parts show them as **tabs** under the page title: the active tab is solid red, and only its cards are on screen, so there's no long scroll to find a tool. The tab row stays at the top while you scroll, each page remembers the tab you used last, and links from one page to a part of another open the right tab.
 
 ### Connect
 - Connect by IP address (default login `root` / `1`)
@@ -170,7 +172,7 @@ Open **★ Wizard** (bottom left of the menu, always visible). It walks a new ow
 - **Board buses (I2C):** the SuperStation's I2C buses and the devices on them, listed only (nothing is read or written)
 
 ### Setup
-One-click fixes and installs, with **Flash SD card** and **MiSTer settings** at the bottom of the page (the **Further down** links jump to them).
+One-click fixes and installs, in tabs: **Scripts and cores**, **Update All**, **PSX SNAC settings**, **Accounts** (Console Mode scraper and RetroAchievements), **Samba and cleanup**, **MiSTer settings** and **Flash SD card**.
 
 Each item shows its current status on the SS1 (installed, up to date, enabled, running, settings applied).
 - Install the SS1 scripts: `sd_integrity.sh`, `shutdown.sh` and `ss1_debug_report.sh`
@@ -221,7 +223,7 @@ Everything in Video is based on the [SuperStation wiki](https://github.com/Takii
 - **HDMI-CEC (TV remote and power):** turn CEC on, let the TV remote work the menu, switch the TV to the SuperStation at power-on, put the TV to sleep and wake it, the CEC clock, the HDMI off timer and the menu's black screen and logo. HDMI-CEC needs MiSTer 20260603 or newer (Console Mode's MiSTer has it too) and a TV with CEC; it's off unless turned on. Games in cores built before May 2026 can't use it while they run
 
 ### Network
-How the SuperStation connects to your network, with Ethernet, WiFi and network shares (Cifs) on one page, and **Jump to** links at the top.
+How the SuperStation connects to your network, in tabs: **Ethernet**, **WiFi** and **Network share (Cifs)**.
 
 #### Ethernet
 - Shows the SuperStation's wired connection: whether a cable is connected, the link speed and duplex, IP address, subnet mask, gateway, DNS servers, whether the address comes from your router (DHCP) or is set manually, and the MAC address
@@ -268,7 +270,7 @@ For players without a NAS or an NVMe drive: keep your games on your PC, so a fai
 - Keep the PC switched on and awake while you play
 
 ### Files
-File manager, saves, SD card backup, screenshots, artwork and memory cards on one page, with **Jump to** links at the top. Each part loads when you scroll to it.
+In tabs: **File manager**, **Saves**, **Backup to NVMe**, **SD card backup**, **Screenshots**, **Artwork** and **Memory cards**. Each tab loads the first time you open it.
 
 #### File manager
 - Two-pane file manager with a drive picker on each side
@@ -330,7 +332,7 @@ File manager, saves, SD card backup, screenshots, artwork and memory cards on on
 - On a dock, set the SNAC Bypass switch to Disabled. PC only
 
 ### Devices
-USB devices, Bluetooth and controllers on one page, with **Jump to** links at the top.
+In tabs: **USB devices**, **Bluetooth** and **Controllers**.
 
 #### USB Devices
 - Separate **SuperStation** and **Dock** cards: the console's own sockets and built-in parts (such as the WiFi/Bluetooth card), and the dock's sockets, NVMe slot and the TV remote receiver. Shows whether the dock is connected, plus a card for the USB host controllers
@@ -365,7 +367,7 @@ USB devices, Bluetooth and controllers on one page, with **Jump to** links at th
   - If the TV can't show them (for example `fb_terminal=0` in MiSTer.ini), the shutdown still runs and SS1 Tool tells you to wait 15 seconds before switching off
 
 ### Diag
-SD card diagnostics, the BIOS and game folder check, the debug report and the controller tester on one page.
+In tabs: **SD diagnostics**, **BIOS and game folders**, **Debug report**, **USB controller tester** and **SNAC controller tester**.
 
 #### SD Diagnostics
 - **Check file system / Repair file system** (NVMe and USB drives): unmounts the drive, runs the SuperStation's own checker for its file system (`fsck.exfat`, `fsck.vfat`, `e2fsck` or `ntfsfix`) and mounts it again exactly as it was. Check changes nothing; Repair asks first. The SS1's exFAT tools (exfatprogs 1.0.4) can only fix simple exFAT problems; SS1 Tool says so and points to `chkdsk` on a PC when they can't. A network share session (a PC with the SS1's share open) is closed for the check, and Windows reconnects by itself. If anything else is using the drive (a game, a core or Console Mode reading it), it isn't touched and SS1 Tool lists what's using it: go back to the main menu and try again. The SD card can't be repaired while the SuperStation runs from it, so SS1 Tool tells you to run `chkdsk X: /f` on a PC instead

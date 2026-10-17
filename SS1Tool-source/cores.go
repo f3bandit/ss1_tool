@@ -1,7 +1,7 @@
 package main
 
 // The MiSTer cores SS1 Tool installs on the SuperStation: the SS1 Memory Card Tool (Files ›
-// Memory cards) and the SS1 Controller Tester (Diag › Controller tester, SNAC). Both come from
+// Memory cards) and the SS1 Controller Tester (Diag › SNAC controller tester). Both come from
 // their GitHub repos: the latest release, or the "unstable" test build while there's no release
 // yet. SS1 Tool never installs or updates them by itself; the user clicks Install / Update.
 
