@@ -64,7 +64,9 @@ func openTerminal(host, user, remoteCmd string) error {
 	}
 	bat := filepath.Join(os.TempDir(), fmt.Sprintf("ss1tool_term_%d.bat", time.Now().UnixNano()))
 	target := user + "@" + host
-	line := "ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL " + target
+	// /dev/null: Windows' OpenSSH maps it to the null device (with "NUL" it wrote a real file called
+	// NUL into the folder it started in)
+	line := "ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null " + target
 	if remoteCmd != "" {
 		line += ` "` + remoteCmd + `"`
 	}

@@ -298,7 +298,7 @@ In tabs: **File manager**, **Saves**, **Backup to NVMe**, **SD card backup**, **
 
 #### SD Backup
 - Backs up everything on the SD card **except the games folder** to this PC: settings, saves, cores, Scripts, Console Mode, linux and so on. Mounted network shares (Cifs) are skipped too, so a backup never copies your NAS
-- Saved in `backup\sdcard\<name>_<date-time>\` next to SS1Tool.exe, with the same folders and file names as on the card, plus a `_backup_info.txt` summary. Links, and files with names Windows doesn't allow (for example with `:` or `?`), can't be stored on a PC: they're skipped and listed in `_backup_info.txt` instead of stopping the backup
+- Saved in `backups\sdcard\<name>_<date-time>\` next to SS1Tool.exe (with every other backup; SD card backups made before 1.28.20 in `backup\sdcard` are moved there by themselves), with the same folders and file names as on the card, plus a `_backup_info.txt` summary. Links, and files with names Windows doesn't allow (for example with `:` or `?`), can't be stored on a PC: they're skipped and listed in `_backup_info.txt` instead of stopping the backup
 - Progress bar, cancel, and a list of backups with **Restore...**, Open folder and Delete. Restore uses the same choices as Reflash without losing anything
 - **System areas:** every SD backup also saves the card's partition table, its first sector (MBR) and MiSTer's bootloader partition (type a2) in `_system\`, with a README on how to restore them, so a card can be rebuilt exactly
 - **Back up to the NVMe/USB drive:** the SuperStation copies the SD card (except the games folder) to `SS1_backup/sdcard` on a drive in the dock with rsync. No PC needed while it runs, and later backups copy only what changed. The system areas go to `SS1_backup/system`
@@ -487,7 +487,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | What | Where |
 |---|---|
 | Settings and saved devices | `%APPDATA%\SS1Tool\config.json` |
-| SD card backups | `backup\sdcard\<name>_<date-time>\` next to `SS1Tool.exe` |
+| SD card backups | `backups\sdcard\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Screenshots | `backups\screenshots\<core>\` next to `SS1Tool.exe` |
 | Previous `cifs_mount.ini` files (contain the share password) | `backups\cifs\` next to `SS1Tool.exe` |
 | Save backups | `backups\saves\<name>_<date-time>\` next to `SS1Tool.exe` |
