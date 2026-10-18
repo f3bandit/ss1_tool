@@ -590,7 +590,7 @@ For development on Linux or macOS, `go build .` produces a version without the W
 
 Developed by **f3bandit**.
 
-Special thanks to **Taki Udon** and the team, and all the admins on the Taki Discord.
+Special thanks to **Taki Udon** and the team, and all the mods on the Taki Discord.
 ![Description](docs/screenshots/lord_udon.gif)
 
 <p><a href="https://discord.gg/74pb5PJRxX"><b>💬 Join the Taki Udon Discord</b></a> &nbsp;·&nbsp; <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation"><b>📖 SuperStation One Documentation</b></a></p>
