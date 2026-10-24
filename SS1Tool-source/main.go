@@ -171,6 +171,7 @@ func main() {
 	registerRoutes2(mux)
 	registerWifiRoutes(mux)
 	registerRoutes3(mux)
+	registerRoutesSys(mux)
 	registerRoutesBT(mux)
 	registerRoutesSaves(mux)
 	registerRoutesCIFS(mux)

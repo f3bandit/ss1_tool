@@ -727,7 +727,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="files">
  <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, take and browse screenshots, and get artwork for Console Mode.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a><a href="#" onclick="jumpTo('mcards');return false">Memory cards</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" class="pc-only win-only" onclick="jumpTo('sysbk');return false">MiSTer &amp; Linux backups</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a><a href="#" onclick="jumpTo('mcards');return false">Memory cards</a></div>
 <div class="subpage" id="fm">
  <h2>File manager</h2><p class="sub">Pick a drive on each side to move or copy files between the SD card and the NVMe/USB drive. Tick files, then use the arrows in the middle.</p>
  <div class="panes">
@@ -782,6 +782,25 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="card"><h3>Backups on this PC</h3><p class="muted" id="sbDir"></p>
   <table><thead><tr><th>Backup</th><th>Date</th><th>Files</th><th>Size</th><th></th></tr></thead><tbody id="sbList"></tbody></table></div>
 </div>
+<div class="subpage pc-only win-only" id="sysbk">
+ <h2>MiSTer &amp; Linux backups</h2><p class="sub">Each time SS1 Tool connects, it checks the parts an update replaces: MiSTer (the main program), the menu core, Linux, and Console Mode's own program files. A version it hasn't saved before is copied to this PC, so you can go back to it if an update breaks something. The same version is never saved twice, a copy that didn't finish is thrown away and made again next time, and nothing is deleted unless you delete it.</p>
+ <div class="card"><h3>On the SuperStation now</h3>
+  <table><thead><tr><th>Part</th><th>Version</th><th>File</th><th>On this PC</th></tr></thead><tbody id="sysCur"><tr><td colspan="4" class="muted">Connect to the SuperStation to see its versions.</td></tr></tbody></table>
+  <div class="bar" id="sysBarWrap" style="display:none;margin-top:10px"><div id="sysBar"></div></div>
+  <p class="muted" id="sysMsg" style="margin:8px 0 0"></p>
+  <div class="row" style="margin-top:8px"><button class="b" onclick="sysCheckNow(this)">Check now</button></div></div>
+ <div class="card"><h3>Saved versions</h3><p class="muted" id="sysDir" style="margin:0 0 8px"></p>
+  <table><thead><tr><th style="width:26px"><input type="checkbox" id="sysAll" onchange="document.querySelectorAll('.sysTick').forEach(c=>c.checked=this.checked)"></th><th>Part</th><th>Version</th><th>First seen</th><th>Size</th><th></th><th></th></tr></thead><tbody id="sysList"></tbody></table>
+  <div class="row" style="margin-top:10px"><button class="b" onclick="api('/api/sysbk/open',{})">Open backups folder</button><button class="b d" onclick="sysDelete(this)">Delete ticked</button><span class="muted">Deleting is the only way a saved version goes away.</span></div></div>
+ <div class="card" id="sysSetCard" style="display:none"><h3>Settings a Linux update can reset</h3>
+  <p class="muted" style="margin:0 0 8px">A Linux update puts these back to stock. SS1 Tool keeps a copy of each version and compares them each time it connects.</p>
+  <div id="sysSets"></div></div>
+</div>
+<div id="sysDlg" class="modal" role="dialog" aria-modal="true" style="display:none"><div class="mbox" style="max-width:620px">
+ <h3 id="sysDlgT"></h3><div id="sysDlgB"></div>
+ <p class="muted" style="margin:10px 0 0">The files are copied next to the current ones and checked first; the current ones are only replaced once everything has arrived intact, so a dropped connection changes nothing. <b style="color:var(--warn)">Don't switch the SuperStation off</b> until it has restarted.</p>
+ <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="b" onclick="$('sysDlg').style.display='none'">Cancel</button><button class="b p" id="sysDlgGo">Put back and restart</button></div>
+</div></div>
 <div class="subpage" id="nvmebk">
  <h2>SD card backup to the NVMe drive</h2><p class="sub">The SuperStation copies its own SD card to the NVMe or USB drive, <b>no PC needed</b>. Everything except the games folder is copied: settings, saves, cores, Scripts, Console Mode, linux and so on. The next backup only copies what changed, so it's quick.</p>
  <div class="card"><h3>Back up now</h3>
@@ -1191,7 +1210,7 @@ async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const 
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
-const SUBLOAD={stSync:()=>{syncLoad();syncDrives()},fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
+const SUBLOAD={stSync:()=>{syncLoad();syncDrives()},fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},sysbk:()=>sysLoad(true),shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
  sddiag:loadTargets,padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
@@ -2303,6 +2322,37 @@ async function pollSDBackup(){if(sbPolling)return;sbPolling=true;try{for(;;){con
   else if(j.running)$("sbOut").textContent=`Backing up "${j.name}"... ${pct}%\n${fmtB(j.done_bytes)} of about ${fmtB(j.total_bytes)} - ${j.files} files\nNow: ${j.current||""}`;
   else{$("sbOut").textContent=j.error?"Backup failed: "+j.error:j.canceled?"Backup cancelled. "+j.files+" files were copied to:\n"+j.path:`Backup complete: ${j.files} files, ${fmtB(j.done_bytes)}\nSaved to: ${j.path}`+(j.skipped?`\n${j.skipped} item(s) Windows can't store (links or file names it doesn't allow) weren't copied; they're listed in _backup_info.txt.`:"");sdBackupList();break}
   await new Promise(r=>setTimeout(r,800))}}catch(e){toast(e.message,true)}sbPolling=false}
+// ---------- MiSTer & Linux backups
+let SYS={versions:[]},sysPolling=false;
+async function sysLoad(probe){try{const j=await api("/api/sysbk/status"+(probe?"?probe=1":""));SYS=j;sysRender(j);if(j.state.running)sysPoll()}catch(e){}}
+function sysRender(j){$("sysDir").textContent="Folder: "+j.dir+" · "+j.versions.length+" version"+(j.versions.length===1?"":"s")+", "+fmtB(j.total||0);
+ const st=j.state,run=st.running;
+ $("sysCur").innerHTML=j.current&&j.current.length?j.current.map(c=>{let pill=c.State==="saved"?'<span class="pill good">Saved</span>':'<span class="pill warn">Not saved yet</span>';
+   if(run&&st.part===c.Name){const pct=st.total?Math.floor(100*st.done/st.total):0;pill=`<span class="pill info">Saving… ${pct}%</span>`}
+   return `<tr><td>${esc(c.Name)}</td><td>${esc(c.Version)}</td><td class="muted" style="font-size:12.5px">${esc(c.File)}</td><td>${pill}</td></tr>`}).join("")
+  :`<tr><td colspan="4" class="muted">${j.connected?"Reading the SuperStation…":"Connect to the SuperStation to see its versions."}</td></tr>`;
+ $("sysBarWrap").style.display=run&&st.total?"block":"none";if(run&&st.total)$("sysBar").style.width=Math.floor(100*st.done/st.total)+"%";
+ let m="";if(run)m=st.message+(st.total?` — ${fmtB(st.done)} of ${fmtB(st.total)}. You can keep using SS1 Tool and the SuperStation meanwhile.`:"…");
+ else{if(st.checked)m="Checked "+new Date(st.checked*1000).toLocaleTimeString()+"."+(st.saved&&st.saved.length?" New: "+st.saved.join(", ")+".":" Nothing new.");}
+ if(st.note)m+=(m?" ":"")+st.note;if(st.error)m+=(m?" ":"")+"⚠ "+st.error;$("sysMsg").textContent=m;
+ $("sysList").innerHTML=j.versions.length?j.versions.map(v=>`<tr><td><input type="checkbox" class="sysTick" data-part="${esc(v.Part)}" data-id="${esc(v.ID)}"></td><td>${esc(v.Name)}</td><td>${esc(v.Version)}</td><td>${new Date(v.FirstSeen*1000).toLocaleDateString()}</td><td>${fmtB(v.Size)}</td>
+   <td>${v.InUse?'<span class="pill good">In use</span>':""}</td><td style="text-align:right">${v.InUse||!j.connected?"":`<button class="b" onclick="sysPutBack('${esc(v.Part)}','${esc(v.ID)}')">Put back…</button>`}</td></tr>`).join("")
+  :'<tr><td colspan="7" class="muted">Nothing saved yet. Versions are saved the next time SS1 Tool connects.</td></tr>';
+ $("sysSetCard").style.display=j.settings&&j.settings.length?"block":"none";
+ if(j.settings)$("sysSets").innerHTML=j.settings.map(s=>`<div class="kv"><span>${esc(s.Name)}</span><span>${s.Status==="reset"?`<span class="pill warn">Reset by the Linux ${esc(s.Since)} update</span> <button class="b" style="padding:3px 10px" onclick="sysSetBack('${esc(s.Path)}',this)">Put mine back</button>`:s.Status==="unchanged"?'<span class="pill good">Unchanged</span>':s.Status==="changed"?'<span class="pill muted">Changed</span>':`<span class="pill muted">${esc(s.Status)}</span>`}</span></div>`).join("")}
+async function sysPoll(){if(sysPolling)return;sysPolling=true;try{for(;;){await new Promise(r=>setTimeout(r,900));const j=await api("/api/sysbk/status");SYS=j;sysRender(j);if(!j.state.running){sysLoad(true);break}}}catch(e){}sysPolling=false}
+function sysCheckNow(b){if(!connectedHost)return toast("Connect to the SuperStation first",true);busy(b,async()=>{await api("/api/sysbk/check",{});setTimeout(()=>{sysLoad(false);sysPoll()},400)})}
+function sysDelete(b){const items=[...document.querySelectorAll(".sysTick:checked")].map(c=>({Part:c.dataset.part,ID:c.dataset.id}));if(!items.length)return toast("Tick the versions to delete first",true);
+ if(!confirm(`Delete ${items.length} saved version(s) from this PC? They can't be put back on the SuperStation after this.`))return;busy(b,async()=>{const j=await api("/api/sysbk/delete",{items});toast(j.message);$("sysAll").checked=false;sysLoad(false)})}
+function sysPutBack(part,id){const v=SYS.versions.find(x=>x.Part===part&&x.ID===id),cur=SYS.versions.find(x=>x.Part===part&&x.InUse);if(!v)return;
+ $("sysDlgT").textContent=`Put back ${v.Name} ${v.Version}?`;
+ $("sysDlgB").innerHTML=`<p>The SuperStation goes back to the ${esc(v.Name)} it had on ${new Date(v.FirstSeen*1000).toLocaleDateString()}. Your games, saves and settings aren't touched.</p>
+  <div class="kv"><span>Now on the SuperStation</span><span>${cur?esc(cur.Version)+' <span class="pill good">already saved on this PC</span>':'<span class="pill warn">not saved yet</span>'}</span></div>
+  <div class="kv"><span>Going back to</span><span>${esc(v.Version)} (${fmtB(v.Size)})</span></div>
+  <div class="kv"><span>What happens</span><span>copy, check, swap, restart</span></div>`;
+ $("sysDlgGo").onclick=()=>busy($("sysDlgGo"),async()=>{const j=await api("/api/sysbk/restore",{part,id});$("sysDlg").style.display="none";toast(j.message)});
+ $("sysDlg").style.display="flex"}
+function sysSetBack(path,b){if(!confirm("Put your copy of "+path+" back, as it was before the Linux update?"))return;busy(b,async()=>{const j=await api("/api/sysbk/setting-restore",{path});toast(j.message);sysLoad(true)})}
 // ---------- dashboard
 const DH={temp:[],cpu:[],rx:[],tx:[]};let dashTimer=null,dashBusy=false;
 function spark(id,data,max,color){const c=$(id),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;const x=c.getContext("2d");x.scale(dpr,dpr);

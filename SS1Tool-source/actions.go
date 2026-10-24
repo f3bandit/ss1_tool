@@ -107,6 +107,7 @@ func apiConnect(w http.ResponseWriter, r *http.Request) {
 	cfgMu.Unlock()
 	saveConfig()
 	go syncAfterConnect() // "Auto sync on startup"
+	go sysCheck()         // MiSTer & Linux backups: copy any new version to this PC
 	// keep already-installed SS1 scripts and helpers current (the status below uses the helper)
 	if out, _ := run("[ -d " + scriptsDir + "/.ss1tool ] && echo yes"); strings.TrimSpace(out) == "yes" {
 		_, _ = ensureScripts(false)
