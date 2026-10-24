@@ -785,8 +785,11 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </div>
 <div class="subpage" id="sysbk">
  <h2>MiSTer &amp; Linux backups</h2><p class="sub">Each time SS1 Tool connects, it checks the parts an update replaces: MiSTer (the main program), the menu core, Linux, and Console Mode's own program files. A version it hasn't saved before is copied here, so you can go back to it if an update breaks something. The same version is never saved twice, a copy that didn't finish is thrown away and made again next time, and nothing is deleted unless you delete it.</p>
+ <div class="card android-only"><h3>On this phone</h3>
+  <label class="ck"><input type="checkbox" id="sysOn" onchange="sysEnable(this)"> Keep MiSTer &amp; Linux backups on this phone</label>
+  <p class="muted" style="margin:6px 0 0">Each Linux version is about 400 MB, and MiSTer and Linux don't update often. Turned off, nothing is saved or synced on this phone; the other devices keep theirs.</p></div>
  <div class="card"><h3>On the SuperStation now</h3>
-  <table><thead><tr><th>Part</th><th>Version</th><th>File</th><th>On this PC</th></tr></thead><tbody id="sysCur"><tr><td colspan="4" class="muted">Connect to the SuperStation to see its versions.</td></tr></tbody></table>
+  <table><thead><tr><th>Part</th><th>Version</th><th>File</th><th>Saved here</th></tr></thead><tbody id="sysCur"><tr><td colspan="4" class="muted">Connect to the SuperStation to see its versions.</td></tr></tbody></table>
   <div class="bar" id="sysBarWrap" style="display:none;margin-top:10px"><div id="sysBar"></div></div>
   <p class="muted" id="sysMsg" style="margin:8px 0 0"></p>
   <div class="row" style="margin-top:8px"><button class="b" onclick="sysCheckNow(this)">Check now</button></div></div>
@@ -2343,7 +2346,8 @@ async function pollSDBackup(){if(sbPolling)return;sbPolling=true;try{for(;;){con
   await new Promise(r=>setTimeout(r,800))}}catch(e){toast(e.message,true)}sbPolling=false}
 // ---------- MiSTer & Linux backups
 let SYS={versions:[]},sysPolling=false;
-async function sysLoad(probe){try{const j=await api("/api/sysbk/status"+(probe?"?probe=1":""));SYS=j;sysRender(j);if(j.state.running)sysPoll()}catch(e){}}
+async function sysLoad(probe){try{const j=await api("/api/sysbk/status"+(probe?"?probe=1":""));SYS=j;$("sysOn").checked=j.on;sysRender(j);if(j.state.running)sysPoll()}catch(e){}}
+function sysEnable(c){busy(c,async()=>{const j=await api("/api/sysbk/enable",{on:c.checked});toast(j.message);sysLoad(c.checked)})}
 function sysRender(j){$("sysDir").textContent="Folder: "+j.dir+" · "+j.versions.length+" version"+(j.versions.length===1?"":"s")+", "+fmtB(j.total||0);
  const st=j.state,run=st.running;
  $("sysCur").innerHTML=j.current&&j.current.length?j.current.map(c=>{let pill=c.State==="saved"?'<span class="pill good">Saved</span>':'<span class="pill warn">Not saved yet</span>';

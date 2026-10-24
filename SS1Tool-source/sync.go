@@ -472,6 +472,9 @@ func syncExcluded(p string) bool {
 	if strings.Contains(p, ".incomplete/") || p == "backups/mister-linux/history.log" {
 		return true
 	}
+	if strings.HasPrefix(p, "backups/mister-linux/") && !sysEnabled() {
+		return true // turned off on this device
+	}
 	for _, x := range syncExclude {
 		if strings.HasPrefix(p, x) {
 			return true
