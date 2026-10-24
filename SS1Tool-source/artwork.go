@@ -1,3 +1,5 @@
+//go:build !ss1android
+
 package main
 
 // Artwork: an external scraper for Console Mode. The PC finds the games on the SuperStation,

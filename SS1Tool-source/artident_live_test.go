@@ -1,3 +1,5 @@
+//go:build !ss1android
+
 package main
 
 import (

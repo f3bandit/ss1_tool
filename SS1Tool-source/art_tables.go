@@ -1,3 +1,5 @@
+//go:build !ss1android
+
 package main
 
 // Console Mode 1.1.4.2's own system tables (section name -> libretro collection,
