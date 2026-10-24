@@ -460,6 +460,28 @@ func artLibretroPick(names []string, official, how, name, title string, manual b
 		}
 	}
 	n, sim := lrMatch(names, name)
+	if n == "" {
+		// fan versions: the name with "Restoration", "Fastrom", "v1.1" ... taken out
+		if c := artStripVariant(name); c != "" && c != artBase(name) {
+			if n, _ = lrMatch(names, c); n == "" {
+				n, _ = lrLoose(names, c)
+			}
+			if n != "" {
+				return n, "based on"
+			}
+		}
+		// the same game under a longer or shorter name ("Rockman 7" -> "Rockman 7 - Shukumei no ...")
+		var how2 string
+		if n, how2 = lrLoose(names, name); n != "" {
+			if manual {
+				return n, "manual"
+			}
+			if artIsHack(title) || how2 == "based on" {
+				return n, "based on"
+			}
+			return n, "similar name"
+		}
+	}
 	switch {
 	case n == "":
 		return "", ""
@@ -471,4 +493,141 @@ func artLibretroPick(names []string, official, how, name, title string, manual b
 		return n, "similar name"
 	}
 	return n, "name"
+}
+
+// words fan versions add to a game's name: taken out, what's left is the game they're based on
+var variantWords = regexp.MustCompile(`(?i)\b(fast ?rom|restoration|restored|complete|deluxe|perfect edition|special edition|enhanced( colou?rs)?|enhancement|improvement|undub|purist|redux|remastered|msu-?1|sram|v\d+(\.\d+)*[a-z]?)\b`)
+
+// artStripVariant: the base of a name with those words removed ("" when nothing is left)
+func artStripVariant(t string) string {
+	t = tagRe.ReplaceAllString(t, "")
+	t = strings.ReplaceAll(t, "_", " ")
+	t = variantWords.ReplaceAllString(t, "")
+	return artBase(t)
+}
+
+var lrStop = map[string]bool{"the": true, "of": true, "a": true, "an": true, "and": true}
+
+func lrWords(b string) []string {
+	var out []string
+	for _, w := range strings.Fields(b) {
+		if !lrStop[w] {
+			out = append(out, w)
+		}
+	}
+	return out
+}
+
+// the main title: the part before " - " (most subtitles), as a base
+func lrMain(t string) string {
+	t = tagRe.ReplaceAllString(t, "")
+	if i := strings.Index(t, " - "); i > 0 {
+		t = t[:i]
+	}
+	return artBase(t)
+}
+
+// lrLoose: libretro names for the same game written differently. The same words without
+// "the", "of" ...; or the same main title (before " - ") when libretro has at most two
+// versions of it (more means a series: "Castlevania - ..." is several games). The one sharing
+// the most words wins, then the region order lrMatch uses.
+func lrLoose(names []string, title string) (string, string) {
+	base := artBase(title)
+	if base == "" {
+		return "", ""
+	}
+	want := strings.Join(lrWords(base), " ")
+	main := lrMain(title)
+	mainW := strings.Join(lrWords(main), " ")
+	type cand struct {
+		n     string
+		score int
+	}
+	var exact []cand
+	groups := map[string][]cand{} // libretro main title's full base -> names
+	tw := map[string]bool{}
+	for _, w := range lrWords(base) {
+		tw[w] = true
+	}
+	for _, n := range names {
+		nb := artBase(n)
+		if strings.Join(lrWords(nb), " ") == want {
+			exact = append(exact, cand{n, lrRegionScore(n)})
+			continue
+		}
+		if mainW == "" || len(mainW) < 4 {
+			continue
+		}
+		if strings.Join(lrWords(lrMain(n)), " ") != mainW {
+			continue
+		}
+		shared := 0
+		for _, w := range lrWords(nb) {
+			if tw[w] {
+				shared++
+			}
+		}
+		groups[nb] = append(groups[nb], cand{n, shared*100 + lrRegionScore(n)})
+	}
+	best := func(cs []cand) string {
+		b, bs := "", -1<<30
+		for _, c := range cs {
+			if c.score > bs {
+				b, bs = c.n, c.score
+			}
+		}
+		return b
+	}
+	if len(exact) > 0 {
+		return best(exact), "similar"
+	}
+	// distinct games under that main title (tags aside, "(Rev 1)" and "(Beta)" are the same game)
+	// a title without a subtitle ("Castlevania", "Neugier") only when libretro has one game
+	// under it; with a subtitle, up to two (its own and the other region's subtitle)
+	limit := 2
+	if main == base {
+		limit = 1
+	}
+	if len(groups) == 0 || len(groups) > limit {
+		return "", ""
+	}
+	var all []cand
+	for _, cs := range groups {
+		all = append(all, cs...)
+	}
+	b := best(all)
+	if lrMain(b) == artBase(b) && main != base {
+		// libretro's has no subtitle, this one has its own: a game built on it (a hack, a sequel)
+		return b, "based on"
+	}
+	return b, "similar"
+}
+
+func lrRegionScore(n string) int {
+	tags, score := artTags(n), 0
+	for i, r := range []string{"usa", "world", "europe", "japan"} {
+		if strings.Contains(tags, r) {
+			score = 40 - 10*i
+			break
+		}
+	}
+	for _, bad := range []string{"beta", "proto", "demo", "sample", "pirate", "hack", "virtual console", "np)", "t-en", "[t"} {
+		if strings.Contains(tags, bad) {
+			score -= 30
+		}
+	}
+	if variantWords.MatchString(tagRe.ReplaceAllString(n, "")) { // libretro's own fan versions ("Super Metroid - Redux")
+		score -= 50
+	}
+	return score - lrExtraTags(n)
+}
+
+// lrExtraTags: names with more tags are re-releases ("(Castlevania Anniversary Collection)",
+// "(Virtual Console)"); the plain release is the one to prefer
+func lrExtraTags(n string) int {
+	k := len(tagRe.FindAllString(n, -1)) - 1
+	if k < 0 {
+		k = 0
+	}
+	return 8 * k
 }
