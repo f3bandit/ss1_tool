@@ -92,8 +92,12 @@ type powerStatus struct {
 func powerProbe() (powerStatus, error) {
 	var st powerStatus
 	out, err := run(`[ -x ` + powerScript + ` ] && echo INSTALLED && md5sum ` + powerScript + ` | sed 's/ .*//;s/^/MD5|/' && ` + powerScript + ` status
-grep -qF ` + shq(powerBegin) + ` ` + userStartup + ` 2>/dev/null && echo BOOT`)
-	if err != nil && out == "" {
+grep -qF ` + shq(powerBegin) + ` ` + userStartup + ` 2>/dev/null && echo BOOT
+echo PROBED`)
+	if !strings.Contains(out, "PROBED") {
+		if err == nil {
+			err = fmt.Errorf("couldn't read the power watch's state")
+		}
 		return st, err
 	}
 	for _, l := range strings.Split(out, "\n") {
