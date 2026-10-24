@@ -467,6 +467,11 @@ func syncExcluded(p string) bool {
 	if strings.HasSuffix(p, ".tmp") || strings.HasPrefix(path.Base(p), ".") {
 		return true
 	}
+	// MiSTer & Linux backups: a copy still being made (or left by a closed SS1 Tool) isn't sent, and
+	// each PC keeps its own history of what it saved and put back
+	if strings.Contains(p, ".incomplete/") || p == "backups/mister-linux/history.log" {
+		return true
+	}
 	for _, x := range syncExclude {
 		if strings.HasPrefix(p, x) {
 			return true

@@ -512,6 +512,7 @@ func apiSysStatus(w http.ResponseWriter, r *http.Request) {
 		FirstSeen               int64
 		Size                    int64
 		InUse                   bool
+		Partial                 bool
 	}
 	type cur struct {
 		Part, Name, Version, File, State string
@@ -553,11 +554,15 @@ func apiSysStatus(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			var sz int64
+			whole := true
 			for _, f := range i.Files {
 				sz += f.Size
+				if st, err := os.Stat(filepath.Join(sysRoot(), p.ID, e.Name(), filepath.Base(f.Path))); err != nil || st.Size() != f.Size {
+					whole = false // still arriving from another copy of SS1 Tool (Sync)
+				}
 			}
 			total += sz
-			vers = append(vers, ver{p.ID, p.Name, i.ID, firstNonEmpty(i.Version, i.ID), i.FirstSeen, sz, i.ID == inUse})
+			vers = append(vers, ver{p.ID, p.Name, i.ID, firstNonEmpty(i.Version, i.ID), i.FirstSeen, sz, i.ID == inUse, !whole})
 		}
 	}
 	sort.SliceStable(vers, func(a, b int) bool {
