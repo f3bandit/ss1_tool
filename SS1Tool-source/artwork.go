@@ -463,14 +463,16 @@ func lrIndex(coll, kind string) ([]string, error) {
 	return names, nil
 }
 
+var lrArticle = regexp.MustCompile(`, (the|der|die|das|le|la|les|el|los|il|a|an)\b`)
 var tagRe = regexp.MustCompile(`\s*[\(\[][^\)\]]*[\)\]]`)
 var nonAlnum = regexp.MustCompile(`[^a-z0-9]+`)
 
 func artBase(t string) string {
 	t = strings.ToLower(tagRe.ReplaceAllString(t, ""))
 	t = strings.ReplaceAll(t, "&", " and ")
-	if i := strings.Index(t, ", the"); i > 0 {
-		t = "the " + t[:i] + t[i+5:]
+	// "Langrisser, Der", "Legend of Zelda, The - ..." -> the article in front, as written on the box
+	if m := lrArticle.FindStringSubmatchIndex(t); m != nil {
+		t = t[m[2]:m[3]] + " " + t[:m[0]] + t[m[1]:]
 	}
 	return strings.TrimSpace(nonAlnum.ReplaceAllString(t, " "))
 }
@@ -516,6 +518,7 @@ func lrMatch(names []string, title string) (string, string) {
 				score -= 40
 			}
 		}
+		score -= lrExtraTags(n)
 		if score > bestScore {
 			best, bestScore = n, score
 		}
