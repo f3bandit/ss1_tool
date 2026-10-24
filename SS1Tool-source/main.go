@@ -63,6 +63,8 @@ type Config struct {
 	DeviceID        string `json:"device_id"`        // this copy of SS1 Tool
 	SyncAuto        bool   `json:"sync_auto"`        // sync once when SS1 Tool connects after starting
 	SettingsUpdated int64  `json:"settings_updated"` // when saved SuperStations or port labels last changed here
+	// MiSTer & Linux backups turned off on this copy (an option on phones): no checks, not synced here
+	SysBackupOff bool `json:"sysbk_off"`
 }
 
 var (

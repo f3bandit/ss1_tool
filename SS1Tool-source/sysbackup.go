@@ -125,8 +125,12 @@ func sysClean() {
 	}
 }
 
-// on every copy of SS1 Tool, phones included (they get the same versions through Sync anyway)
-func sysEnabled() bool { return true }
+// on every copy of SS1 Tool, phones included, unless it's turned off on this copy
+func sysEnabled() bool {
+	cfgMu.Lock()
+	defer cfgMu.Unlock()
+	return !cfg.SysBackupOff
+}
 
 const sysProbeCmd = `cd /media/fat 2>/dev/null || exit 1
 for f in MiSTer menu.rbf linux/zImage_dtb linux/linux.img ConsoleMode/MiSTer_ConsoleMode ConsoleMode/menu_ConsoleMode.rbf ConsoleMode/ConsoleMode_arm; do
@@ -499,6 +503,34 @@ func registerRoutesSys(mux *http.ServeMux) {
 	h("/api/sysbk/delete", apiSysDelete)
 	h("/api/sysbk/restore", apiSysRestore)
 	h("/api/sysbk/setting-restore", apiSysSettingRestore)
+	h("/api/sysbk/enable", apiSysEnable)
+}
+
+// turning MiSTer & Linux backups off (or on again) on this copy: the saved versions stay where they
+// are, and Sync forgets them in its last-sync list, so nothing is taken as deleted here and removed
+// from the other devices
+func apiSysEnable(w http.ResponseWriter, r *http.Request) {
+	var req struct{ On bool }
+	if err := readJSON(r, &req); err != nil {
+		fail(w, 400, "bad request")
+		return
+	}
+	cfgMu.Lock()
+	cfg.SysBackupOff = !req.On
+	cfgMu.Unlock()
+	saveConfig()
+	st := syncLoadLast()
+	for p := range st {
+		if strings.HasPrefix(p, "backups/mister-linux/") {
+			delete(st, p)
+		}
+	}
+	syncSaveLast(st)
+	msg := "MiSTer & Linux backups are on: new versions are saved when SS1 Tool connects, and Sync brings the others."
+	if !req.On {
+		msg = "MiSTer & Linux backups are off on this device: nothing is saved or synced here. The versions already here stay until you delete them."
+	}
+	writeJSON(w, map[string]any{"ok": true, "message": msg})
 }
 
 var sysLastNow *sysNow
@@ -590,7 +622,7 @@ func apiSysStatus(w http.ResponseWriter, r *http.Request) {
 	state := sysState
 	sysMu.Unlock()
 	writeJSON(w, map[string]any{"ok": true, "dir": sysRoot(), "current": curs, "versions": vers, "total": total,
-		"settings": sets, "state": state, "connected": connected()})
+		"settings": sets, "state": state, "connected": connected(), "on": sysEnabled()})
 }
 
 func sysPartIdx(id string) int {
