@@ -105,6 +105,7 @@ func session() (*ssh.Session, error) {
 	}
 	go sysCheck() // reconnected (the SuperStation may have restarted after an update)
 	go powerSync()
+	go cmAutoConfirm()
 	sshMu.Lock()
 	c = sshClient
 	sshMu.Unlock()

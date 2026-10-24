@@ -108,6 +108,7 @@ func apiConnect(w http.ResponseWriter, r *http.Request) {
 	saveConfig()
 	go syncAfterConnect() // "Auto sync on startup"
 	go sysCheck()         // MiSTer & Linux backups: copy any new version to this PC
+	go cmAutoConfirm()    // a Console Mode update still waiting: confirm it so it stays
 	go powerSync()        // power watch: read its events
 	// keep already-installed SS1 scripts and helpers current (the status below uses the helper)
 	if out, _ := run("[ -d " + scriptsDir + "/.ss1tool ] && echo yes"); strings.TrimSpace(out) == "yes" {
