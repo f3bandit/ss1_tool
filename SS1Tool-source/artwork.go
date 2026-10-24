@@ -874,17 +874,6 @@ func artFetchOne(req artReq, acc artAccounts, s *artSystem, g *artGame, name str
 	if manual {
 		g.Found = "manual"
 	}
-	byName := func(similar bool) string {
-		switch {
-		case manual:
-			return "manual"
-		case similar && artIsHack(g.Title):
-			return "based on"
-		case similar:
-			return "similar name"
-		}
-		return "name"
-	}
 	switch req.Source {
 	case "thegamesdb":
 		if acc.TGDB == "" {
@@ -928,36 +917,11 @@ func artFetchOne(req artReq, acc artAccounts, s *artSystem, g *artGame, name str
 		if err != nil {
 			return err
 		}
-		n := ""
-		if official != "" {
-			for _, cand := range artThumbNames(official) {
-				for _, x := range names {
-					if x == lrName(cand) {
-						n = x
-						break
-					}
-				}
-				if n != "" {
-					break
-				}
-			}
-			if n == "" { // the official name with other tags (another region's picture)
-				if x, _ := lrMatch(names, official); x != "" {
-					n = x
-				}
-			}
-			if n != "" {
-				g.Found = how
-			}
-		}
+		n, f := artLibretroPick(names, official, how, name, g.Title, manual)
 		if n == "" {
-			var sim string
-			n, sim = lrMatch(names, name)
-			if n == "" {
-				return errArtNotFound
-			}
-			g.Found = byName(sim == "similar")
+			return errArtNotFound
 		}
+		g.Found = f
 		boxURL, found, label = lrURL(m.Libretro, "Named_Boxarts", n), n, "libretro"
 		if g.Found == "similar name" || g.Found == "based on" {
 			label = "libretro (" + g.Found + ")"
