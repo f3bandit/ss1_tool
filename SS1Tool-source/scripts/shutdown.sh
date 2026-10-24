@@ -102,6 +102,8 @@ vol_state() { # on-disk exFAT VolumeFlags of a partition
 
 T="Shutting down"; [ "$MODE" = reboot ] && T="Restarting"
 show "$T" "\n   Flushing writes to storage...\n\n   Do NOT power off yet." 9 warn
+# SS1 Tool's power watch: this is a normal end, not a power cut
+[ -x /media/fat/Scripts/.ss1tool/power/ss1_power.sh ] && /media/fat/Scripts/.ss1tool/power/ss1_power.sh stop
 mounts=()
 for m in /media/usb[0-9]* /media/fat; do [ -d "$m" ] && mountpoint -q "$m" && mounts+=("$m"); done
 sync

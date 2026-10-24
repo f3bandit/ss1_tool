@@ -179,7 +179,7 @@ html[data-platform=android] .jump.tabs a.on{background:var(--acc);border-color:v
 .ethgrid span:first-child{color:var(--dim)}
 #updCard p a,.updnotes a,.card p a:not(.b),.card .muted a:not(.b),.card td a:not(.b){color:#79c0ff}#updPage{text-decoration:none;display:inline-block}
 .updbanner{position:sticky;top:var(--hdr,53px);z-index:24;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#e3b3411f;border-bottom:1px solid #e3b34159;color:var(--text)}
-.updbanner b{color:var(--warn)}.updbanner a.b{text-decoration:none}
+.updbanner b{color:var(--warn)}.tally{display:flex;gap:8px;margin:6px 0 4px}.tally i{width:46px;height:12px;border-radius:6px;background:var(--panel2);border:1px solid var(--line)}.tally i.on{background:var(--warn);border-color:var(--warn)}.updbanner a.b{text-decoration:none}
 .updnotes{margin-top:12px;border:1px solid var(--line);border-radius:6px;padding:10px 14px;max-height:340px;overflow:auto;font-size:13px;background:var(--panel2)}
 .updnotes h2,.updnotes h3,.updnotes h4{margin:10px 0 6px;font-size:14px}.updnotes ul{margin:4px 0 8px 18px;padding:0}.updnotes li{margin:2px 0}
 .updnotes table{margin:6px 0;font-size:12.5px}.updnotes code{background:var(--bg);padding:0 4px;border-radius:3px}
@@ -428,6 +428,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 <body>
 <header><button class="b navtog" onclick="navToggle()" aria-label="Menu">&#9776;</button><h1>SS1 <span>Tool</span></h1><span class="muted">v{{VERSION}}</span><span id="updPill" class="pc-only no-steam"></span><div id="conn">Not connected</div><button class="b pc-only" onclick="quitApp()">Quit</button></header>
 <div id="aUpd" class="updbanner" style="display:none"></div>
+<div id="pwrBanner" class="updbanner" style="display:none;background:#f851491a;border-bottom-color:#f8514959"><span><b style="color:var(--bad)">Power supply problem?</b> <span id="pwrBannerText"></span></span><button class="b p" onclick="openPart('diag','power')">What helps</button><button class="b" onclick="$('pwrBanner').style.display='none'">Dismiss</button></div>
 <div id="updBanner" class="updbanner pc-only no-steam" style="display:none"><span id="updBannerText"></span><button class="b p" id="updBannerGo" onclick="updInstall()">Restart now</button><button class="b" id="updBannerNotes" style="display:none" onclick="updShowNotes()">What's new</button><button class="b" onclick="updSnooze()">Not now</button></div>
 <div class="wrap">
 <nav id="nav">
@@ -954,7 +955,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="diag">
  <h2>Diag</h2><p class="sub">Check the SD card, the BIOS files and games folders, collect a debug report when something isn't right, and test controllers.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('sddiag');return false">SD diagnostics</a><a href="#" onclick="jumpTo('bioscheck');return false">BIOS and game folders</a><a href="#" onclick="jumpTo('debug');return false">Debug report</a><a href="#" onclick="jumpTo('padtest');return false">USB controller tester</a><a href="#" onclick="jumpTo('padsnac');return false">SNAC controller tester</a><a href="#" class="android-only" onclick="openPage('about');setTimeout(()=>jumpTo('appReport'),50);return false">App problem report</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('sddiag');return false">SD diagnostics</a><a href="#" onclick="jumpTo('power');return false">Power</a><a href="#" onclick="jumpTo('bioscheck');return false">BIOS and game folders</a><a href="#" onclick="jumpTo('debug');return false">Debug report</a><a href="#" onclick="jumpTo('padtest');return false">USB controller tester</a><a href="#" onclick="jumpTo('padsnac');return false">SNAC controller tester</a><a href="#" class="android-only" onclick="openPage('about');setTimeout(()=>jumpTo('appReport'),50);return false">App problem report</a></div>
 <div class="subpage" id="sddiag">
  <h2>SD diagnostics</h2><p class="sub">Runs the sd_integrity checks on the SuperStation. Everything here only reads, except <b>Repair file system</b>. Results are also logged to /media/fat/sd_integrity.log.</p>
  <div class="card"><div class="row"><span>Drive:</span><select id="diagTarget"></select><button class="b" onclick="loadTargets()">Refresh drives</button></div>
@@ -975,6 +976,24 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   </div>
   <p class="muted" style="margin:10px 0 0">Deep scans (read every file, surface read, write/verify) take a long time and run on the SuperStation itself: <a href="#" onclick="term('sd_integrity');return false" style="color:#79c0ff">open sd_integrity in a terminal</a>.</p>
   <pre class="out" id="diagOut">No test run yet.</pre></div>
+</div>
+<div class="subpage" id="power">
+ <h2>Power</h2><p class="sub">A power adapter that can't keep up resets the SuperStation instantly under load: no crash, no error, no log. The power watch catches it: heavy work that started and never finished, with no normal restart in between, means the power went. Switching off while nothing heavy is running is never counted.</p>
+ <div class="card" id="pwHelp" style="display:none;border-color:#f8514980"><h3>What helps</h3><ul style="margin:0;padding-left:20px;line-height:1.7">
+  <li>Use the power adapter that came with the SuperStation, or a single-port USB-C PD adapter rated 9 V / 3 A or more.</li>
+  <li>Don't share a multi-port charger with other devices: they take power away under load.</li>
+  <li>Plug it straight into the wall or a good power strip, not into a TV's or monitor's USB port.</li>
+  <li>A worn cable can drop power too: try another one.</li></ul></div>
+ <div class="card"><h3>Power watch on the SuperStation</h3>
+  <div class="kv"><span>Status</span><span id="pwState">-</span></div>
+  <div class="kv"><span>What it does</span><span>checks at start-up, then looks for heavy work every 10 seconds at the lowest priority, and sleeps while a game or core runs</span></div>
+  <div class="kv"><span>Counts as heavy work</span><span>Update All, MiSTer's downloader, Console Mode's updater, backups to the NVMe drive (including the nightly one), SD card backups to a PC, file system checks</span></div>
+  <div class="kv"><span>Files</span><span class="muted">/media/fat/Scripts/.ss1tool/power/ (started from linux/user-startup.sh)</span></div>
+  <div class="row" style="margin-top:10px"><button class="b p" id="pwInstall" style="display:none" onclick="pwInstall(this)">Install power watch</button><button class="b d" id="pwRemove" style="display:none" onclick="pwRemove(this)">Remove power watch</button><span class="muted" id="pwNote"></span></div></div>
+ <div class="card"><h3>Power lost during heavy work</h3>
+  <div class="row" style="justify-content:space-between"><div><div id="pwCount" style="font-size:28px;font-weight:600">0</div><div class="tally" id="pwTally"></div></div><button class="b" id="pwAck" onclick="pwAck(this)">Start the count again (fixed it)</button></div>
+  <table style="margin-top:8px"><thead><tr><th>When</th><th>Interrupted</th><th>Seen</th></tr></thead><tbody id="pwList"></tbody></table>
+  <p class="muted" style="margin:10px 0 0" id="pwFile"></p></div>
 </div>
 <div class="subpage" id="bioscheck">
  <h2>BIOS and game folders</h2><p class="sub">Checks the BIOS files each system needs and the games folders MiSTer actually uses, with the same databases Update All uses (ajgowans' BIOS Database and the MiSTer distribution). SS1 Tool only checks; Update All's <b>BIOS Database</b> option can install missing BIOS files.</p>
@@ -1210,7 +1229,7 @@ async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const 
 // Pages and the parts inside merged pages. A part loads the first time it scrolls into view
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
-const SUBLOAD={stSync:()=>{syncLoad();syncDrives()},fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},sysbk:()=>sysLoad(true),shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
+const SUBLOAD={stSync:()=>{syncLoad();syncDrives()},fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},sysbk:()=>sysLoad(true),power:()=>pwLoad(true),shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
  sddiag:loadTargets,padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
@@ -1264,7 +1283,7 @@ async function init(){const c=await api("/api/config");$("host").value=c.host||"
 function setConn(on){$("conn").innerHTML=on?"Connected to <b>"+$("host").value+"</b>":"Not connected";$("statusCard").style.display=on?"block":"none"}
 function doConnect(){busy(event.target,async()=>{const s=await api("/api/connect",{host:$("host").value,user:$("user").value,pass:$("pass").value});connectedHost=$("host").value;setConn(true);showStatus(s);toast("Connected");loadDevices()})}
 async function doDisconnect(){await api("/api/disconnect",{});connectedHost="";setConn(false);loadDevices()}
-async function loadStatus(quiet){try{if(!ADV)await loadAdvisory();showStatus(await api("/api/status"))}catch(e){if(!quiet)toast(e.message,true)}}
+async function loadStatus(quiet){try{if(!ADV)await loadAdvisory();showStatus(await api("/api/status"));pwBanner();setTimeout(pwBanner,6000)}catch(e){if(!quiet)toast(e.message,true)}}
 let LASTSTATUS=null,WARNEDGEN4="";
 const DRIVE_HIGH_W=7; // drives rated above this can overload the SS1 dock
 // GitHub issue form for a drive that isn't in the drive list (filled in with what the drive reported)
@@ -2353,6 +2372,25 @@ function sysPutBack(part,id){const v=SYS.versions.find(x=>x.Part===part&&x.ID===
  $("sysDlgGo").onclick=()=>busy($("sysDlgGo"),async()=>{const j=await api("/api/sysbk/restore",{part,id});$("sysDlg").style.display="none";toast(j.message)});
  $("sysDlg").style.display="flex"}
 function sysSetBack(path,b){if(!confirm("Put your copy of "+path+" back, as it was before the Linux update?"))return;busy(b,async()=>{const j=await api("/api/sysbk/setting-restore",{path});toast(j.message);sysLoad(true)})}
+// ---------- power watch
+const pwWhen=t=>t?new Date(t*1000).toLocaleString([], {month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"unknown time";
+async function pwBanner(){try{const j=await api("/api/power/status");const e=j.events&&j.events[0];
+ $("pwrBanner").style.display=j.warn?"flex":"none";if(j.warn)$("pwrBannerText").textContent=`The SuperStation lost power in the middle of heavy work ${j.count} times${e?" (latest: "+e.what+", "+pwWhen(e.at)+")":""}. That's usually a power adapter that can't keep up.`}catch(e){}}
+async function pwLoad(probe){try{const j=await api("/api/power/status"+(probe?"?probe=1":""));
+ if(!j.connected)$("pwState").innerHTML='<span class="pill muted">Connect to see</span>';
+ else if(j.installed)$("pwState").innerHTML=j.running?'<span class="pill good">Installed, running</span>':'<span class="pill warn">Installed, not running (it starts with the SuperStation)</span>';
+ else if(j.installed===false)$("pwState").innerHTML='<span class="pill muted">Not installed</span>';
+ $("pwInstall").style.display=j.connected&&j.installed===false?"":"none";$("pwRemove").style.display=j.connected&&j.installed?"":"none";
+ $("pwNote").textContent=j.installed?"Removes the script, its start-up line and its files. Nothing else is touched.":"One small script, started the same way as the CIFS scripts. Remove it any time.";
+ $("pwCount").innerHTML=`${j.count} <span class="muted" style="font-size:14px;font-weight:400">${j.count>=j.warn_at?"&middot; warning shown":"of "+j.warn_at+" before a warning"}</span>`;$("pwCount").style.color=j.count>=j.warn_at?"var(--warn)":"";
+ $("pwTally").innerHTML=Array.from({length:j.warn_at},(_,i)=>`<i class="${i<j.count?"on":""}"></i>`).join("");
+ $("pwHelp").style.display=j.warn?"block":"none";$("pwAck").style.display=j.count?"":"none";
+ $("pwList").innerHTML=j.events&&j.events.length?j.events.map(e=>`<tr><td>${esc(pwWhen(e.at))}</td><td>${esc(e.what)}</td><td class="muted">read when SS1 Tool connected ${esc(pwWhen(e.seen))}</td></tr>`).join(""):'<tr><td colspan="3" class="muted">None since the count was last started.</td></tr>';
+ $("pwFile").textContent=`The SuperStation keeps the events in a small file on its SD card; SS1 Tool copies each one into its own record on this PC (${j.file}), so nothing is lost if the card is reflashed.`+(j.all>j.count?` ${j.all-j.count} earlier event(s) are in the record from before the count was started again.`:"");
+ pwBanner()}catch(e){}}
+function pwInstall(b){busy(b,async()=>{const j=await api("/api/power/install",{});toast(j.message);pwLoad(true)})}
+function pwRemove(b){if(!confirm("Remove the power watch from the SuperStation? The events it found so far stay in SS1 Tool's record on this PC."))return;busy(b,async()=>{const j=await api("/api/power/remove",{});toast(j.message);pwLoad(true)})}
+function pwAck(b){if(!confirm("Start the count again? Do this once you've changed the power adapter or cable."))return;busy(b,async()=>{const j=await api("/api/power/ack",{});toast(j.message);pwLoad(false)})}
 // ---------- dashboard
 const DH={temp:[],cpu:[],rx:[],tx:[]};let dashTimer=null,dashBusy=false;
 function spark(id,data,max,color){const c=$(id),r=c.getBoundingClientRect(),dpr=devicePixelRatio||1;c.width=r.width*dpr;c.height=r.height*dpr;const x=c.getContext("2d");x.scale(dpr,dpr);
