@@ -113,6 +113,8 @@ type artGame struct {
 	Match  string `json:"match,omitempty"`  // the name it was found under
 	Miss   string `json:"miss,omitempty"`   // why nothing was found
 	Manual string `json:"manual,omitempty"` // name typed for a manual scrape
+	File   string `json:"-"`                // the game's file on the SuperStation (a folder's first disc)
+	Found  string `json:"found,omitempty"`  // how it was matched: disc code, checksum, name, similar name, based on, manual
 }
 
 type artSystem struct {
@@ -314,9 +316,17 @@ done; true`)
 		for _, d := range s.Dirs {
 			seen := map[string]bool{}
 			folderHas := map[string]bool{}
+			folderFile := map[string]string{} // the disc to identify a folder by: its first .cue/.chd, else its first file
 			for _, e := range lists[d] {
 				if !e.dir && strings.Contains(e.p, "/") && ext[strings.ToLower(path.Ext(e.p))] {
-					folderHas[strings.SplitN(e.p, "/", 2)[0]] = true
+					f := strings.SplitN(e.p, "/", 2)[0]
+					folderHas[f] = true
+					x := strings.ToLower(path.Ext(e.p))
+					cur := folderFile[f]
+					better := cur == "" || ((x == ".cue" || x == ".chd") && !strings.HasSuffix(strings.ToLower(cur), ".cue") && !strings.HasSuffix(strings.ToLower(cur), ".chd")) || (strings.ToLower(path.Ext(cur)) == x && e.p < cur)
+					if better {
+						folderFile[f] = e.p
+					}
 				}
 			}
 			for _, e := range lists[d] {
@@ -332,7 +342,10 @@ done; true`)
 					continue
 				}
 				seen[t] = true
-				g := &artGame{Title: t, Dir: d, Folder: folder}
+				g := &artGame{Title: t, Dir: d, Folder: folder, File: d + "/" + e.p}
+				if folder {
+					g.File = d + "/" + folderFile[e.p]
+				}
 				_, g.HasBox = s.media[d][artBoxFile(t)]
 				_, g.HasBG = s.media[d][artBGFile(t)]
 				s.Games = append(s.Games, g)
@@ -662,9 +675,12 @@ func tgdbFind(key string, platform int, name string) (box, fan string, found str
 	return box, fan, g.Title, nil
 }
 
-func ssFind(a artAccounts, system int, romName string) (box, fan, found string, err error) {
+func ssFind(a artAccounts, system int, romName, crc string) (box, fan, found string, err error) {
 	q := url.Values{"output": {"json"}, "devid": {a.DevID}, "devpassword": {a.DevPw}, "softname": {"SS1Tool"},
 		"ssid": {a.SSID}, "sspassword": {a.SSPass}, "systemeid": {strconv.Itoa(system)}, "romnom": {romName}}
+	if crc != "" {
+		q.Set("crc", strings.ToUpper(crc))
+	}
 	b, err := artGet("https://api.screenscraper.fr/api2/jeuInfos.php?" + q.Encode())
 	if err != nil {
 		return "", "", "", err
@@ -849,38 +865,102 @@ func artFetchOne(req artReq, acc artAccounts, s *artSystem, g *artGame, name str
 	boxDst := filepath.Join(artLocal(g.Dir+"/"+artMediaDir), artBoxFile(artSafe(g.Title)))
 	bgDst := filepath.Join(artLocal(g.Dir+"/"+artMediaDir), artBGFile(artSafe(g.Title)))
 	var boxURL, bgURL, found, label string
+	// the game's official name, from what's in its file (not for a name the user typed)
+	official, how := "", ""
+	if !manual {
+		official, how = artOfficial(m.Libretro, g)
+	}
+	g.Found = ""
+	if manual {
+		g.Found = "manual"
+	}
+	byName := func(similar bool) string {
+		switch {
+		case manual:
+			return "manual"
+		case similar && artIsHack(g.Title):
+			return "based on"
+		case similar:
+			return "similar name"
+		}
+		return "name"
+	}
 	switch req.Source {
 	case "thegamesdb":
 		if acc.TGDB == "" {
 			return errors.New("no TheGamesDB key saved")
 		}
-		b, f, t, err := tgdbFind(acc.TGDB, m.TGDB, name)
+		q := name
+		if official != "" {
+			q = strings.TrimSpace(tagRe.ReplaceAllString(official, ""))
+		}
+		b, f, t, err := tgdbFind(acc.TGDB, m.TGDB, q)
 		if err != nil {
 			return err
 		}
 		boxURL, bgURL, found, label = b, f, t, "TheGamesDB"
+		if official != "" {
+			g.Found = how
+		} else if g.Found == "" {
+			g.Found = "name"
+		}
 	case "screenscraper":
 		romName := name
 		if !manual && !g.Folder {
 			romName = g.Title + path.Ext(g.Title)
 		}
-		b, f, t, err := ssFind(acc, m.SS, romName)
+		crc := ""
+		if id, ok := identOf(g); ok && !manual {
+			crc = id.CRC
+		}
+		b, f, t, err := ssFind(acc, m.SS, romName, crc)
 		if err != nil {
 			return err
 		}
 		boxURL, bgURL, found, label = b, f, t, "ScreenScraper"
+		if crc != "" {
+			g.Found = "checksum"
+		} else if g.Found == "" {
+			g.Found = "name"
+		}
 	default:
 		names, err := lrIndex(m.Libretro, "Named_Boxarts")
 		if err != nil {
 			return err
 		}
-		n, how := lrMatch(names, name)
+		n := ""
+		if official != "" {
+			for _, cand := range artThumbNames(official) {
+				for _, x := range names {
+					if x == lrName(cand) {
+						n = x
+						break
+					}
+				}
+				if n != "" {
+					break
+				}
+			}
+			if n == "" { // the official name with other tags (another region's picture)
+				if x, _ := lrMatch(names, official); x != "" {
+					n = x
+				}
+			}
+			if n != "" {
+				g.Found = how
+			}
+		}
 		if n == "" {
-			return errArtNotFound
+			var sim string
+			n, sim = lrMatch(names, name)
+			if n == "" {
+				return errArtNotFound
+			}
+			g.Found = byName(sim == "similar")
 		}
 		boxURL, found, label = lrURL(m.Libretro, "Named_Boxarts", n), n, "libretro"
-		if how == "similar" {
-			label = "libretro (similar name)"
+		if g.Found == "similar name" || g.Found == "based on" {
+			label = "libretro (" + g.Found + ")"
 		}
 		if snaps, err := lrIndex(m.Libretro, "Named_Snaps"); err == nil {
 			if sn, _ := lrMatch(snaps, n); sn != "" {
@@ -959,6 +1039,21 @@ func artRun(req artReq) (string, error) {
 	artMu.Unlock()
 	if len(todo) == 0 {
 		return "Every game you picked already has its art. Untick \"Only games without art\" to download it again.", nil
+	}
+	// what each game is, read once on the SuperStation (only what's needed for these games)
+	bySys := map[*artSystem][]*artGame{}
+	var order []*artSystem
+	for _, it := range todo {
+		if bySys[it.s] == nil {
+			order = append(order, it.s)
+		}
+		bySys[it.s] = append(bySys[it.s], it.g)
+	}
+	for _, s := range order {
+		if artStop.Load() {
+			break
+		}
+		identGames(s, bySys[s])
 	}
 	artJob.Next(fmt.Sprintf("Downloading art for %d games", len(todo)))
 	workers := 6
