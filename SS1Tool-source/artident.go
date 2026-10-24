@@ -1,3 +1,5 @@
+//go:build !ss1android
+
 package main
 
 // Artwork: finding a game by what's in its file, not just its name. A small helper on the
