@@ -443,3 +443,32 @@ func artThumbNames(official string) []string {
 	}
 	return out
 }
+
+// artLibretroPick: the libretro box art for a game. Its official name first (found by what's in the
+// file, with the names libretro may use for it), then its own title, the same or a similar name.
+func artLibretroPick(names []string, official, how, name, title string, manual bool) (string, string) {
+	if official != "" {
+		for _, cand := range artThumbNames(official) {
+			for _, x := range names {
+				if x == lrName(cand) {
+					return x, how
+				}
+			}
+		}
+		if x, _ := lrMatch(names, official); x != "" { // the same game with other tags (another region's picture)
+			return x, how
+		}
+	}
+	n, sim := lrMatch(names, name)
+	switch {
+	case n == "":
+		return "", ""
+	case manual:
+		return n, "manual"
+	case sim == "similar" && artIsHack(title):
+		return n, "based on"
+	case sim == "similar":
+		return n, "similar name"
+	}
+	return n, "name"
+}
