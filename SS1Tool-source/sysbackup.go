@@ -24,7 +24,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -126,8 +125,8 @@ func sysClean() {
 	}
 }
 
-// on PCs (Windows, Linux, Steam Deck), not on phones: a Linux image is about 400 MB
-func sysEnabled() bool { return runtime.GOOS != "android" || os.Getenv("SS1TOOL_SYSBK") == "1" }
+// on every copy of SS1 Tool, phones included (they get the same versions through Sync anyway)
+func sysEnabled() bool { return true }
 
 const sysProbeCmd = `cd /media/fat 2>/dev/null || exit 1
 for f in MiSTer menu.rbf linux/zImage_dtb linux/linux.img ConsoleMode/MiSTer_ConsoleMode ConsoleMode/menu_ConsoleMode.rbf ConsoleMode/ConsoleMode_arm; do
