@@ -104,6 +104,7 @@ func session() (*ssh.Session, error) {
 		return nil, fmt.Errorf("connection lost: %w", err)
 	}
 	go sysCheck() // reconnected (the SuperStation may have restarted after an update)
+	go powerSync()
 	sshMu.Lock()
 	c = sshClient
 	sshMu.Unlock()
