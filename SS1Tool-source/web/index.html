@@ -1187,6 +1187,14 @@ const CECNOTE=`<div class="vinfo"><b>Messages about hdmi_cec, hdmi_off, video_of
 const TOKEN="{{TOKEN}}";
 const $=id=>document.getElementById(id);
 let lastReport="";
+// anything that starts Console Mode again: when its update hasn't confirmed itself and SS1 Tool
+// couldn't confirm it, the server asks first; "restart anyway" sends it again with force
+async function apiCM(url,body){
+  const j=await api(url,body);
+  if(j.ask!=="cm_update")return j;
+  if(!confirm(j.message))throw new Error("Not restarted: Console Mode's update is still waiting to confirm itself.");
+  return api(url,Object.assign({},body,{force:true}));
+}
 async function api(url,body,method){
   const opt={method:method||(body!==undefined?"POST":"GET"),headers:{"X-Token":TOKEN}};
   if(body!==undefined){opt.headers["Content-Type"]="application/json";opt.body=JSON.stringify(body)}
@@ -1345,7 +1353,7 @@ async function loadScraper(){const ok=t=>`<span class="pill good">&#10003; ${t}<
   $("scraperNow").innerHTML=(j.cm_installed?"":'<span class="pill bad">Console Mode not found on this SuperStation. </span>')+(j.has_devid?"Developer ID: present in screenscraper.txt. ":"")+"Leave a field blank to keep the installed value."}
  catch(e){for(const id of ["stSSID","stSSPW","stTGDB"])$(id).textContent="";$("scraperNow").textContent=e.message}}
 function saveScraper(){busy(event.target,async()=>{const j=await api("/api/scraper",{ssid:$("ssid").value,sspassword:$("sspw").value,tgdb:$("tgdb").value});$("sspw").value="";toast(j.message);loadScraper()})}
-function remote(a){if(a!=="menu"&&!confirm(a==="reboot"?"Reboot the SuperStation?":"Safely shut down the SuperStation?"))return;busy(event.target,async()=>{const j=await api("/api/remote",{action:a});toast(j.message);if(a!=="menu"){EXPECT={kind:a};setTimeout(onLost,a==="shutdown"?3500:2500)}})}
+function remote(a){if(a!=="menu"&&!confirm(a==="reboot"?"Reboot the SuperStation?":"Safely shut down the SuperStation?"))return;busy(event.target,async()=>{const j=await apiCM("/api/remote",{action:a});toast(j.message);if(a!=="menu"){EXPECT={kind:a};setTimeout(onLost,a==="shutdown"?3500:2500)}})}
 let termAt=0;
 function term(w){if(document.activeElement)document.activeElement.blur();if(Date.now()-termAt<4000)return;termAt=Date.now();
  busy(null,async()=>{const j=await api("/api/terminal",{which:w});toast(j.message+" Click inside the terminal window before typing the password.")})}
@@ -2024,14 +2032,14 @@ function artRender(){if(!ART)return;const S=ART.systems||[];if(!ART_OPEN&&S.leng
  $("artPending").textContent=ART.pending?`${ART.pending} picture${ART.pending==1?"":"s"} ready to copy`:(ART.scanned?"Nothing new to copy":"");}
 async function artStart(){const sys=[...document.querySelectorAll(".artSys:checked")].map(c=>c.value);if(!sys.length)return toast("Tick at least one system",true);
  try{await api("/api/art/start",{source:$("artSource").value,media:$("artMedia").value,systems:sys,missing_only:$("artMissing").checked});artPoll()}catch(e){toast(e.message,true)}}
-function artReloadCM(btn){busy(btn,async()=>{await api("/api/remote",{action:"menu"});toast("Console Mode is reloading - new art shows when it's back")})}
+function artReloadCM(btn){busy(btn,async()=>{await apiCM("/api/remote",{action:"menu"});toast("Console Mode is reloading - new art shows when it's back")})}
 async function artCancel(b){b.disabled=true;b.textContent="Stopping...";try{await api('/api/art/cancel',{})}catch(e){toast(e.message,true)}}
 async function artInstall(){try{await api("/api/art/install",{});artPoll()}catch(e){toast(e.message,true)}}
 async function artPoll(){if(artPolling)return;artPolling=true;try{for(;;){const j=await api("/api/art/progress");if(!j.id)break;
   $("artBarWrap").style.display="block";$("artOut").style.display="block";$("artStop").style.display=j.running?"":"none";if(!j.running){$("artStop").disabled=false;$("artStop").textContent="Stop"}$("artGo").disabled=$("artInstBtn").disabled=j.running;
   const pct=j.total?Math.floor(100*j.done/j.total):(j.total_bytes?Math.floor(100*j.bytes/j.total_bytes):0);$("artBarWrap").classList.toggle("ind",j.running&&!pct);$("artBar").style.width=(j.running?pct:100)+"%";
   $("artOut").textContent=j.running?`${j.title}\n${j.msg}...`+(j.total?` ${j.done} of ${j.total}`:"")+(j.total_bytes?` ${fmtB(j.bytes)} of ${fmtB(j.total_bytes)}`:""):(j.error?"Stopped: "+j.error:j.result);
-  if(!j.running){if(/^Install/.test(j.title)&&!j.error&&/^Copied/.test(j.result||"")&&$("artReloadAfter").checked){try{await api("/api/remote",{action:"menu"});$("artOut").textContent+="\nConsole Mode reloaded: the new art shows when it's back."}catch(e){$("artOut").textContent+="\nCouldn't reload Console Mode ("+e.message+"): use Reload Console Mode."}}
+  if(!j.running){if(/^Install/.test(j.title)&&!j.error&&/^Copied/.test(j.result||"")&&$("artReloadAfter").checked){try{await apiCM("/api/remote",{action:"menu"});$("artOut").textContent+="\nConsole Mode reloaded: the new art shows when it's back."}catch(e){$("artOut").textContent+="\nCouldn't reload Console Mode ("+e.message+"): use Reload Console Mode."}}
    await artLoad();if(!ART_OPEN&&/^Scrape/.test(j.title)){const t=[...document.querySelectorAll(".artSys:checked")].map(c=>c.value),S=(ART.systems||[]).filter(s=>t.includes(s.key)&&s.games>s.with_box).sort((a,b)=>(b.games-b.with_box)-(a.games-a.with_box));if(S[0])ART_OPEN=S[0].key}
    if(ART_OPEN){artResults(ART_OPEN);if(/^Scrape/.test(j.title))setTimeout(()=>jumpTo("artResultsCard"),300)}break}await new Promise(r=>setTimeout(r,800))}}catch(e){}artPolling=false}
 let ART_OPEN="";
@@ -2141,7 +2149,7 @@ async function rsPoll(fresh){if(rsPolling)return;rsPolling=true;
    const L=$("rsJobLog");L.textContent=(j.log||[]).join("\n");L.scrollTop=L.scrollHeight;$("rsDone").style.display=!j.running&&!j.error?"flex":"none";$("rsBtn").disabled=!!j.running}
   if(!j.running)break;await new Promise(r=>setTimeout(r,400))}}catch(e){}
  rsPolling=false;sdBackupList()}
-async function restartSS1(){if(!confirm("Restart the SuperStation now?"))return;try{const j=await api("/api/remote",{action:"reboot"});toast(j.message)}catch(e){toast(e.message,true)}}
+async function restartSS1(){if(!confirm("Restart the SuperStation now?"))return;try{const j=await apiCM("/api/remote",{action:"reboot"});toast(j.message)}catch(e){toast(e.message,true)}}
 // ---------- "Why isn't my card listed?"
 async function diskReport(target){const box=$(target);if(!box)return;box.innerHTML='<p class="muted">Asking Windows for every disk...</p>';
  let d;try{d=await api("/api/flash/disks?all=1")}catch(e){box.innerHTML=`<p><span class="pill bad">${esc(e.message)}</span></p>`;return}
@@ -2321,7 +2329,7 @@ async function wzNext(){if(WZ.busy)return;WZ.busy=true;$("wzNext").disabled=true
 function wzBack(){if(W.step>0){W.step--;WZ.status=null;wzSave();wzRender()}}
 function wzSkip(){if(W.step===6){W.wifiDone="";W.wifiSsid=""}if(W.step===11)W.scraper="skipped";W.step++;WZ.status=null;wzSave();wzRender()}
 function wzReset(){W={step:0,disk:"",diskLabel:"",image:"consolemode",flashed:false,booted:false,path:"",ip:"",user:"root",drive:"",wifiSsid:"",wifiPass:"",wifiCountry:"",wifiDone:"",scripts:{ss1:true,reflex:false,psx:false},ua:"rec",samba:"",overlapDone:false,scraper:"",done:{}};WZ.status=null;wzSave();wzRender()}
-function wzRestart(){if(!confirm("Restart the SuperStation now?"))return;api("/api/remote",{action:"reboot"}).then(()=>{EXPECT={kind:W.wifiDone?"wifi":"reboot"};setTimeout(onLost,2500)}).catch(e=>toast(e.message,true))}
+function wzRestart(){if(!confirm("Restart the SuperStation now?"))return;apiCM("/api/remote",{action:"reboot"}).then(()=>{EXPECT={kind:W.wifiDone?"wifi":"reboot"};setTimeout(onLost,2500)}).catch(e=>toast(e.message,true))}
 // ---------- community scripts
 async function loadCommunity(){try{const l=await api("/api/community/status");
  $("commList").innerHTML=l.map(c=>`<tr><td><b>${esc(c.name)}</b><div class="muted">${esc(c.file)} &middot; by <a href="${esc(c.source)}" target="_blank" rel="noopener" style="color:#79c0ff">${esc(c.author)}</a></div></td>
@@ -2377,7 +2385,7 @@ function sysPutBack(part,id){const v=SYS.versions.find(x=>x.Part===part&&x.ID===
   <div class="kv"><span>Now on the SuperStation</span><span>${cur?esc(cur.Version)+' <span class="pill good">already saved on this PC</span>':'<span class="pill warn">not saved yet</span>'}</span></div>
   <div class="kv"><span>Going back to</span><span>${esc(v.Version)} (${fmtB(v.Size)})</span></div>
   <div class="kv"><span>What happens</span><span>copy, check, swap, restart</span></div>`;
- $("sysDlgGo").onclick=()=>busy($("sysDlgGo"),async()=>{const j=await api("/api/sysbk/restore",{part,id});$("sysDlg").style.display="none";toast(j.message)});
+ $("sysDlgGo").onclick=()=>busy($("sysDlgGo"),async()=>{const j=await apiCM("/api/sysbk/restore",{part,id});$("sysDlg").style.display="none";toast(j.message)});
  $("sysDlg").style.display="flex"}
 function sysSetBack(path,b){if(!confirm("Put your copy of "+path+" back, as it was before the Linux update?"))return;busy(b,async()=>{const j=await api("/api/sysbk/setting-restore",{path});toast(j.message);sysLoad(true)})}
 // ---------- power watch
@@ -2471,7 +2479,7 @@ function wifiSave(where){const body={ssid:$("wSsid").value,pass:$("wPass").value
  if(where==="card"&&!body.drive)return toast("Insert the SD card and click Refresh",true);
  busy(event.target,async()=>{const j=await api(where==="card"?"/api/wifi/save-card":"/api/wifi/save-remote",body);$("wOut").style.display="block";$("wOut").textContent=j.message;toast(where==="card"?"Saved to the SD card":"Sent to the SuperStation");if(where!=="card")wifiRemoteState()})}
 function wifiRestart(){if(!connectedHost)return toast("Connect to the SuperStation first",true);if(!confirm("Restart the SuperStation now so it joins WiFi?"))return;
- busy(event.target,async()=>{await api("/api/remote",{action:"reboot"});EXPECT={kind:"wifi"};setTimeout(onLost,2500)})}
+ busy(event.target,async()=>{await apiCM("/api/remote",{action:"reboot"});EXPECT={kind:"wifi"};setTimeout(onLost,2500)})}
 // ---------- connection watch: tell the user when the SS1 goes away
 let EXPECT=null,pingBusy=false;
 function showModal(title,text,canReconnect){$("mTitle").textContent=title;$("mText").textContent=text;$("mErr").textContent="";$("mBtn").style.display=canReconnect?"":"none";$("modal").style.display="flex"}

@@ -692,7 +692,10 @@ func apiSysDelete(w http.ResponseWriter, r *http.Request) {
 // Put back: every file of the version goes next to the current one as <name>.ss1tool.new, is
 // checked on the SuperStation, and only then replaces it; then the SuperStation restarts.
 func apiSysRestore(w http.ResponseWriter, r *http.Request) {
-	var req struct{ Part, ID string }
+	var req struct {
+		Part, ID string
+		Force    bool
+	}
 	if err := readJSON(r, &req); err != nil {
 		fail(w, 400, "bad request")
 		return
@@ -700,6 +703,21 @@ func apiSysRestore(w http.ResponseWriter, r *http.Request) {
 	if !connected() {
 		fail(w, 409, "not connected")
 		return
+	}
+	// the restart afterwards starts Console Mode again: work with its update guard first.
+	// Putting back Console Mode's own files replaces what its guard would restore, so then
+	// the guard is closed after the swap instead.
+	cmOwn := strings.HasPrefix(req.Part, "cm_")
+	cmNote := ""
+	if !cmOwn {
+		ask, note := cmBeforeRestart(req.Force)
+		if ask != "" {
+			writeJSON(w, map[string]any{"ask": "cm_update", "message": ask})
+			return
+		}
+		if note != "" {
+			cmNote = note + " "
+		}
 	}
 	dir, ok := sysVerDir(req.Part, req.ID)
 	if !ok {
@@ -802,14 +820,17 @@ func apiSysRestore(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sysLogf("MiSTer & Linux backups: put back %s %s", p.Name, firstNonEmpty(info.Version, info.ID))
+	if cmOwn {
+		cmDrop()
+	}
 	if _, err := ensureScripts(false); err == nil {
 		kbdStop()
 		_, _ = run("NODIALOG=1 nohup bash " + scriptsDir + "/shutdown.sh reboot >/dev/null 2>&1 &")
 		go func() { time.Sleep(2 * time.Second); disconnect() }()
-		writeJSON(w, map[string]any{"ok": true, "message": p.Name + " " + firstNonEmpty(info.Version, info.ID) + " is back. The SuperStation is restarting: reconnect in about 30 seconds."})
+		writeJSON(w, map[string]any{"ok": true, "message": cmNote + p.Name + " " + firstNonEmpty(info.Version, info.ID) + " is back. The SuperStation is restarting: reconnect in about 30 seconds."})
 		return
 	}
-	writeJSON(w, map[string]any{"ok": true, "message": p.Name + " " + firstNonEmpty(info.Version, info.ID) + " is back. Restart the SuperStation to use it."})
+	writeJSON(w, map[string]any{"ok": true, "message": cmNote + p.Name + " " + firstNonEmpty(info.Version, info.ID) + " is back. Restart the SuperStation to use it."})
 }
 
 type sysReadCounter struct {

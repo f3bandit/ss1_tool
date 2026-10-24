@@ -278,8 +278,28 @@ func apiRemote(w http.ResponseWriter, r *http.Request) {
 	if !needConn(w) {
 		return
 	}
-	var req struct{ Action string }
+	var req struct {
+		Action string
+		Force  bool
+	}
 	_ = readJSON(r, &req)
+	cmNote := ""
+	switch req.Action {
+	case "reboot", "shutdown", "menu":
+		// each of these starts Console Mode again: work with its update guard first
+		ask, note := cmBeforeRestart(req.Force)
+		if ask != "" {
+			writeJSON(w, map[string]any{"ask": "cm_update", "message": ask})
+			return
+		}
+		cmNote = note
+	}
+	withNote := func(m string) string {
+		if cmNote != "" {
+			return cmNote + " " + m
+		}
+		return m
+	}
 	switch req.Action {
 	case "reboot":
 		// A plain "reboot" leaves the FPGA core running and the SS1 on a black screen.
@@ -294,7 +314,7 @@ func apiRemote(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		go func() { time.Sleep(2 * time.Second); disconnect() }()
-		writeJSON(w, map[string]any{"ok": true, "message": "Restarting. Reconnect in about 30 seconds."})
+		writeJSON(w, map[string]any{"ok": true, "message": withNote("Restarting. Reconnect in about 30 seconds.")})
 	case "shutdown":
 		if _, err := ensureScripts(false); err != nil {
 			fail(w, 502, err.Error())
@@ -310,14 +330,14 @@ func apiRemote(w http.ResponseWriter, r *http.Request) {
 		if note != "" {
 			msg = "Safe shutdown started. " + note
 		}
-		writeJSON(w, map[string]any{"ok": true, "message": msg, "warn": note != ""})
+		writeJSON(w, map[string]any{"ok": true, "message": withNote(msg), "warn": note != ""})
 	case "menu":
 		out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core menu.rbf" > /dev/MiSTer_cmd' && echo ok`)
 		if err != nil {
 			fail(w, 502, "MiSTer did not accept the command (is the menu busy?) "+strings.TrimSpace(out))
 			return
 		}
-		writeJSON(w, map[string]any{"ok": true, "message": "Menu core reloaded."})
+		writeJSON(w, map[string]any{"ok": true, "message": withNote("Menu core reloaded.")})
 	default:
 		fail(w, 400, "unknown action")
 	}
