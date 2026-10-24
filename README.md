@@ -277,7 +277,7 @@ For players without a NAS or an NVMe drive: keep your games on your PC, so a fai
 - Keep the PC switched on and awake while you play
 
 ### Files
-In tabs: **File manager**, **Saves**, **Backup to NVMe**, **SD card backup**, **Screenshots**, **Artwork** and **Memory cards**. Each tab loads the first time you open it.
+In tabs: **File manager**, **Saves**, **Backup to NVMe**, **SD card backup**, **MiSTer & Linux backups**, **Screenshots**, **Artwork** and **Memory cards**. Each tab loads the first time you open it.
 
 #### File manager
 - Two-pane file manager with a drive picker on each side
@@ -317,11 +317,22 @@ In tabs: **File manager**, **Saves**, **Backup to NVMe**, **SD card backup**, **
 - Works while a game or core is running; the MiSTer menu and Console Mode's own screens can't be captured
 - New screenshots taken on the SuperStation (with the controller or keyboard) appear in the list by themselves
 
+#### MiSTer & Linux backups
+- **A copy of every version of the parts an update replaces**, so you can go back if an update breaks something: MiSTer (the main program), the menu core (`menu.rbf`), Linux (`zImage_dtb` and `linux.img`), and Console Mode's own program files (`MiSTer_ConsoleMode`, `menu_ConsoleMode.rbf`, `ConsoleMode_arm`)
+- Checked each time SS1 Tool connects (and with **Check now**). A version it hasn't saved before is copied to `backups\mister-linux\` on this PC and checked; the same version is never saved twice. A copy that didn't finish is thrown away and made again next time
+- Versions are shown the way you know them: MiSTer's build date, Linux's version, Console Mode's version
+- A few small Linux settings files (network, host name, SSH settings and keys) are saved alongside Linux, and can be put back one at a time
+- **Put back** saves the version in use first (so it can be undone), copies the saved one over, checks it, swaps it in and restarts the SuperStation
+- Nothing is ever deleted unless you tick it and press **Delete ticked**
+- Synced to your other copies of SS1 Tool. On Android it can be turned off for that phone only
+- **Console Mode updates are kept.** Console Mode puts its previous version back if it restarts a few times before it has confirmed an update works. Before SS1 Tool restarts, shuts down or reloads the menu, and each time it connects, it checks for an update that's still waiting: when the new Console Mode is running, SS1 Tool confirms it the same way Console Mode does (and notes it in Console Mode's own `update.log`), so the update stays. When Console Mode isn't running, nothing is confirmed and you're asked first. Console Mode's own backups are left where they are
+
 #### Artwork (Console Mode)
 - **An external artwork scraper for Console Mode**, run on this PC instead of on the SuperStation. **Find my games** reads the systems Console Mode knows (from its own section files on the SS1) and the games in their folders on the SD card and on USB/NVMe drives. BIOS files are skipped
 - **Download artwork** for the systems you tick from **libretro** (free, no account), or **TheGamesDB** / **ScreenScraper** with the accounts saved in Setup › Console Mode scraper accounts, the same sources and system lists Console Mode uses. Box art, backgrounds or both, optionally only for games without art
 - Art is saved exactly the way Console Mode does it: `media/<game>.png` and `media/<game>-BG.png` next to the games (a game in its own folder uses the folder's name), and for pictures bigger than 512x512 an optimized copy in `media/optimized/` (fitted inside 512x512, JPEG quality 90, like Console Mode's Optimize Artwork)
 - Everything is built in `scrapes\` next to SS1Tool.exe with the same folders as on the SuperStation, so the art can be put back after a reflash without downloading it again. The downloaded originals are kept in `scrapes\_originals`
+- **Games are recognised by what's in them**, not only by their file names: cartridges by their checksum (the same way No-Intro lists them, with copier headers skipped), PlayStation and Saturn discs by their disc code (`.cue`/`.bin` and `.chd`). The official name is looked up in libretro's own game lists, so a renamed file still gets the right art. Fan versions (Restoration, Fastrom, translations, hacks) get the art of the game they're based on, and names written differently (another region's subtitle, "Langrisser, Der") are matched too. **Results** shows how each game was found
 - **Results** lists every game by system with its art. For patched, translated or modded games that weren't found, type a simpler name (for example the original game's), search, and pick the cover; or **upload your own picture** as box art or background. The art is saved under your game's own name, copied to the SuperStation straight away, and your game files are never renamed
 - **Install** copies only new or changed pictures to the SuperStation, then reloads Console Mode so the new art shows (or press **Reload Console Mode**)
 - **Clean up** finds art for games that are no longer there, and can remove all backgrounds (Console Mode turns background downloads back on at every start). Only pictures in `media` folders are ever deleted, after you see the list
@@ -374,7 +385,13 @@ In tabs: **USB devices**, **Bluetooth** and **Controllers**.
   - If the TV can't show them (for example `fb_terminal=0` in MiSTer.ini), the shutdown still runs and SS1 Tool tells you to wait 15 seconds before switching off
 
 ### Diag
-In tabs: **SD diagnostics**, **BIOS and game folders**, **Debug report**, **USB controller tester** and **SNAC controller tester**.
+In tabs: **SD diagnostics**, **Power**, **BIOS and game folders**, **Debug report**, **USB controller tester** and **SNAC controller tester**.
+
+#### Power
+- **Power watch:** a power adapter that can't keep up resets the SuperStation instantly under load, with no crash, no error and no log. The power watch is a small script on the SuperStation (opt in, **Install power watch**) that notices heavy work that started and never finished with no normal restart in between: Update All, MiSTer's downloader, Console Mode's updater, backups to the NVMe drive and SD card backups to a PC, file system checks
+- It checks at start-up, then looks every 10 seconds at the lowest priority, and sleeps while a game or core runs. Switching off while nothing heavy is running is never counted
+- SS1 Tool reads the events each time it connects and keeps its own record on this PC (`backups\power\events.json`), so nothing is lost if the card is reflashed. After 3, it warns from the tray and with a banner in the app, and explains what helps
+- **Remove power watch** removes the script, its start-up line and its files
 
 #### SD Diagnostics
 - **Check file system / Repair file system** (NVMe and USB drives): unmounts the drive, runs the SuperStation's own checker for its file system (`fsck.exfat`, `fsck.vfat`, `e2fsck` or `ntfsfix`) and mounts it again exactly as it was. Check changes nothing; Repair asks first. The SS1's exFAT tools (exfatprogs 1.0.4) can only fix simple exFAT problems; SS1 Tool says so and points to `chkdsk` on a PC when they can't. A network share session (a PC with the SS1's share open) is closed for the check, and Windows reconnects by itself. If anything else is using the drive (a game, a core or Console Mode reading it), it isn't touched and SS1 Tool lists what's using it: go back to the main menu and try again. The SD card can't be repaired while the SuperStation runs from it, so SS1 Tool tells you to run `chkdsk X: /f` on a PC instead
@@ -498,20 +515,22 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 | Screenshots | `backups\screenshots\<core>\` next to `SS1Tool.exe` |
 | Previous `cifs_mount.ini` files (contain the share password) | `backups\cifs\` next to `SS1Tool.exe` |
 | Save backups | `backups\saves\<name>_<date-time>\` next to `SS1Tool.exe` |
-| Artwork for Console Mode | `scrapes\` next to `SS1Tool.exe` (originals in `scrapes\_originals`) |
+| Artwork for Console Mode | `scrapes\` next to `SS1Tool.exe` (originals in `scrapes\_originals`; what each game was recognised as in `scrapes\_ident.json`, libretro's game lists in `scrapes\_lists`) |
+| MiSTer & Linux backups | `backups\mister-linux\<part>\<version>\` next to `SS1Tool.exe`, with `history.log` |
+| Power watch record | `backups\power\events.json` next to `SS1Tool.exe` |
 | Memory card library | `memcards\<card name>\<date_time>.mcd` next to `SS1Tool.exe` |
 | Bluetooth pairing backups | `backups\bluetooth\<name>_<date-time>\` next to `SS1Tool.exe` |
 | Controller mapping backups | `backups\controller-maps\<name>_<date-time>\` next to `SS1Tool.exe` |
 | ini backups | `backups\` next to `SS1Tool.exe`, e.g. `backups\before_video_changes_2026-10-03_15-42-08\MiSTer\MiSTer.ini`. Categories: `MiSTer` (MiSTer.ini, the `MiSTer_*.ini` video profiles and `yc.txt`), `Downloader`, `ConsoleMode`, `ConsoleMode\themeconfig`, `ConsoleMode\themeconfig\section_groups` |
 | Downloaded SD installer images | `%LOCALAPPDATA%\SS1Tool\images\` |
 | Debug reports | Wherever you choose in the Save As window |
-| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/`; the memory card core and the controller tester core in `/media/fat/_Utility/`, their job and report files in `/media/fat/games/SS1_MemCard/` and `/media/fat/games/SS1_Controller_Tester/`; copies of `PSX.CFG` from before each PSX SNAC settings change in `/media/fat/config/ss1tool_backup/`; Sync's shared copy in `SS1Tool_sync/` on the drive picked in Setup › Sync (the NVMe unless you choose another) |
+| On the SS1 | Scripts in `/media/fat/Scripts/`, the Console Mode screen helper in `/media/fat/Scripts/.ss1tool/`; the keyboard helper runs from `/tmp` (RAM) and is gone after a reboot; the copies Video's Undo uses (up to ten per file) in `/media/fat/config/ss1tool/video_undo/`; the memory card core and the controller tester core in `/media/fat/_Utility/`, their job and report files in `/media/fat/games/SS1_MemCard/` and `/media/fat/games/SS1_Controller_Tester/`; copies of `PSX.CFG` from before each PSX SNAC settings change in `/media/fat/config/ss1tool_backup/`; Sync's shared copy in `SS1Tool_sync/` on the drive picked in Setup › Sync (the NVMe unless you choose another); the power watch in `/media/fat/Scripts/.ss1tool/power/` (started from `linux/user-startup.sh`); the artwork game reader `ss1ident` in `/media/fat/Scripts/.ss1tool/` |
 
 ## Privacy and security
 
 - The app only listens on `127.0.0.1` (your own PC), and every request needs a random session token.
 - **Find my SuperStation** only connects to port 22 on your local network to read each device's SSH greeting and name; it never tries to sign in.
-- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory, check for and download SS1 Tool updates, download Update All, the SD installer and the CIFS scripts, and read the BIOS and MiSTer distribution databases for the BIOS check, to TheGamesDB, to test an API key you enter, and to retroachievements.org, to check a RetroAchievements login you enter.
+- No telemetry, no accounts, no cloud services. The only internet access is to GitHub, to read the Linux update advisory, check for and download SS1 Tool updates, download Update All, the SD installer and the CIFS scripts, and read the BIOS and MiSTer distribution databases for the BIOS check and libretro's game lists for artwork, to TheGamesDB, to test an API key you enter, and to retroachievements.org, to check a RetroAchievements login you enter.
 - Saved devices store the name, IP and user only, never the password.
 - **Share a folder from this PC** creates a local Windows account (default `ss1user`) that can only open that one folder. Its password is written only to the SS1's `cifs_mount.ini`; SS1 Tool doesn't keep it. **Remove share from this PC** deletes the account.
 - The CIFS share password is written only to your SS1, in `/media/fat/Scripts/cifs_mount.ini`, because MiSTer's `cifs_mount.sh` needs it there. Copies of earlier `cifs_mount.ini` files are kept on your PC in `backups\cifs\`.
@@ -570,6 +589,10 @@ For development on Linux or macOS, `go build .` produces a version without the W
 | `snacport2.go` | SNAC controller tester: runs the controller tester core and reads both front ports from it |
 | `cores.go` | The MiSTer cores SS1 Tool installs (memory card core, controller tester core): newest build on GitHub, install, up to date or not |
 | `psxcfg.go` | PSX SNAC settings: reads and changes the SNAC options in the PSX core's settings file |
+| `sysbackup.go` | MiSTer & Linux backups: finds new versions, copies and checks them, puts them back |
+| `cmwatch.go` | Keeps Console Mode updates: confirms a waiting update the way Console Mode does before a restart and on connect |
+| `power.go`, `scripts/ss1_power.sh` | Power watch: the script on the SuperStation and SS1 Tool's record of power lost during heavy work |
+| `artident.go`, `tools/ss1ident/` | Artwork: recognises games by their checksum or disc code (the `ss1ident` helper runs on the SuperStation and reads `.chd` with libchdr) and matches them to libretro's names |
 | `sync.go` | Sync: the shared copy on the SuperStation, which drive it's on (Migrate), and keeping backups, memory cards and settings the same on every device |
 | `restore.go` | Reflash and restore: restores settings and data from an SD card backup |
 | `appwindow.go` | Keeps SS1 Tool to one window |
@@ -595,6 +618,8 @@ Special thanks to **Taki Udon** and the team, and all the admins on the Taki Dis
 <p><a href="https://discord.gg/74pb5PJRxX"><b>💬 Join the Taki Udon Discord</b></a> &nbsp;·&nbsp; <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation"><b>📖 SuperStation One Documentation</b></a></p>
 
 SuperStation One, Console Mode and MiSTer belong to their respective owners. This project uses [x/crypto/ssh](https://pkg.go.dev/golang.org/x/crypto/ssh) and downloads [Update All](https://github.com/theypsilon/Update_All_MiSTer) and the official [SS1 SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer) at runtime.
+
+The artwork game reader `ss1ident` is built with [libchdr](https://github.com/rtissera/libchdr) (BSD 3-clause) and the libraries it includes (LZMA SDK, public domain; miniz and zstd, MIT and BSD); their licenses are in `SS1Tool-source/tools/ss1ident/libchdr/`. Game names come from the [libretro-database](https://github.com/libretro/libretro-database) game lists, and box art from [libretro's thumbnails](https://thumbnails.libretro.com/).
 
 ## License
 
