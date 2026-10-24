@@ -5,8 +5,8 @@ package main
 // When Console Mode installs an update it writes ConsoleMode/.cm_update_watch:
 //
 //	0                         <- start-ups so far without a confirmation
-//	E                         <- the kind of watch
-//	<file>\t<its backup>      <- one line per file it replaced ("-" = it was new)
+//	R                         <- the kind of update ("R" = full reboot, as 1.2 -> 1.2.2; "E" also seen)
+//	<backup>\t<file>          <- one line per file it replaced ("-" = the file is new)
 //
 // Each time Console Mode starts it adds one to the count; on the third start without a
 // confirmation it copies the backups back ("ROLLBACK: update never confirmed healthy").
@@ -113,7 +113,7 @@ func cmBeforeRestart(force bool) (ask, note string) {
 	if err != nil || !st.Pending {
 		return "", ""
 	}
-	if st.Kind == "E" && st.Running && st.Age >= cmMinAge {
+	if cmKindKnown(st.Kind) && st.Running && st.Age >= cmMinAge {
 		if cmConfirm(st) == nil {
 			return "", "Console Mode's update was confirmed first, so it stays after the restart."
 		}
@@ -124,7 +124,7 @@ func cmBeforeRestart(force bool) (ask, note string) {
 	why := "Console Mode isn't running right now"
 	if st.Running {
 		why = fmt.Sprintf("the new Console Mode has only been running for %d seconds", st.Age)
-	} else if st.Kind != "E" {
+	} else if !cmKindKnown(st.Kind) {
 		why = "its update file isn't in the form SS1 Tool knows"
 	}
 	undo := "This restart makes Console Mode undo its update and go back to the version before."
@@ -133,3 +133,6 @@ func cmBeforeRestart(force bool) (ask, note string) {
 	}
 	return "Console Mode installed an update and hasn't confirmed it works yet, and SS1 Tool can't confirm it for it: " + why + ".\n\n" + undo + "\n\nBest: let the SuperStation show the Console Mode menu for a moment, then try again.\n\nRestart anyway?", ""
 }
+
+// the kinds of watch Console Mode writes (1.2.2); both confirm the same way: the file goes
+func cmKindKnown(k string) bool { return k == "E" || k == "R" }
