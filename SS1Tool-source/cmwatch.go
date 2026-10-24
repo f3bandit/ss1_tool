@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 )
 
 const (
@@ -136,3 +138,32 @@ func cmBeforeRestart(force bool) (ask, note string) {
 
 // the kinds of watch Console Mode writes (1.2.2); both confirm the same way: the file goes
 func cmKindKnown(k string) bool { return k == "E" || k == "R" }
+
+var cmAutoMu sync.Mutex
+
+// cmAutoConfirm runs after each connect and reconnect: a Console Mode update that is still
+// waiting gets confirmed as soon as the new Console Mode has been running long enough, so it
+// stays whatever the SuperStation is restarted with afterwards (CM's menu, the power button).
+// It keeps looking for a few minutes, since the connect usually comes right after the
+// update's own restart.
+func cmAutoConfirm() {
+	if !cmAutoMu.TryLock() {
+		return
+	}
+	defer cmAutoMu.Unlock()
+	for i := 0; i < 16 && connected(); i++ { // about 4 minutes
+		st, err := cmWatchProbe()
+		if err == nil && !st.Pending {
+			return
+		}
+		if err == nil && cmKindKnown(st.Kind) && st.Running && st.Age >= cmMinAge {
+			if cmConfirm(st) == nil {
+				trayNotify("Console Mode update kept",
+					"Console Mode hadn't confirmed its update yet, so it would have gone back to the old version after a couple of restarts. SS1 Tool confirmed it.",
+					"", false)
+			}
+			return
+		}
+		time.Sleep(15 * time.Second)
+	}
+}
