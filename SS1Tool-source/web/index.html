@@ -727,7 +727,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </section>
 <section id="files">
  <h2>Files</h2><p class="sub">Your files on the SuperStation: move and copy them, back up saves and the SD card, take and browse screenshots, and get artwork for Console Mode.</p>
- <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" class="pc-only win-only" onclick="jumpTo('sysbk');return false">MiSTer &amp; Linux backups</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a><a href="#" onclick="jumpTo('mcards');return false">Memory cards</a></div>
+ <div class="jump"><span class="muted">Jump to:</span><a href="#" onclick="jumpTo('fm');return false">File manager</a><a href="#" onclick="jumpTo('saves');return false">Saves</a><a href="#" onclick="jumpTo('nvmebk');return false">Backup to NVMe</a><a href="#" class="win-only" onclick="jumpTo('sdbackup');return false">SD card backup</a><a href="#" class="pc-only" onclick="jumpTo('sysbk');return false">MiSTer &amp; Linux backups</a><a href="#" onclick="jumpTo('shots');return false">Screenshots</a><a href="#" class="pc-only win-only" onclick="jumpTo('art');return false">Artwork</a><a href="#" onclick="jumpTo('mcards');return false">Memory cards</a></div>
 <div class="subpage" id="fm">
  <h2>File manager</h2><p class="sub">Pick a drive on each side to move or copy files between the SD card and the NVMe/USB drive. Tick files, then use the arrows in the middle.</p>
  <div class="panes">
@@ -782,7 +782,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="card"><h3>Backups on this PC</h3><p class="muted" id="sbDir"></p>
   <table><thead><tr><th>Backup</th><th>Date</th><th>Files</th><th>Size</th><th></th></tr></thead><tbody id="sbList"></tbody></table></div>
 </div>
-<div class="subpage pc-only win-only" id="sysbk">
+<div class="subpage pc-only" id="sysbk">
  <h2>MiSTer &amp; Linux backups</h2><p class="sub">Each time SS1 Tool connects, it checks the parts an update replaces: MiSTer (the main program), the menu core, Linux, and Console Mode's own program files. A version it hasn't saved before is copied to this PC, so you can go back to it if an update breaks something. The same version is never saved twice, a copy that didn't finish is thrown away and made again next time, and nothing is deleted unless you delete it.</p>
  <div class="card"><h3>On the SuperStation now</h3>
   <table><thead><tr><th>Part</th><th>Version</th><th>File</th><th>On this PC</th></tr></thead><tbody id="sysCur"><tr><td colspan="4" class="muted">Connect to the SuperStation to see its versions.</td></tr></tbody></table>

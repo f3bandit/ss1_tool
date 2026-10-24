@@ -126,7 +126,8 @@ func sysClean() {
 	}
 }
 
-func sysEnabled() bool { return runtime.GOOS == "windows" || os.Getenv("SS1TOOL_SYSBK") == "1" }
+// on PCs (Windows, Linux, Steam Deck), not on phones: a Linux image is about 400 MB
+func sysEnabled() bool { return runtime.GOOS != "android" || os.Getenv("SS1TOOL_SYSBK") == "1" }
 
 const sysProbeCmd = `cd /media/fat 2>/dev/null || exit 1
 for f in MiSTer menu.rbf linux/zImage_dtb linux/linux.img ConsoleMode/MiSTer_ConsoleMode ConsoleMode/menu_ConsoleMode.rbf ConsoleMode/ConsoleMode_arm; do
@@ -239,7 +240,9 @@ func sysVersion(p sysPart, n *sysNow) (id, shown string, ok bool) {
 			return "", "", false
 		}
 		shown := ""
-		if p.CM && n.CMVer != "" {
+		if p.ID == "cm_app" && n.CMVer != "" {
+			shown = n.CMVer
+		} else if p.CM && n.CMVer != "" {
 			shown = "with Console Mode " + n.CMVer
 		}
 		return md[:12], shown, true
