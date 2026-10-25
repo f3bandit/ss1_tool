@@ -447,7 +447,7 @@ func apiVideoApply(w http.ResponseWriter, r *http.Request) {
 	if req.Mode == "try" {
 		secs := req.Secs
 		if secs < 10 || secs > 120 {
-			secs = 20
+			secs = 35
 		}
 		// the SuperStation reverts by itself unless Keep removes the flag in time
 		script := fmt.Sprintf(`echo %s > %s; (sleep %d; if [ -f %s ] && [ "$(cat %s)" = %s ]; then cp -f %s %s && rm -f %s && sync; rm -f %s; [ -p /dev/MiSTer_cmd ] && echo "load_core menu.rbf" > /dev/MiSTer_cmd; fi) </dev/null >/dev/null 2>&1 &`,
@@ -593,7 +593,7 @@ func apiVideoSelect(w http.ResponseWriter, r *http.Request) {
 	}
 	secs := req.Secs
 	if secs < 10 || secs > 120 {
-		secs = 20
+		secs = 35
 	}
 	// like a settings try: the SuperStation goes back to the previous profile unless kept
 	tok := fmt.Sprintf("profile%d", time.Now().UnixNano())

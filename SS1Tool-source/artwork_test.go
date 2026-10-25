@@ -133,3 +133,43 @@ func TestArtBios(t *testing.T) {
 		}
 	}
 }
+
+func TestArtPort(t *testing.T) {
+	for _, c := range []struct{ sys, title, from, name string }{
+		{"SNES", "Super Mario Bros. (SNES Port)", "NES", "Super Mario Bros."},
+		{"SNES", "Zelda II - The Adventure of Link NES2SNES", "NES", "Zelda II - The Adventure of Link"},
+		{"SNES", "Metroid (NES Conversion v1.1)", "NES", "Metroid"},
+		{"SNES", "Port Royale (Europe)", "", ""},
+		{"NES", "Something (Port)", "", ""},
+	} {
+		if f := artPortFrom(c.sys, c.title); f != c.from {
+			t.Errorf("%q: from %q, want %q", c.title, f, c.from)
+		}
+		if c.from != "" {
+			if n := artPortName(c.title); n != c.name {
+				t.Errorf("%q: name %q, want %q", c.title, n, c.name)
+			}
+			nes := []string{"Super Mario Bros. (World)", "Zelda II - The Adventure of Link (USA)", "Metroid (USA)"}
+			if got, _ := lrMatch(nes, artPortName(c.title)); got == "" {
+				t.Errorf("%q: not found in the NES list", c.title)
+			}
+		}
+	}
+}
+
+func TestArtTranslated(t *testing.T) {
+	names := []string{"Kishin Douji Zenki - Battle Raiden (Japan)", "Kishin Douji Zenki - Tenchi Meidou (Japan)",
+		"Fushigi no Dungeon 2 - Fuurai no Shiren (Japan)", "Nangoku Shounen Papuwa-kun (Japan)", "Final Fantasy Legend, The (USA)",
+		"Final Fantasy Adventure (USA)", "Final Fantasy Mystic Quest (USA)", "Army Men - World War - Final Front (USA)"}
+	for in, want := range map[string]string{
+		"Demon Child Zenki - Battle Raiden":          "Kishin Douji Zenki - Battle Raiden (Japan)",
+		"Mysterious Dungeon 2 - Shiren the Wanderer": "Fushigi no Dungeon 2 - Fuurai no Shiren (Japan)",
+		"Nankoku Shounen Papuwa-kun":                 "Nangoku Shounen Papuwa-kun (Japan)",
+		"Final Fantasy Tactics":                      "",
+		"Final Fantasy Tactics FF6 - World of Ruin":  "",
+	} {
+		if got, _ := lrLoose(names, in); got != want {
+			t.Errorf("%q -> %q, want %q", in, got, want)
+		}
+	}
+}

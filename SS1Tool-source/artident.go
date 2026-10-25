@@ -590,7 +590,18 @@ func lrLoose(names []string, title string) (string, string) {
 	if main == base {
 		limit = 1
 	}
-	if len(groups) == 0 || len(groups) > limit {
+	if len(groups) == 0 {
+		// a translated title: no main title in common (#142)
+		if gs := lrTranslated(names, title); len(gs) > 0 {
+			var cs []cand
+			for _, n := range gs {
+				cs = append(cs, cand{n, lrRegionScore(n)})
+			}
+			return best(cs), "similar"
+		}
+		return "", ""
+	}
+	if len(groups) > limit {
 		return "", ""
 	}
 	var all []cand
@@ -632,4 +643,161 @@ func lrExtraTags(n string) int {
 		k = 0
 	}
 	return 8 * k
+}
+
+// ---- ports: a game ported from another system ("Super Mario Bros. (SNES Port)", "Zelda II NES2SNES")
+// is looked up as the original, in that system's lists (the same rule as Phosphor's)
+
+var portRe = regexp.MustCompile(`(?i)\((?:[^)]*\b)?(?:port(?:ed)?|conversion)\b[^)]*\)|\b(?:nes|famicom|fc|snes)[ -]?(?:port(?:ed)?|conversion)\b|\bnes ?2 ?snes\b`)
+var portWordRe = regexp.MustCompile(`(?i)\b(?:(?:nes|famicom|fc|snes)[ -]?(?:port(?:ed)?|conversion)|nes ?2 ?snes)\b`)
+
+// artPortFrom: the system key a port came from ("" when the name doesn't say it's a port, or the
+// system isn't known): the SNES ports are NES games
+func artPortFrom(sys, title string) string {
+	tag := strings.ToLower(portRe.FindString(title))
+	switch {
+	case tag == "":
+		return ""
+	case sys == "SNES" && !strings.Contains(tag, "snes to"):
+		return "NES"
+	case strings.Contains(tag, "nes") && !strings.Contains(tag, "snes") && sys != "NES":
+		return "NES"
+	}
+	return ""
+}
+
+// artPortName: the original game's name: the port's tags and words taken out
+func artPortName(title string) string {
+	t := tagRe.ReplaceAllString(title, " ")
+	t = portWordRe.ReplaceAllString(t, " ")
+	return strings.Trim(strings.Join(strings.Fields(t), " "), " -:")
+}
+
+// ---- translated titles (#142, the same rules as Phosphor's automatch.go)
+
+func lrParts(t string) (main, sub []string) {
+	m := lrMain(t)
+	main = lrWords(m)
+	if b := artBase(t); b != m {
+		sub = lrWords(strings.TrimSpace(strings.TrimPrefix(b, m)))
+	}
+	return
+}
+
+func lrNums(ws []string) string {
+	var n []string
+	for _, w := range ws {
+		if strings.Trim(w, "0123456789") == "" {
+			n = append(n, w)
+		}
+	}
+	return strings.Join(n, " ")
+}
+
+func lrRare(w string) bool { return len(w) >= 5 && w != "super" && strings.Trim(w, "0123456789") != "" }
+
+// lrOneLetter: two words of 6 letters or more with one letter changed, added or left out ("nankoku" / "nangoku")
+func lrOneLetter(a, b string) bool {
+	if len(a) < 6 || len(b) < 6 || a == b {
+		return false
+	}
+	if len(a) > len(b) {
+		a, b = b, a
+	}
+	if len(b)-len(a) > 1 {
+		return false
+	}
+	i := 0
+	for i < len(a) && a[i] == b[i] {
+		i++
+	}
+	if len(a) == len(b) {
+		return a[i+1:] == b[i+1:]
+	}
+	return a[i:] == b[i+1:]
+}
+
+// lrTranslated: libretro's names for the one game a translated or re-spelt title is, by the first rule
+// that points at exactly one game: one long word spelt one letter differently; the same subtitle of two
+// words or more; two telling words in common across main title and subtitle (a main title's word in
+// their main title too), half or more of each name's words. The numbers must match.
+func lrTranslated(names []string, title string) []string {
+	om, os := lrParts(title)
+	ow := append(append([]string{}, om...), os...)
+	if len(ow) < 2 {
+		return nil
+	}
+	nums := lrNums(ow)
+	osK := strings.Join(os, "")
+	has := func(ws []string, w string) bool {
+		for _, x := range ws {
+			if x == w {
+				return true
+			}
+		}
+		return false
+	}
+	rare := func(ws []string) int {
+		n := 0
+		for _, w := range ws {
+			if lrRare(w) {
+				n++
+			}
+		}
+		return n
+	}
+	rule := [3]map[string][]string{{}, {}, {}}
+	for _, n := range names {
+		if variantWords.MatchString(tagRe.ReplaceAllString(n, "")) || artIsHack(n) {
+			continue
+		}
+		tm, ts := lrParts(n)
+		tw := append(append([]string{}, tm...), ts...)
+		if lrNums(tw) != nums {
+			continue
+		}
+		key := strings.Join(tw, " ")
+		if len(tw) == len(ow) {
+			diff, ok := 0, true
+			for i := range ow {
+				if ow[i] == tw[i] {
+					continue
+				}
+				if lrOneLetter(ow[i], tw[i]) {
+					diff++
+				} else {
+					ok = false
+					break
+				}
+			}
+			if ok && diff == 1 {
+				rule[0][key] = append(rule[0][key], n)
+			}
+		}
+		if len(os) >= 2 && len(osK) >= 10 && strings.Join(ts, "") == osK {
+			rule[1][key] = append(rule[1][key], n)
+		}
+		if len(os) > 0 && len(ts) > 0 {
+			inMain, inSub, k, moved := false, false, 0, false
+			for _, w := range ow {
+				if lrRare(w) && has(tw, w) {
+					k++
+					inMain = inMain || has(om, w)
+					inSub = inSub || has(os, w)
+					moved = moved || (has(om, w) && !has(tm, w))
+				}
+			}
+			if k >= 2 && inMain && inSub && !moved && 2*k >= rare(ow) && 2*k >= rare(tw) {
+				rule[2][key] = append(rule[2][key], n)
+			}
+		}
+	}
+	for _, r := range rule {
+		if len(r) == 1 {
+			for _, ns := range r {
+				return ns
+			}
+		}
+	}
+	return nil
 }

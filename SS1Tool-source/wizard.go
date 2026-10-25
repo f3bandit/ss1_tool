@@ -31,6 +31,8 @@ type cardReq struct {
 	Community  []string `json:"community"`
 	SSID       string   `json:"ssid"`
 	SSPassword string   `json:"sspassword"`
+	DevID      string   `json:"devid"`
+	DevPW      string   `json:"devpassword"`
 	TGDB       string   `json:"tgdb"`
 }
 
@@ -242,28 +244,16 @@ func apiCardScraper(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "TheGamesDB API key should be 64 hex characters - nothing was saved")
 		return
 	}
-	if strings.ContainsAny(req.SSID+req.SSPassword, "\r\n") {
+	req.DevID = strings.TrimSpace(req.DevID)
+	if strings.ContainsAny(req.SSID+req.SSPassword+req.DevID+req.DevPW, "\r\n") {
 		fail(w, 400, "credentials cannot contain line breaks")
 		return
 	}
 	dir := filepath.Join(root, "ConsoleMode")
 	var msgs []string
-	if req.SSID != "" || req.SSPassword != "" {
+	if req.SSID != "" || req.SSPassword != "" || req.DevID != "" || req.DevPW != "" {
 		cur, _ := os.ReadFile(filepath.Join(dir, "screenscraper.txt"))
-		var keep []string
-		for _, l := range strings.Split(strings.ReplaceAll(string(cur), "\r\n", "\n"), "\n") {
-			k, _, _ := strings.Cut(strings.TrimSpace(l), "=")
-			if strings.TrimSpace(l) == "" || (k == "ssid" && req.SSID != "") || (k == "sspassword" && req.SSPassword != "") {
-				continue
-			}
-			keep = append(keep, l)
-		}
-		if req.SSID != "" {
-			keep = append(keep, "ssid="+req.SSID)
-		}
-		if req.SSPassword != "" {
-			keep = append(keep, "sspassword="+req.SSPassword)
-		}
+		keep := []string{ssSetKeys(string(cur), map[string]string{"ssid": req.SSID, "sspassword": req.SSPassword, "devid": req.DevID, "devpassword": req.DevPW})}
 		if err := writeLF(filepath.Join(dir, "screenscraper.txt"), []byte(strings.Join(keep, "\n")), 0o600); err != nil {
 			fail(w, 500, err.Error())
 			return

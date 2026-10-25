@@ -681,21 +681,21 @@ func tgdbFind(key string, platform int, name string) (box, fan string, found str
 }
 
 func ssFind(a artAccounts, system int, romName, crc string) (box, fan, found string, err error) {
-	q := url.Values{"output": {"json"}, "devid": {a.DevID}, "devpassword": {a.DevPw}, "softname": {"SS1Tool"},
-		"ssid": {a.SSID}, "sspassword": {a.SSPass}, "systemeid": {strconv.Itoa(system)}, "romnom": {romName}}
+	q := ssLogin(a)
+	q.Set("systemeid", strconv.Itoa(system))
+	q.Set("romnom", romName)
 	if crc != "" {
 		q.Set("crc", strings.ToUpper(crc))
 	}
-	b, err := artGet("https://api.screenscraper.fr/api2/jeuInfos.php?" + q.Encode())
-	if err != nil {
-		return "", "", "", err
+	code, b, err := ssRequest("jeuInfos.php", q)
+	if msg, stop := ssAnswer(code, b, err); msg != "" {
+		if stop {
+			return "", "", "", ssStop{msg}
+		}
+		return "", "", "", fmt.Errorf("%s", msg)
 	}
-	s := string(b)
-	switch {
-	case strings.Contains(s, "quota"):
-		return "", "", "", errors.New("ScreenScraper daily quota reached - try again tomorrow")
-	case strings.Contains(s, "login") && !strings.HasPrefix(strings.TrimSpace(s), "{"):
-		return "", "", "", errors.New("ScreenScraper didn't accept the login")
+	if code == 404 {
+		return "", "", "", errArtNotFound
 	}
 	var r struct {
 		Response struct {
@@ -867,12 +867,18 @@ func (r artReq) wantBG() bool  { return r.Media != "box" }
 // what the user typed for a manual scrape).
 func artFetchOne(req artReq, acc artAccounts, s *artSystem, g *artGame, name string, manual bool) error {
 	m := artSystems[s.Key]
+	// a port is looked up as the original, in its system's lists (not for a name the user typed)
+	if from := artPortFrom(s.Key, g.Title); from != "" && !manual {
+		if mf, ok := artSystems[from]; ok {
+			m, name = mf, artPortName(g.Title)
+		}
+	}
 	boxDst := filepath.Join(artLocal(g.Dir+"/"+artMediaDir), artBoxFile(artSafe(g.Title)))
 	bgDst := filepath.Join(artLocal(g.Dir+"/"+artMediaDir), artBGFile(artSafe(g.Title)))
 	var boxURL, bgURL, found, label string
 	// the game's official name, from what's in its file (not for a name the user typed)
 	official, how := "", ""
-	if !manual {
+	if !manual && m.Libretro == artSystems[s.Key].Libretro { // a port's checksum isn't the original's
 		official, how = artOfficial(m.Libretro, g)
 	}
 	g.Found = ""
@@ -900,11 +906,11 @@ func artFetchOne(req artReq, acc artAccounts, s *artSystem, g *artGame, name str
 		}
 	case "screenscraper":
 		romName := name
-		if !manual && !g.Folder {
+		if !manual && !g.Folder && m.SS == artSystems[s.Key].SS {
 			romName = g.Title + path.Ext(g.Title)
 		}
 		crc := ""
-		if id, ok := identOf(g); ok && !manual {
+		if id, ok := identOf(g); ok && !manual && m.SS == artSystems[s.Key].SS {
 			crc = id.CRC
 		}
 		b, f, t, err := ssFind(acc, m.SS, romName, crc)
@@ -978,8 +984,11 @@ func artRun(req artReq) (string, error) {
 		return "", err
 	}
 	acc := artReadAccounts()
-	if req.Source == "screenscraper" && (acc.DevID == "" || acc.SSID == "") {
-		return "", errors.New("ScreenScraper needs a developer ID and your own login. SS1 Tool doesn't have its own ScreenScraper developer ID yet: use libretro or TheGamesDB for now")
+	if req.Source == "screenscraper" {
+		// like Console Mode: all four keys, and a login that works, before the first game
+		if msg, ok := ssCheckLogin(acc); !ok {
+			return "", errors.New(msg)
+		}
 	}
 	if req.Source == "thegamesdb" && acc.TGDB == "" {
 		return "", errors.New("no TheGamesDB API key saved: add it in Setup › Console Mode scraper accounts")
@@ -1029,7 +1038,7 @@ func artRun(req artReq) (string, error) {
 	if req.Source != "libretro" {
 		workers = 1 // TheGamesDB and ScreenScraper limit how fast one user may ask
 	}
-	var done, found, missed int64
+	var done, found, missed, ssFails int64
 	var fatal atomic.Value
 	ch := make(chan item)
 	var wg sync.WaitGroup
@@ -1053,11 +1062,24 @@ func artRun(req artReq) (string, error) {
 				if artStop.Load() {
 					continue // a download cut short by Stop isn't a miss
 				}
+				var stop ssStop
 				switch {
+				case errors.As(err, &stop):
+					atomic.AddInt64(&missed, 1)
+					it.g.Miss = stop.msg
+					fatal.Store(err)
+				case req.Source == "screenscraper" && err != nil && !errors.Is(err, errArtNotFound):
+					atomic.AddInt64(&missed, 1)
+					it.g.Miss = err.Error()
+					if atomic.AddInt64(&ssFails, 1) >= 3 {
+						fatal.Store(fmt.Errorf("%v: stopped after 3 failed searches in a row", err))
+					}
 				case err == nil:
+					atomic.StoreInt64(&ssFails, 0)
 					atomic.AddInt64(&found, 1)
 					it.g.Miss = ""
 				case errors.Is(err, errArtNotFound):
+					atomic.StoreInt64(&ssFails, 0)
 					atomic.AddInt64(&missed, 1)
 					it.g.Miss = "not found"
 				default:
@@ -1270,6 +1292,7 @@ func registerArtworkRoutes(mux *http.ServeMux) {
 	artLoadManual()
 	h := func(p string, f http.HandlerFunc) { mux.HandleFunc(p, guard(f)) }
 	h("/api/art/state", apiArtState)
+	h("/api/scraper/sscheck", apiSSCheck) // ScreenScraper: Check login (Setup, and before a scrape)
 	h("/api/art/scan", apiArtScan)
 	h("/api/art/start", apiArtStart)
 	h("/api/art/progress", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, artJob.Snapshot()) })

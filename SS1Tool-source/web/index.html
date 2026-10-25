@@ -520,11 +520,17 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <p class="muted" id="psxCores" style="margin:8px 0 0"></p></div>
 </div>
 <div class="subpage" id="stAcc">
- <div class="card" id="scraperCard"><h3>Console Mode scraper accounts</h3><p>Writes your own ScreenScraper login and TheGamesDB API key to /media/fat/ConsoleMode. Leave a field blank to keep the current value.</p>
+ <div class="card" id="scraperCard"><h3>Console Mode scraper accounts</h3><p>Writes your own ScreenScraper login and TheGamesDB API key to /media/fat/ConsoleMode. Console Mode needs all four ScreenScraper keys: your free screenscraper.fr login and a developer ID and password (ask for one on the screenscraper.fr forum). Leave a field blank to keep the current value.</p>
   <div class="row" style="align-items:flex-start;gap:14px">
    <div><input id="ssid" placeholder="ScreenScraper username" size="22"><div class="st" id="stSSID"></div></div>
    <div><input id="sspw" type="password" placeholder="ScreenScraper password" size="22"><div class="st" id="stSSPW"></div></div>
   </div>
+  <div class="row" style="margin-top:8px;align-items:flex-start;gap:14px">
+   <div><input id="ssdev" placeholder="Developer ID" size="22" autocomplete="off"><div class="st" id="stSSDEV"></div></div>
+   <div><input id="ssdevpw" type="password" placeholder="Developer password" size="22" autocomplete="off"><div class="st" id="stSSDEVPW"></div></div>
+   <button class="b" onclick="checkSS()">Check login</button>
+  </div>
+  <p id="ssCheck" style="margin:6px 0 0"></p>
   <div class="row" style="margin-top:8px;align-items:flex-start;gap:14px">
    <div><input id="tgdb" placeholder="TheGamesDB API key (64 characters)" size="50"><div class="st" id="stTGDB"></div></div>
    <button class="b p" onclick="saveScraper()">Save</button>
@@ -612,7 +618,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div id="vTry" class="vtry" style="display:none"></div>
 
  <div class="subpage" id="vcur">
-  <h2>Current settings</h2><p class="sub">What the SuperStation uses now, explained. Use &#9664; &#9654; to pick another value and <b>Try</b> it: the display restarts with it, and unless you press <b>Keep</b> within 20 seconds the SuperStation puts the old value back by itself, even if the picture is gone.</p>
+  <h2>Current settings</h2><p class="sub">What the SuperStation uses now, explained. Use &#9664; &#9654; to pick another value and <b>Try</b> it: the display restarts with it, and unless you press <b>Keep</b> within 35 seconds the SuperStation puts the old value back by itself, even if the picture is gone.</p>
   <div class="card"><div class="row"><span>Settings file</span><select id="vFile" onchange="vLoad(this.value)" style="min-width:260px"></select><button class="b" onclick="vLoad()">Rescan</button><button class="b" onclick="vReload()" title="Restarts MiSTer's menu so it reads the settings again">Restart display</button><button class="b" id="vUndoBtn" onclick="vUndo()" style="display:none">Undo last change</button><span id="vActive"></span></div>
    <div id="vNotes"></div>
    <div id="vGroups"></div></div>
@@ -1345,14 +1351,18 @@ function deleteDevice(i){const d=DEVICES[i];if(!confirm("Delete saved device "+d
  busy(null,async()=>{await api("/api/devices/delete",{name:d.name});toast("Deleted "+d.name);loadDevices()})}
 // ---------- setup / remote
 async function loadScraper(){const ok=t=>`<span class="pill good">&#10003; ${t}</span>`,no=t=>`<span class="pill warn">&#10007; ${t}</span>`;
- for(const id of ["stSSID","stSSPW","stTGDB"])$(id).innerHTML='<span class="pill muted">checking...</span>';
+ for(const id of ["stSSID","stSSPW","stSSDEV","stSSDEVPW","stTGDB"])$(id).innerHTML='<span class="pill muted">checking...</span>';
  try{const j=await api("/api/scraper");
   $("stSSID").innerHTML=j.ssid?ok("Installed: "+esc(j.ssid)):(j.ss_file?no("screenscraper.txt found, but no username"):no("Not set"));
   $("stSSPW").innerHTML=j.has_password?ok("Installed (hidden)"):no("Not set");
+  $("stSSDEV").innerHTML=j.devid?ok("Installed: "+esc(j.devid)):no("Not set: needed");
+  $("stSSDEVPW").innerHTML=j.has_devpassword?ok("Installed (hidden)"):no("Not set: needed");
   $("stTGDB").innerHTML=j.tgdb_mask?(j.tgdb_valid?ok("Installed: key ending "+esc(j.tgdb_mask.slice(3))):no("Key found but not 64 characters - check it")):no("Not set");
-  $("scraperNow").innerHTML=(j.cm_installed?"":'<span class="pill bad">Console Mode not found on this SuperStation. </span>')+(j.has_devid?"Developer ID: present in screenscraper.txt. ":"")+"Leave a field blank to keep the installed value."}
- catch(e){for(const id of ["stSSID","stSSPW","stTGDB"])$(id).textContent="";$("scraperNow").textContent=e.message}}
-function saveScraper(){busy(event.target,async()=>{const j=await api("/api/scraper",{ssid:$("ssid").value,sspassword:$("sspw").value,tgdb:$("tgdb").value});$("sspw").value="";toast(j.message);loadScraper()})}
+  $("scraperNow").innerHTML=(j.cm_installed?"":'<span class="pill bad">Console Mode not found on this SuperStation. </span>')+"Leave a field blank to keep the installed value."}
+ catch(e){for(const id of ["stSSID","stSSPW","stSSDEV","stSSDEVPW","stTGDB"])$(id).textContent="";$("scraperNow").textContent=e.message}}
+function checkSS(){const el=$("ssCheck");el.innerHTML='<span class="pill muted">Asking ScreenScraper...</span>';
+ busy(event.target,async()=>{try{const j=await api("/api/scraper/sscheck");el.innerHTML=`<span class="pill ${j.works?"good":"warn"}">${j.works?"&#10003;":"&#10007;"} ${esc(j.message)}</span>`}catch(e){el.innerHTML=`<span class="pill warn">&#10007; ${esc(e.message)}</span>`}})}
+function saveScraper(){busy(event.target,async()=>{const j=await api("/api/scraper",{ssid:$("ssid").value,sspassword:$("sspw").value,devid:$("ssdev").value,devpassword:$("ssdevpw").value,tgdb:$("tgdb").value});$("sspw").value="";$("ssdevpw").value="";toast(j.message);loadScraper()})}
 function remote(a){if(a!=="menu"&&!confirm(a==="reboot"?"Reboot the SuperStation?":"Safely shut down the SuperStation?"))return;busy(event.target,async()=>{const j=await apiCM("/api/remote",{action:a});toast(j.message);if(a!=="menu"){EXPECT={kind:a};setTimeout(onLost,a==="shutdown"?3500:2500)}})}
 let termAt=0;
 function term(w){if(document.activeElement)document.activeElement.blur();if(Date.now()-termAt<4000)return;termAt=Date.now();
@@ -2255,6 +2265,8 @@ const WZSTEPS=[
 ()=>`<h3>Remove the faulty overlap fix tool</h3><p>Some SS1 images shipped with <code>fix_sd_overlap</code>. It misreads the SuperStation's correct SD card layout as broken, and running it can destroy the card (SuperStation-Documentation issue #14). The 1.2 images shouldn't include it, but this checks to be sure.</p><div class="row" id="wzOv">${wzStatusLine()}</div>`,
 ()=>`<h3>Console Mode scraping</h3><p>Console Mode downloads box art and game info using your own free accounts at screenscraper.fr and thegamesdb.net. You can skip this and add them later in Setup.</p>
  <div class="row"><input id="wzSu" placeholder="ScreenScraper username" size="24"><input id="wzSp" type="password" placeholder="ScreenScraper password" size="24"></div>
+ <div class="row"><input id="wzSd" placeholder="Developer ID" size="24" autocomplete="off"><input id="wzSdp" type="password" placeholder="Developer password" size="24" autocomplete="off"></div>
+ <p class="muted">Console Mode needs all four for ScreenScraper: your login and a developer ID (ask for one on the screenscraper.fr forum).</p>
  <div class="row"><input id="wzSk" placeholder="TheGamesDB API key (64 characters)" size="52"></div>${W.scraper==="saved"?wpill(true,"&#10003; Saved"):""}`,
 ()=>{const d=W.done,b=(ok,t)=>wpill(ok,t);return `<h3>All set</h3><p>Here's what was set up.</p><div class="row">
  ${b(W.flashed,"SD card installed ("+(W.image==="consolemode"?"Console Mode":"Regular")+")")}${b(!!W.wifiDone,W.wifiDone?"WiFi: "+esc(W.wifiDone):"WiFi skipped")}
@@ -2320,9 +2332,9 @@ async function wzApply(){ // runs the current step's action; returns true to mov
  case 8:if(W.ua==="rec"){const j=await pick("/api/wizard/card/updateall","/api/update-all");toast(j.message.split("\n")[0])}return true;
  case 9:if(!W.samba)return wzErr("Choose whether to turn on Samba."),false;if(W.samba==="on"){const j=await pick("/api/wizard/card/samba","/api/samba");toast(j.message.split("\n")[0])}WZ.status=null;return true;
  case 10:{if(!WZ.st)return true;if((WZ.st.overlap||[]).length)return wzErr("Remove the overlap tool first. It can destroy the card."),false;WZ.status=null;return true}
- case 11:{const u=$("wzSu").value.trim(),p=$("wzSp").value,k=$("wzSk").value.trim();if(!u&&!p&&!k)return wzErr("Enter your accounts, or use Skip."),false;
-  if((u&&!p)||(!u&&p))return wzErr("Enter both the ScreenScraper username and password."),false;
-  const j=await pick("/api/wizard/card/scraper","/api/scraper",{ssid:u,sspassword:p,tgdb:k,SSID:u,SSPassword:p,TGDB:k});W.scraper="saved";toast(j.message.split("\n")[0]);return true}}
+ case 11:{const u=$("wzSu").value.trim(),p=$("wzSp").value,d=$("wzSd").value.trim(),dp=$("wzSdp").value,k=$("wzSk").value.trim();if(!u&&!p&&!d&&!dp&&!k)return wzErr("Enter your accounts, or use Skip."),false;
+  if((u||p||d||dp)&&!(u&&p&&d&&dp))return wzErr("ScreenScraper needs all four: "+[!u&&"your username",!p&&"your password",!d&&"a developer ID",!dp&&"a developer password"].filter(Boolean).join(", ")+"."),false;
+  const j=await pick("/api/wizard/card/scraper","/api/scraper",{ssid:u,sspassword:p,devid:d,devpassword:dp,tgdb:k,SSID:u,SSPassword:p,DevID:d,DevPassword:dp,TGDB:k});W.scraper="saved";toast(j.message.split("\n")[0]);return true}}
  return true}
 async function wzNext(){if(WZ.busy)return;WZ.busy=true;$("wzNext").disabled=true;wzErr();
  try{if(await wzApply()){W.step++;WZ.status=null;wzSave();wzRender()}}catch(e){wzErr(e.message)}WZ.busy=false;$("wzNext").disabled=false}
@@ -2573,7 +2585,7 @@ function vTryOne(k){const v=$("vs_"+k).value,o=VOPT[k];
 function vToastHTML(h){const d=document.createElement("div");d.innerHTML=h;toast(d.textContent)}
 async function vTry(changes,file){if(VTRY)return toast("Keep or undo the change that's being tried first",true);
  if(VID&&VID.core&&VID.core.toUpperCase()!=="MENU"&&!confirm("A game is running. Trying this restarts the menu and closes the game. Continue?"))return;
- try{const j=await api("/api/video/apply",{file:file||VID.file,changes,mode:"try",secs:20});vTryBanner({secs_left:j.secs,changes,file});toast(j.message)}catch(e){toast(e.message,true)}}
+ try{const j=await api("/api/video/apply",{file:file||VID.file,changes,mode:"try",secs:35});vTryBanner({secs_left:j.secs,changes,file});toast(j.message)}catch(e){toast(e.message,true)}}
 async function vSave(changes,file,reload){try{const j=await api("/api/video/apply",{file,changes,mode:"save",reload});toast(j.message);vLoad(file)}catch(e){toast(e.message,true)}}
 function vTryBanner(p){clearInterval(VTIMER);const el=$("vTry");
  if(!p){VTRY=null;el.style.display="none";return}
@@ -2595,7 +2607,7 @@ function vProfRender(){const j=VID;
   <td style="text-align:right">${f.alt>=0&&!f.active?`<button class="b sm" onclick="vUse(${f.alt})">Try this profile</button>`:""} <button class="b sm" onclick="vLoad('${esc(f.path)}');jumpTo('vcur')">Show settings</button></td></tr>`).join("")+`</tbody></table>`}
 async function vUse(alt){if(VTRY)return toast("Keep or undo the change that's being tried first",true);
  if(VID.core&&VID.core.toUpperCase()!=="MENU"&&!confirm("A game is running. Switching profiles restarts the menu and closes the game. Continue?"))return;
- try{const j=await api("/api/video/select",{alt,secs:20});vTryBanner({secs_left:j.secs,profile:VID.files.find(f=>f.alt===alt).name,file:""});toast(j.message)}catch(e){toast(e.message,true)}}
+ try{const j=await api("/api/video/select",{alt,secs:35});vTryBanner({secs_left:j.secs,profile:VID.files.find(f=>f.alt===alt).name,file:""});toast(j.message)}catch(e){toast(e.message,true)}}
 // ---- setup wizard
 const DIPN=[["1","YC / composite region","PAL","NTSC"],["2","FPGA luma trap","PAL","NTSC"],["3","YC / composite encoder","FPGA","Sony"],["4","Sync on green","Off","Add"]];
 const VSET=[
@@ -2662,7 +2674,7 @@ function vwRender(){const el=$("vWiz");
   ${pl.differ.map(n=>`<div class="vwarn"><span class="pill warn">sources differ</span> ${esc(n)}</div>`).join("")}
   ${CECNOTE}
   <div class="row" style="margin-top:12px"><span>Write to</span><select onchange="VW.file=this.value">${files.map(f=>`<option value="${esc(f.path)}"${f.path===VW.file?" selected":""}>${esc(f.name)}${f.alt===0?" (used every time the SuperStation starts)":""}${f.active?" (in use now)":""}</option>`).join("")}</select></div>
-  <div class="row" style="margin-top:10px"><button class="b p" onclick="vwApply(true)">Try it (goes back by itself in 20 s)</button><button class="b" onclick="vwApply(false)" title="Writes the settings without restarting the display, for example to set up a CRT before connecting it">Save without restarting</button></div>
+  <div class="row" style="margin-top:10px"><button class="b p" onclick="vwApply(true)">Try it (goes back by itself in 35 s)</button><button class="b" onclick="vwApply(false)" title="Writes the settings without restarting the display, for example to set up a CRT before connecting it">Save without restarting</button></div>
   <p class="muted" style="margin:8px 0 0">Set the switches before trying an analog setup. A backup of the file is saved on this PC first, and <b>Undo last change</b> under Current settings puts it back.</p>`}
 function vwApply(tr){const pl=vwPlan();if(!pl)return;
  if(pl.s.k==="vga"&&!confirm("31 kHz output is only for PC monitors. Never use it with a TV-style (15 kHz) CRT. Continue?"))return;
