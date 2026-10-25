@@ -502,7 +502,7 @@ func apiScraper(w http.ResponseWriter, r *http.Request) {
 			parts = append(parts, "")
 		}
 		flags, ss, tg := parts[0], parts[1], strings.TrimSpace(parts[2])
-		id, hasPw, hasDev := "", false, false
+		id, hasPw, hasDev, devID, hasDevPw := "", false, false, "", false
 		for _, l := range strings.Split(ss, "\n") {
 			k, v, _ := strings.Cut(strings.TrimSpace(l), "=")
 			v = strings.TrimSpace(v)
@@ -512,7 +512,9 @@ func apiScraper(w http.ResponseWriter, r *http.Request) {
 			case "sspassword":
 				hasPw = v != ""
 			case "devid":
-				hasDev = v != ""
+				hasDev, devID = v != "", v
+			case "devpassword":
+				hasDevPw = v != ""
 			}
 		}
 		mask := ""
@@ -523,18 +525,18 @@ func apiScraper(w http.ResponseWriter, r *http.Request) {
 			"cm_installed": strings.Contains(flags, "CM=1"),
 			"ss_file":      strings.Contains(flags, "SSF=1"),
 			"tg_file":      strings.Contains(flags, "TGF=1"),
-			"ssid":         id, "has_password": hasPw, "has_devid": hasDev,
+			"ssid":         id, "has_password": hasPw, "has_devid": hasDev, "devid": devID, "has_devpassword": hasDevPw,
 			"tgdb_mask": mask, "tgdb_valid": hex64.MatchString(tg),
 		})
 		return
 	}
-	var req struct{ SSID, SSPassword, TGDB string }
+	var req struct{ SSID, SSPassword, DevID, DevPassword, TGDB string }
 	if err := readJSON(r, &req); err != nil {
 		fail(w, 400, "bad request")
 		return
 	}
-	req.SSID, req.TGDB = strings.TrimSpace(req.SSID), strings.TrimSpace(req.TGDB)
-	if strings.ContainsAny(req.SSID+req.SSPassword, "\r\n") {
+	req.SSID, req.TGDB, req.DevID = strings.TrimSpace(req.SSID), strings.TrimSpace(req.TGDB), strings.TrimSpace(req.DevID)
+	if strings.ContainsAny(req.SSID+req.SSPassword+req.DevID+req.DevPassword, "\r\n") {
 		fail(w, 400, "credentials cannot contain line breaks")
 		return
 	}
@@ -547,27 +549,14 @@ func apiScraper(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var msgs []string
-	if req.SSID != "" || req.SSPassword != "" {
+	if req.SSID != "" || req.SSPassword != "" || req.DevID != "" || req.DevPassword != "" {
 		cur, err := run("cat " + shq(ssPath) + " 2>/dev/null; true")
 		if err != nil {
 			fail(w, 502, "couldn't read the current ScreenScraper login, so nothing was changed: "+err.Error())
 			return
 		}
-		var keep []string
-		for _, l := range strings.Split(strings.ReplaceAll(cur, "\r\n", "\n"), "\n") {
-			k, _, _ := strings.Cut(strings.TrimSpace(l), "=")
-			if strings.TrimSpace(l) == "" || (k == "ssid" && req.SSID != "") || (k == "sspassword" && req.SSPassword != "") {
-				continue
-			}
-			keep = append(keep, l) // preserves devid/devpassword and anything else
-		}
-		if req.SSID != "" {
-			keep = append(keep, "ssid="+req.SSID)
-		}
-		if req.SSPassword != "" {
-			keep = append(keep, "sspassword="+req.SSPassword)
-		}
-		if err := upload(ssPath, strings.NewReader(strings.Join(keep, "\n")), "600"); err != nil {
+		txt := ssSetKeys(cur, map[string]string{"ssid": req.SSID, "sspassword": req.SSPassword, "devid": req.DevID, "devpassword": req.DevPassword})
+		if err := upload(ssPath, strings.NewReader(txt), "600"); err != nil {
 			fail(w, 502, err.Error())
 			return
 		}
