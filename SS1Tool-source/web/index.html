@@ -1297,7 +1297,24 @@ function openPart(page,part){openPage(page);if(part)setTimeout(()=>jumpTo(part),
 document.querySelectorAll("nav#nav button").forEach(b=>b.onclick=()=>{openPage(b.dataset.s);window.scrollTo(0,0)});
 // ---------- connect
 async function init(){const c=await api("/api/config");$("host").value=c.host||"";$("user").value=c.user||"root";loadDevices();if(c.connected){connectedHost=c.host;setConn(true);loadStatus()}}
-function setConn(on){$("conn").innerHTML=on?"Connected to <b>"+$("host").value+"</b>":"Not connected";$("statusCard").style.display=on?"block":"none"}
+function setConn(on){$("conn").innerHTML=on?"Connected to <b>"+$("host").value+"</b>":"Not connected";$("statusCard").style.display=on?"block":"none";if(on)setTimeout(vtakiCheck,800);else VTAKI_HOST=""}
+// The SuperStation's video ini files set to Taki's settings on a Console Mode SuperStation, by itself,
+// once per card (ss1video.go, docs/ss1-video.md: the SS1's Sony video chip needs them). No button:
+// when something was changed, the user is told front and center, with the changes and the copies.
+let VTAKI_HOST="";
+async function vtakiCheck(){if(!connectedHost||VTAKI_HOST===connectedHost)return;VTAKI_HOST=connectedHost;
+ try{const j=await api("/api/video/taki",{});if(!j.changed)return;
+  const ln=(j.changes||[]).map(c=>c.what==="made"?`• ${c.file}: added (it was missing)`
+   :c.what==="renamed"?`• MiSTer_example.ini renamed MiSTer_example.ini.txt (MiSTer counted it as a video profile, which hid one of Taki's)`
+   :`• ${c.file}: ${c.key} ${c.from||"(not set)"} → ${c.to}`);
+  const t=$("mText");t.style.whiteSpace="pre-line";t.style.maxHeight="50vh";t.style.overflow="auto";
+  showModal("Video settings adjusted for your SuperStation",
+   "This SuperStation wasn't running the correct video ini files for its hardware, so SS1 Tool adjusted them to Taki's settings. "+
+   "The SuperStation has its own video chip for S-Video and composite, and MiSTer's default settings don't drive it.\n\n"+
+   "What changed:\n"+ln.join("\n")+"\n\n"+
+   "Only those lines were changed; everything else in each file is as it was. Copies of the files as they were are on the SuperStation in "+j.backup+
+   (j.pc_backup?" and in Backups on this device":"")+". The new settings take effect the next time the SuperStation starts. You can still change them on the Video page.",false);
+ }catch(e){}}
 function doConnect(){busy(event.target,async()=>{const s=await api("/api/connect",{host:$("host").value,user:$("user").value,pass:$("pass").value});connectedHost=$("host").value;setConn(true);showStatus(s);toast("Connected");loadDevices()})}
 async function doDisconnect(){await api("/api/disconnect",{});connectedHost="";setConn(false);loadDevices()}
 async function loadStatus(quiet){try{if(!ADV)await loadAdvisory();showStatus(await api("/api/status"));pwBanner();setTimeout(pwBanner,6000)}catch(e){if(!quiet)toast(e.message,true)}}
