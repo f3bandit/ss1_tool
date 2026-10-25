@@ -8,6 +8,10 @@ package main
 // (Keep) in time, the SuperStation puts the old file back and restarts the menu by itself.
 // That also works when the picture is gone, the PC loses the network or SS1 Tool closes.
 //
+// The SS1's own video hardware (the Sony encoder needs vga_mode=subcarrier) and Taki's settings
+// for MiSTer.ini and the four profiles: ss1video.go and docs/ss1-video.md. Read those before
+// changing anything here that writes vga_mode, composite_sync, vga_sog, video_info or logo.
+//
 // Profiles: MiSTer uses MiSTer.ini plus up to three alternatives, the first three
 // MiSTer_*.ini files it finds in /media/fat (directory order), sorted by name
 // (cfg_get_name in Main_MiSTer). The active one is kept in shared memory, read and set with
@@ -63,6 +67,7 @@ func registerVideoRoutes(mux *http.ServeMux) {
 	h("/api/video/undo", apiVideoUndo)
 	h("/api/video/select", apiVideoSelect)
 	h("/api/video/reload", apiVideoReload)
+	h("/api/video/taki", apiVideoTaki) // ss1video.go: Taki's settings on a Console Mode SuperStation, after connecting
 }
 
 // ---------------------------------------------------------------- ini editing
