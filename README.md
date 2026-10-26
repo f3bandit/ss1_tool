@@ -166,7 +166,7 @@ Open **★ Wizard** (bottom left of the menu, always visible). It walks a new ow
 6. WiFi (optional), scripts (SS1 + community), Update All stable lane, Samba, overlap tool check, and ScreenScraper / TheGamesDB (optional)
 
 ### Dashboard
-- Live health of the SS1's Linux side, refreshed every 3 seconds: CPU use and load with the number of cores and threads and a bar for each thread, memory, storage space on the SD card and USB/NVMe drives, network traffic with a download/upload graph, uptime, the current core, running processes (busiest first), and temperature on hardware that has a sensor
+- Live health of the SS1's Linux side, refreshed every 3 seconds: CPU use and load with the number of cores and threads and a bar for each thread, memory, storage space on the SD card and USB/NVMe drives, network traffic with a download/upload graph, uptime, the current core, running processes (busiest first), and temperature: the dock's NVMe drive (read through the dock every 20 seconds) and any other sensor Linux has
 - Kernel log viewer (last 20 to 200 messages) for tracking down controllers, WiFi adapters or drives that keep disconnecting
 - **Disk activity:** read and write speed of the SD card and each USB/NVMe drive, live, so you can see when a drive is busy (a copy, a scan, a game loading)
 - **Board buses (I2C):** the SuperStation's I2C buses and the devices on them, listed only (nothing is read or written)

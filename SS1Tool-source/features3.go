@@ -558,7 +558,17 @@ func humanBytes(n int64) string {
 
 // ================================================================ dashboard
 
-const dashCmd = `for z in /sys/class/thermal/thermal_zone*; do [ -r "$z/temp" ] && echo "SENSOR $(cat "$z/temp" 2>/dev/null) $(cat "$z/type" 2>/dev/null || basename "$z")"; done
+const dashCmd = `F=/media/fat/Scripts/.ss1tool/ss1fb C=/tmp/ss1tool-nvmetemp
+if [ -x "$F" ]; then
+ a=$(date -r "$C" +%s 2>/dev/null || echo 0)
+ if [ $(( $(date +%s) - a )) -ge 20 ]; then
+  : > "$C.new"
+  for b in /sys/block/sd*; do case "$(cat "$b/device/vendor" 2>/dev/null)" in [Jj][Mm][Ii][Cc][Rr][Oo][Nn]*) t=$("$F" -nvmesmart "/dev/${b##*/}" 2>/dev/null | sed -n 's/^temperature_c=//p'); [ -n "$t" ] && echo "SENSOR $t NVMe drive" >> "$C.new" ;; esac; done
+  mv "$C.new" "$C"
+ fi
+ cat "$C" 2>/dev/null
+fi
+for z in /sys/class/thermal/thermal_zone*; do [ -r "$z/temp" ] && echo "SENSOR $(cat "$z/temp" 2>/dev/null) $(cat "$z/type" 2>/dev/null || basename "$z")"; done
 for h in /sys/class/hwmon/hwmon*; do n=$(cat "$h/name" 2>/dev/null); for t in "$h"/temp*_input "$h"/device/temp*_input; do [ -r "$t" ] || continue; l=$(cat "${t%_input}_label" 2>/dev/null); echo "SENSOR $(cat "$t" 2>/dev/null) ${n:-hwmon}${l:+ $l}"; done; done
 echo "UPTIME $(cut -d' ' -f1 /proc/uptime)"
 echo "LOAD $(cut -d' ' -f1-3 /proc/loadavg)"
