@@ -1,3 +1,6 @@
+// Copyright (C) 2026 f3bandit. GPL-3.0-or-later (see LICENSE).
+// SS1 Tool's memory card manager: f3bandit's idea and design.
+
 package main
 
 // Memory cards: the SS1 Memory Card Tool core (f3bandit/SS1_MemCard_MiSTer) reads and writes the
