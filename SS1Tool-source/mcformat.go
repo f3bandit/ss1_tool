@@ -1,3 +1,6 @@
+// Copyright (C) 2026 f3bandit. GPL-3.0-or-later (see LICENSE).
+// SS1 Tool's memory card manager: f3bandit's idea and design.
+
 package main
 
 // PlayStation memory card images (raw 128 KB: .mcd / .mcr / .sav from MiSTer's PSX core).

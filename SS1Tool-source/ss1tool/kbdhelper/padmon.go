@@ -1,3 +1,6 @@
+// Copyright (C) 2026 f3bandit. GPL-3.0-or-later (see LICENSE).
+// SS1 Tool's controller tester: f3bandit's idea and design.
+
 package main
 
 // "ss1kbd -padmon" reports the state of every controller on the SuperStation as one JSON line

@@ -1,3 +1,6 @@
+// Copyright (C) 2026 f3bandit. GPL-3.0-or-later (see LICENSE).
+// SS1 Tool's controller tester: f3bandit's idea and design.
+
 package main
 
 // Reading the SuperStation's front port (SNAC port 1) in MiSTer menu mode.
