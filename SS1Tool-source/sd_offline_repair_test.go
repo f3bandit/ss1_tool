@@ -65,3 +65,27 @@ func TestRescueScripts(t *testing.T) {
 		t.Fatal("the drive folder changed: check its length")
 	}
 }
+
+// the drives plugged in and the other drives a repair repaired
+func TestParseRescueDrives(t *testing.T) {
+	m := parseRescue(`drive=b6e1223b
+plugged=/media/usb0|b6e1223b|SanDisk|exfat|repair
+plugged=/media/usb1|7a06eb63|NVMe drive|exfat|
+last_result=repaired
+last_drive=7a06eb63||NVMe drive|exfat|0|clean
+last_drive=1111||Kingston|ntfs|9|ntfs: repair it on a PC
+self_state=done
+self_result=clean
+`)
+	p := m["plugged"].([]plugDrive)
+	if len(p) != 2 || p[0].Label != "repair" || p[1].Model != "NVMe drive" || p[1].FS != "exfat" {
+		t.Fatalf("plugged: %+v", p)
+	}
+	d := m["last_drives"].([]driveResult)
+	if len(d) != 2 || d[0].Result != "clean" || d[1].Result != "skipped" || d[1].Summary != "ntfs: repair it on a PC" {
+		t.Fatalf("last_drives: %+v", d)
+	}
+	if m["self_state"] != "done" || m["self_result"] != "clean" {
+		t.Fatalf("self: %v", m)
+	}
+}

@@ -58,10 +58,53 @@ type rescueDrive struct {
 	FreeMB   int    `json:"free_mb,omitempty"`
 }
 
+// a drive plugged in now (what a repair would repair)
+type plugDrive struct {
+	Path     string `json:"path"`
+	PartUUID string `json:"partuuid"`
+	Model    string `json:"model"`
+	FS       string `json:"fs"`
+	Label    string `json:"label"`
+}
+
+// a drive the last repair repaired (besides the SD card): result clean | repaired | errors_left | failed | skipped
+type driveResult struct {
+	PartUUID string `json:"partuuid"`
+	Label    string `json:"label"`
+	Model    string `json:"model"`
+	FS       string `json:"fs"`
+	Result   string `json:"result"`
+	Summary  string `json:"summary"`
+}
+
+func fsckResult(code string) string {
+	switch code {
+	case "0":
+		return "clean"
+	case "1":
+		return "repaired"
+	case "4":
+		return "errors_left"
+	case "9":
+		return "skipped"
+	}
+	return "failed"
+}
+
+func fields(v string, n int) []string {
+	f := strings.SplitN(v, "|", n)
+	for len(f) < n {
+		f = append(f, "")
+	}
+	return f
+}
+
 // sd_offline_repair.sh status: key=value lines
 func parseRescue(out string) map[string]any {
-	m := map[string]any{"candidates": []rescueDrive{}}
+	m := map[string]any{"candidates": []rescueDrive{}, "plugged": []plugDrive{}, "last_drives": []driveResult{}}
 	var cands []rescueDrive
+	plugged := []plugDrive{}
+	drives := []driveResult{}
 	for _, l := range strings.Split(out, "\n") {
 		k, v, ok := strings.Cut(strings.TrimSpace(l), "=")
 		if !ok {
@@ -80,6 +123,12 @@ func parseRescue(out string) map[string]any {
 			} else {
 				m["new_drive"] = d
 			}
+		case "plugged":
+			f := fields(v, 5)
+			plugged = append(plugged, plugDrive{Path: f[0], PartUUID: f[1], Model: f[2], FS: f[3], Label: f[4]})
+		case "last_drive":
+			f := fields(v, 6)
+			drives = append(drives, driveResult{PartUUID: f[0], Label: f[1], Model: f[2], FS: f[3], Result: fsckResult(f[4]), Summary: f[5]})
 		case "drive_present", "armed", "sd_dirty_at_boot", "fresh":
 			m[k] = v == "1"
 		default:
@@ -91,6 +140,8 @@ func parseRescue(out string) map[string]any {
 	if cands != nil {
 		m["candidates"] = cands
 	}
+	m["plugged"] = plugged
+	m["last_drives"] = drives
 	return m
 }
 
@@ -112,6 +163,10 @@ func apiSdRepair(w http.ResponseWriter, r *http.Request) {
 		Force      bool
 	}
 	_ = readJSON(r, &req)
+	if _, err := ensureScripts(false); err != nil { // (sd_integrity.sh repairs the repair drive after a repair)
+		fail(w, 502, err.Error())
+		return
+	}
 	if err := ensureRescue(); err != nil {
 		fail(w, 502, err.Error())
 		return
@@ -169,7 +224,7 @@ func apiSdRepair(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		go func() { time.Sleep(2 * time.Second); disconnect() }()
-		writeJSON(w, map[string]any{"ok": true, "message": strings.TrimSpace(note + " Restarting to repair the SD card. Console Mode can take up to a minute to close, then the TV stays dark for about a minute while the card is repaired, and the SuperStation starts again by itself. Reconnect after that to see the result.")})
+		writeJSON(w, map[string]any{"ok": true, "message": strings.TrimSpace(note + " Restarting to repair all drives. Console Mode can take up to a minute to close, then the TV stays dark while the drives are repaired, and the SuperStation starts again by itself. SS1 Tool reconnects after that and shows what it found.")})
 	default:
 		fail(w, 400, "unknown action")
 	}

@@ -423,6 +423,7 @@ html[data-platform=android] #toTop{bottom:calc(var(--bnh) + 16px);right:16px;wid
  html[data-platform=android] #toTop{bottom:24px}
 }
 body.repshot #toast,body.repshot #toTop{display:none!important}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid #30363d;border-top-color:#79c0ff;border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -985,9 +986,9 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   </div>
   <p class="muted" style="margin:10px 0 0">Deep scans (read every file, surface read, write/verify) take a long time and run on the SuperStation itself: <a href="#" onclick="term('sd_integrity');return false" style="color:#79c0ff">open sd_integrity in a terminal</a>.</p>
   <pre class="out" id="diagOut">No test run yet.</pre></div>
- <div class="card" id="srCard"><h3>Repair the SD card offline</h3>
-  <p class="muted" style="margin:0 0 10px">The SD card can't be repaired while the SuperStation runs from it. SS1 Tool puts a copy of the SuperStation's own MiSTer Linux on a repair drive: <b>a spare USB stick is best</b> (exFAT, 1 GB free; about 400 MB in <code>ss1tool/rescue</code> on it, nothing else changes) and a few lines in the SD card's <code>linux/u-boot.txt</code> that do nothing until you ask. <b>Restart and repair</b> then starts that copy, which checks and repairs the SD card while nothing is using it, and starts the SuperStation again. Every other start-up stays exactly as it is.</p>
-  <p class="muted" style="margin:0 0 10px">Why a USB stick: the repair runs from the repair drive, so that drive can't be repaired offline itself. With a spare stick, your NVMe drive stays free to be repaired too. The NVMe drive works as the repair drive if you don't have a stick.</p>
+ <div class="card" id="srCard"><h3>Repair all drives</h3>
+  <p class="muted" style="margin:0 0 10px">Windows often can't repair these drives properly, so SS1 Tool can still report them dirty afterwards. This repairs them on the SuperStation itself, with nothing using them: one restart into repair mode checks and repairs the SD card, the NVMe drive and any USB drives, then Console Mode starts again by itself.</p>
+  <details style="margin:0 0 10px"><summary class="muted" style="cursor:pointer">How it works</summary><p class="muted" style="margin:8px 0 0">The SD card can't be repaired while the SuperStation runs from it. SS1 Tool puts a copy of the SuperStation's own MiSTer Linux on a repair drive (exFAT, 1 GB free; about 400 MB in <code>ss1tool/rescue</code> on it, nothing else changes) and a few lines in the SD card's <code>linux/u-boot.txt</code> that do nothing until you ask. The restart starts that copy, which repairs the drives and restarts normally; every other start-up stays exactly as it is. The repair runs from the repair drive, so that one is repaired after the restart instead. <b>A spare USB stick is the best repair drive</b>: it leaves the NVMe drive free to be repaired offline with the SD card.</p></details>
   <div id="srBody"><p class="muted">Open this page while connected to see it.</p></div>
   <pre class="out" id="srOut" style="display:none"></pre></div>
 </div>
@@ -1476,32 +1477,63 @@ function bkRestore(i,k){const b=BKSETS[i];if(!b)return;const one=k>=0?b.files[k]
 function bkShow(i){const b=i===""?null:BKSETS[i];api("/api/ini/backup-show",{set:b?b.name:""}).catch(e=>toast(e.message,true))}
 function bkDelete(i){const b=BKSETS[i];if(!b||!confirm("Delete backup "+b.name+" and all its files?"))return;busy(null,async()=>{await api("/api/ini/backup-delete",{set:b.name});loadBackups()})}
 // ---------- diagnostics / debug
-// ---------- offline SD card repair
-let SR={};
+// ---------- repair all drives (offline)
+let SR={},SRW=null;
 function srNvme(d){return d&&d.model==="NVMe drive"}
 function srSort(c){return c.slice().sort((a,b)=>srNvme(a)-srNvme(b))}
-function srName(d){return (d.model==="NVMe drive"?"NVMe drive":"USB drive"+(d.model?" · "+d.model:""))+" ("+(d.path||"").split("/").pop()+")"}
+function srName(d){return srNvme(d)?"NVMe drive":(d.label?`USB drive "${d.label}"`:"USB drive"+(d.model?" · "+d.model:""))}
+function srPath(d){return " ("+(d.path||"").split("/").pop()+")"}
+function srRes(r){return {clean:"no errors",repaired:"repaired",errors_left:"errors left",failed:"not repaired",skipped:"not checked"}[r]||"not repaired"}
+function srCol(r){return r==="clean"||r==="repaired"?"#3fb950":r==="errors_left"?"#f85149":"#e3b341"}
 async function srLoad(){try{SR=await api("/api/sdrepair",{});srDraw();
-  if(SR.fresh&&SR.last_result&&localStorage.getItem("srShown")!==SR.last_at){localStorage.setItem("srShown",SR.last_at);toast("SD card repaired offline: "+srRes(SR.last_result))}}
- catch(e){$("srBody").innerHTML=`<p class="muted">${esc(e.message)}</p>`}}
-function srRes(r){return {clean:"no errors found, the card is marked clean",repaired:"the card was repaired",errors_left:"errors are left: repair it on a PC"}[r]||"the repair didn't run"}
-function srDraw(){const r=SR,c=srSort(r.candidates||[]);let h="",a="";
+  if(SR.fresh&&SR.last_result&&localStorage.getItem("srShown")!==SR.last_at){try{localStorage.setItem("srShown",SR.last_at)}catch(e){}toast("Drives repaired: SD card "+srRes(SR.last_result))}
+  if(SR.self_state==="running"){clearTimeout(srLoad._t);srLoad._t=setTimeout(()=>{if($("srBody").offsetParent)srLoad()},4000)}}
+ catch(e){if(!SRW)$("srBody").innerHTML=`<p class="muted">${esc(e.message)}</p>`}}
+function srSelf(){const r=SR,me=(r.plugged||[]).find(d=>d.partuuid===r.drive)||{path:r.drive_mount,model:r.drive_model};return me}
+function srDraw(){if(SRW)return srWaitDraw();const r=SR,c=srSort(r.candidates||[]);let h="",a="";
  const kv=(k,v)=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`;
- if(!r.drive&&!c.length)h=`<p style="margin:0"><b>Plug a spare USB stick into the SuperStation</b> (exFAT, 1 GB free) to repair the SD card without taking it out, then press Refresh. Nothing else on the stick changes.</p>`;
- else if(!r.drive){const usb=c.some(d=>!srNvme(d));h=`<p style="margin:0">Choose the drive that repairs the SD card. A spare USB stick is recommended: the repair drive itself can't be repaired offline.</p>`+(usb?"":`<p class="muted" style="margin:8px 0 0">For the best repair, plug in any spare USB stick (exFAT, 1 GB free) and press Refresh. Or use the NVMe drive.</p>`);
-  a=c.map(d=>`<button class="b${srNvme(d)?"":" p"}" onclick="srDo('setup','${esc(d.path)}')">Use the ${esc(srName(d))}${srNvme(d)?"":" (recommended)"}</button>`).join("")}
- else if(!r.drive_present){const n=r.new_drive;h=kv("Repair drive",esc(r.drive_model||"a USB drive")+" · not plugged in")+(n?`<p style="margin:8px 0 0">Another drive is plugged in: make it the repair drive?</p>`:`<p class="muted" style="margin:8px 0 0">Plug it back in, or another spare USB stick to use instead.</p>`);
-  if(n)a=`<button class="b p" onclick="srDo('setup','${esc(n.path)}')">Use the ${esc(srName(n))}</button>`;a+=`<button class="b d" onclick="srDo('remove')">Turn off offline repair</button>`}
- else{h=kv("Repair drive",esc(srName({path:r.drive_mount,model:r.drive_model})))+kv("SD card at start-up",r.sd_dirty_at_boot?"<b>Wasn't shut down safely</b>":"Clean")+(r.armed?kv("Next restart","Repairs the SD card"):"")+(srNvme({model:r.drive_model})&&c.some(d=>!srNvme(d))?`<p class="muted" style="margin:8px 0 0">A USB stick is plugged in: use it as the repair drive instead, so the NVMe drive isn't the drive the repair runs from.</p>`:"");
-  a=`<button class="b p" onclick="srDo('go')">Restart and repair</button>`+(r.armed?`<button class="b" onclick="srDo('disarm')">Not at the next restart</button>`:"")+c.filter(d=>d.path!==r.drive_mount).map(d=>`<button class="b" onclick="srDo('setup','${esc(d.path)}')">Use the ${esc(srName(d))} instead</button>`).join("")+`<button class="b d" onclick="srDo('remove')">Turn off offline repair</button>`;
-  h+=`<p class="muted" style="margin:8px 0 0">The TV stays dark for about a minute while the SD card is repaired. Go back to the main menu first.</p>`}
- if(r.last_result)h+=kv("Last repair",esc(srRes(r.last_result).replace(/^./,c=>c.toUpperCase()))+" · "+esc((r.last_at||"").slice(0,16)));
- $("srBody").innerHTML=h+`<div class="row" style="margin-top:10px">${a}<button class="b" onclick="srLoad()">Refresh</button></div>`}
-function srDo(what,target){
- if(what==="go"&&!confirm("Restart the SuperStation and repair the SD card?\n\nConsole Mode can take up to a minute to close, then the TV stays dark for about a minute while the card is repaired, and the SuperStation starts again by itself. Don't switch it off in between."))return;
- if(what==="remove"&&!confirm("Turn off offline repair?\n\nIts lines come off the SD card's u-boot.txt and its copy of Linux off the drive."))return;
- const o=$("srOut");o.style.display="block";o.textContent=what==="setup"?"Copying the SuperStation's Linux to the drive (about 400 MB, under a minute on an NVMe drive)...":what==="go"?"Getting the repair ready...":"...";
- busy(event&&event.target,async()=>{try{const j=await apiCM("/api/sdrepair",{do:what,target:target||""});o.textContent=j.message||"Done";toast(j.message||"Done");if(what!=="go")srLoad()}catch(e){o.textContent=e.message;throw e}})}
+ const big=(lbl,on,dis)=>`<button class="b ${dis?"":"p"}" style="padding:11px 20px;font-weight:600" ${dis?"disabled":""} onclick="${on}">${lbl}</button>`;
+ if(!r.drive&&!c.length){h=`<p style="margin:0"><b>Plug a spare USB stick into the SuperStation</b> (exFAT, 1 GB free) to repair the drives without a PC, then press Refresh. The repair starts from it; nothing else on it changes.</p><p class="muted" style="margin:8px 0 0">No USB or NVMe drive with room found.</p>`;a=big("Restart and repair all drives","",1)}
+ else if(!r.drive){const usb=c.some(d=>!srNvme(d));h=`<p style="margin:0">First, choose the drive the repair starts from. <b>A spare USB stick is recommended</b>: the drive the repair starts from is repaired after the restart, not offline.</p>`+(usb?"":`<p class="muted" style="margin:8px 0 0">For the best repair, plug in any spare USB stick (exFAT, 1 GB free) and press Refresh. Or use the NVMe drive: it's then repaired after the restart, once Console Mode is back.</p>`);
+  a=c.map(d=>`<button class="b${srNvme(d)?"":" p"}" onclick="srDo('setup','${esc(d.path)}')">Use the ${esc(srName(d)+srPath(d))}${srNvme(d)?"":" (recommended)"}</button>`).join("")}
+ else if(!r.drive_present){const n=r.new_drive;h=`<p style="margin:0">The drive the repair starts from (${esc(r.drive_model||"a USB drive")}) isn't plugged in.`+(n?` Another drive is: <b>${esc(srName(n))}</b>.</p><p class="muted" style="margin:8px 0 0">Plug it back in, or start from this one instead.</p>`:`</p><p class="muted" style="margin:8px 0 0">Plug it back in, or another spare USB stick to use instead.</p>`);
+  if(n)a=big("Use it and repair",`srDo('setup','${esc(n.path)}',1)`);else a=big("Restart and repair all drives","",1);a+=`<button class="b" onclick="srDo('remove')">Turn off drive repair</button>`}
+ else{const me=srSelf(),others=(r.plugged||[]).filter(d=>d.partuuid!==r.drive);
+  h=`<p style="margin:0 0 6px">Checks and repairs:</p><ul style="margin:0;padding-left:20px;line-height:1.7"><li>SD card${r.sd_dirty_at_boot?' · <b style="color:#e3b341">wasn\'t shut down safely</b>':""}</li>`+others.map(d=>`<li>${esc(srName(d))}${d.fs&&d.fs!=="exfat"&&d.fs!=="vfat"?` · <span class="muted">${esc(d.fs)}: not checked here</span>`:""}</li>`).join("")+`<li>${esc(srName(me))} <span class="muted">· after the restart, since repair mode runs from it</span></li></ul>`;
+  if(srNvme(me)&&c.some(d=>!srNvme(d)))h+=`<p class="muted" style="margin:8px 0 0">A USB stick is plugged in: start from it instead, and the NVMe drive is repaired offline too.</p>`;
+  if(r.armed)h+=kv("Next restart","Repairs all drives");
+  a=big("Restart and repair all drives","srDo('go')")+(r.armed?`<button class="b" onclick="srDo('disarm')">Not at the next restart</button>`:"")+c.filter(d=>d.path!==r.drive_mount).map(d=>`<button class="b" onclick="srDo('setup','${esc(d.path)}')">Start from the ${esc(srName(d)+srPath(d))} instead</button>`).join("")+`<button class="b" onclick="srDo('remove')">Turn off drive repair</button>`}
+ h+=srDone();
+ $("srBody").innerHTML=h+`<div class="row" style="margin-top:12px;align-items:center">${a}<button class="b" onclick="srLoad()">Refresh</button></div>`}
+// the last repair, one row per drive
+function srDone(){const r=SR;if(!r.last_result)return"";
+ const row=(n,res,sum)=>`<span style="padding:9px 12px;border-bottom:1px solid #21262d">${esc(n)}</span><span style="padding:9px 12px;border-bottom:1px solid #21262d"><b style="color:${srCol(res)}">${srRes(res).replace(/^./,x=>x.toUpperCase())}</b>${sum?` · <span class="muted">${esc(sum)}</span>`:""}</span>`;
+ let rows=row("SD card",r.last_result,r.last_result==="repaired"?"was marked dirty, now clean":r.last_result==="errors_left"?"back up your saves and repair it on a PC (chkdsk X: /f)":"");
+ for(const d of r.last_drives||[])rows+=row(srName(d),d.result,d.result==="clean"?"":d.summary);
+ const me=srSelf();
+ rows+=row(srName(me)+" (repair drive)",r.self_state==="running"?"":r.self_result||"skipped",r.self_state==="running"?"repairing now...":r.self_result==="clean"?"checked after the restart":r.self_summary||"");
+ const all=[r.last_result,...(r.last_drives||[]).map(d=>d.result),r.self_result],bad=all.some(x=>x==="errors_left"||x==="failed");
+ return `<h4 style="margin:14px 0 8px">${r.self_state==="running"?"Last repair":bad?"Last repair: some drives need a look":"Last repair: all drives fine"} <span class="muted" style="font-weight:400">· ${esc((r.last_at||"").slice(0,16))}</span></h4><div style="display:grid;grid-template-columns:minmax(140px,240px) minmax(0,1fr);border:1px solid #21262d;border-radius:8px;font-size:14px">${rows}</div>`}
+// after Restart and repair: progress until SS1 Tool is connected again and the repair drive is done
+function srWaitDraw(){const s=Math.round((Date.now()-SRW.t)/1000),st=SRW.stage;
+ const step=(i,t)=>{const done=st>i,on=st===i;return `<div style="display:flex;gap:10px;align-items:center;margin:6px 0;${done||on?"":"color:#8b949e"}"><span style="width:16px;text-align:center">${done?'<b style="color:#3fb950">&#10003;</b>':on?'<span class="spin"></span>':"&#9675;"}</span><span>${on?"<b>"+t+"</b>":t}</span></div>`};
+ $("srBody").innerHTML=`<h4 style="margin:0 0 8px">Repairing all drives</h4>`+step(0,"Set up and restarting")+step(1,"Console Mode closing")+step(2,"Repairing the drives <span class=\"muted\">· the TV is dark, that's normal</span>")+step(3,"Console Mode starting again, SS1 Tool reconnecting")+step(4,"The repair drive repaired")+
+  `<p class="muted" style="margin:10px 0 0">${Math.floor(s/60)} min ${s%60} s so far. SS1 Tool reconnects by itself. Don't switch the SuperStation off.</p><div class="row" style="margin-top:10px"><button class="b" onclick="srStopWait()">Stop waiting</button></div>`}
+function srStopWait(){clearInterval(SRW&&SRW.h);SRW=null;srLoad()}
+function srWait(){SRW={t:Date.now(),stage:1,seen:false};EXPECT={kind:"sdrepair"};srWaitDraw();
+ SRW.h=setInterval(async()=>{if(!SRW||SRW.busy)return;SRW.busy=true;try{const el=(Date.now()-SRW.t)/1000;
+  if(!connectedHost&&SRW.stage<2)SRW.stage=2;
+  if(!connectedHost&&el>45){try{await api("/api/connect",{host:$("host").value,user:$("user").value||"root",pass:$("pass").value});connectedHost=$("host").value;setConn(true);loadDevices();SRW.stage=4}catch(e){}}
+  if(connectedHost&&SRW.stage>=4){try{SR=await api("/api/sdrepair",{});if(SR.self_state!=="running"){clearInterval(SRW.h);SRW=null;srDraw();toast("Drives repaired: the results are in SD diagnostics");return}}catch(e){}}
+  if(el>900){clearInterval(SRW.h);SRW=null;$("srBody").innerHTML=`<p>The SuperStation hasn't come back yet. When it has, connect and click Refresh.</p><div class="row"><button class="b" onclick="srLoad()">Refresh</button></div>`;return}
+  srWaitDraw()}finally{if(SRW)SRW.busy=false}},3000)}
+function srDo(what,target,thenGo){
+ if(what==="go"&&!confirm("Restart and repair all drives?\n\nThe SuperStation restarts into repair mode and checks and repairs the SD card and every other drive plugged in. The drive the repair starts from is repaired after the restart.\n\nConsole Mode can take up to a minute to close, then the TV stays dark while the drives are repaired. It starts Console Mode again by itself, and SS1 Tool shows what it found.\n\nDon't switch the SuperStation off until Console Mode is back."))return;
+ if(what==="remove"&&!confirm("Turn off drive repair?\n\nIts lines come off the SD card's u-boot.txt and its copy of Linux off the repair drive."))return;
+ const o=$("srOut");o.style.display="block";o.textContent=what==="setup"?"Copying the SuperStation's Linux to the drive (about 400 MB, about a minute)...":what==="go"?"Getting the repair ready...":"...";
+ busy(event&&event.target,async()=>{try{const j=await apiCM("/api/sdrepair",{do:what,target:target||""});o.textContent=j.message||"Done";
+  if(what==="go"){o.style.display="none";srWait();return}
+  toast(j.message||"Done");await srLoad();if(thenGo&&SR.drive_present)srDo("go")}catch(e){o.textContent=e.message;throw e}})}
 async function loadTargets(){try{const t=await api("/api/targets");$("diagTarget").innerHTML=t.map(x=>`<option value="${x.path}">${x.path} (${x.fs})</option>`).join("")}catch(e){}}
 function diag(test){const tgt=$("diagTarget").value||"/media/fat";
  if(test==="fsrepair"&&!confirm(`Repair the file system on ${tgt}?\n\nThe drive is unmounted while it's repaired, so nothing may be using it: go back to the main menu first. Repairs can remove broken files or folders the checker can't fix, so back up anything important first if you can.`))return;
@@ -2545,6 +2577,7 @@ let EXPECT=null,pingBusy=false;
 function showModal(title,text,canReconnect){$("mTitle").textContent=title;$("mText").textContent=text;$("mErr").textContent="";$("mBtn").style.display=canReconnect?"":"none";$("modal").style.display="flex"}
 function closeModal(){$("modal").style.display="none"}
 function onLost(){if($("modal").style.display==="flex")return;const host=$("host").value||"the SuperStation";connectedHost="";setConn(false);loadDevices();
+ if(EXPECT&&EXPECT.kind==="sdrepair"){EXPECT=null;return}
  if(EXPECT&&EXPECT.kind==="shutdown")showModal("SuperStation is shutting down","Wait until the SS1 screen shows SAFE TO POWER OFF, then switch it off. When you turn it back on, click Reconnect.",true);
  else if(EXPECT&&EXPECT.kind==="wifi")showModal("SuperStation is restarting on WiFi","When it's back, its screen shows the new WiFi IP address. Unplug the Ethernet cable, enter that IP on the Connect tab and click Connect (or update your saved device).",false);
  else if(EXPECT&&EXPECT.kind==="reboot")showModal("SuperStation is restarting","It will be back in about 30 seconds. Click Reconnect when it has started.",true);
