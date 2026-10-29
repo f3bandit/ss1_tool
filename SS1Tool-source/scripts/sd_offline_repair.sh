@@ -8,7 +8,7 @@
 # linux/u-boot.txt that do nothing until asked. "Restart and repair" sets a word in the memory u-boot and
 # Linux share across a warm restart (0x1FFFFF10, a part of that page MiSTer's Main doesn't use); u-boot
 # clears it and starts the copy from the drive (root=PARTUUID=<drive>), the SD card never mounted; the
-# step runs fsck.exfat on the card, leaves the result on the drive and restarts. The restart after that
+# step runs fsck.exfat on the card and then every other drive plugged in, leaves the result on the drive and restarts. The restart after that
 # is the normal one: Console Mode starts as always, and SS1 Tool reads the result when it connects.
 # - The drive is found by its partition's PARTUUID, never by its Linux name (sda, sdb...).
 # - Every other start-up is u-boot's own: the lines run u-boot's own mmcboot, read from the u-boot on the
@@ -21,6 +21,7 @@
 #   sd_offline_repair.sh disarm          not after all
 #   sd_offline_repair.sh restart         a warm restart now (a cold reset clears the word)
 #   sd_offline_repair.sh result [boot]   a repair's result, from the drive; boot: wake the dock's NVMe first
+#   sd_offline_repair.sh selfrepair      repair the repair drive itself (result does it after a repair)
 #   sd_offline_repair.sh remove          the lines off the SD card, the copy off the drive
 
 set -u
@@ -184,8 +185,39 @@ cmd_result() {
 	st_set last_result "$res"; st_set last_at "${at:-$(now)}"; st_set last_summary "$summary"; st_set last_picked "$(date +%s)"; st_set armed_at ""
 	log "repair (${at:-?}): $res (fsck.exfat $code: $summary)"
 	cp "$r.$$" "$DATA/last-result.txt" 2> /dev/null; cp "$m/$SUBDIR/fsck.log" "$DATA/last-fsck.log" 2> /dev/null
+	# the other drives repaired in the same pass
+	if [ -f "$m/$SUBDIR/drives.txt" ]; then
+		mv -f "$m/$SUBDIR/drives.txt" "$DATA/last-drives.txt"; cp "$m/$SUBDIR/drives.log" "$DATA/last-drives.log" 2> /dev/null
+	else
+		rm -f "$DATA/last-drives.txt"
+	fi
 	rm -f "$r.$$"; sync
+	# and the repair drive itself, now nothing runs from it: unmounted and repaired, in the background
+	st_set self_state running; st_set self_result ""; st_set self_summary ""
+	setsid -f bash "$SELF" selfrepair < /dev/null > /dev/null 2>&1 || bash "$SELF" selfrepair < /dev/null > /dev/null 2>&1 &
 	echo "result=$res"
+}
+
+# The repair drive, after the restart: SD diagnostics' own repair (it unmounts the drive, closes the
+# network share's hold on it, repairs it and mounts it again), or why it couldn't.
+cmd_selfrepair() {
+	local m out res sum
+	m="$(mount_of_partuuid "$(st_get partuuid)")"
+	if [ -z "$m" ]; then res=failed; sum="the repair drive isn't plugged in"
+	elif [ ! -f "$FAT/Scripts/sd_integrity.sh" ]; then res=skipped; sum="sd_integrity.sh isn't on the SD card"
+	else
+		out="$(NODIALOG=1 bash "$FAT/Scripts/sd_integrity.sh" --run fsrepair "$m" 2>&1)"
+		printf '%s\n' "$out" > "$DATA/last-self.log"
+		sum="$(printf '%s\n' "$out" | sed -n 's/^RESULT: //p' | tail -1)"
+		case "$sum" in
+			"PASS - no"*) res=clean ;;
+			"PASS - errors"*) res=repaired ;;
+			"NOT RUN"*) res=failed; sum="$(printf '%s\n' "$out" | grep -m1 -E '^(FAIL|SKIP):' | sed 's/^[A-Z]*: //')" ;;
+			*) res=errors_left ;;
+		esac
+	fi
+	st_set self_result "$res"; st_set self_summary "$(printf '%s' "$sum" | cut -c1-160)"; st_set self_state done
+	log "repair drive ($m): $res ($sum)"
 }
 
 cmd_status() {
@@ -204,9 +236,17 @@ cmd_status() {
 		echo "candidate=$cm|$cp|$cmod|$cfree"
 		[ -n "$p" ] && [ "$cp" != "$p" ] && [ -z "${m:-}" ] && echo "new_drive=$cm|$cp|$cmod"
 	done
+	# every drive plugged in (what a repair would repair): mount|partuuid|model|fs|label
+	while read -r dev mpt fs _; do
+		case "$mpt" in /media/usb[0-9]*) ;; *) continue ;; esac
+		[ "$fs" = fuseblk ] && fs="$(blkid -s TYPE -o value "$dev" 2> /dev/null)"
+		echo "plugged=$mpt|$(blkid -s PARTUUID -o value "$dev" 2> /dev/null)|$(model_of "$dev")|$fs|$(blkid -s LABEL -o value "$dev" 2> /dev/null | tr '|' ' ')"
+	done < "$MOUNTS"
 	c="$(st_get last_result)"
 	if [ -n "$c" ]; then
 		echo "last_result=$c"; echo "last_at=$(st_get last_at)"; echo "last_summary=$(st_get last_summary)"
+		[ -f "$DATA/last-drives.txt" ] && sed 's/^/last_drive=/' "$DATA/last-drives.txt"
+		echo "self_state=$(st_get self_state)"; echo "self_result=$(st_get self_result)"; echo "self_summary=$(st_get self_summary)"
 		up="$(cut -d. -f1 /proc/uptime)"; t="$(st_get last_picked)"
 		[ -n "$t" ] && [ "$t" -ge $(( $(date +%s) - up )) ] && echo "fresh=1"
 	fi
@@ -268,6 +308,7 @@ case "${1:-status}" in
 	disarm) $DEVMEM $MARK 32 0 2> /dev/null; echo "ok   not at the next restart" ;;
 	restart) cmd_restart ;;
 	result) cmd_result "${2:-}" ;;
+	selfrepair) cmd_selfrepair ;;
 	remove) cmd_remove ;;
-	*) sed -n '2,24p' "$SELF" | sed 's/^# \{0,1\}//'; exit 2 ;;
+	*) sed -n '2,26p' "$SELF" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac
