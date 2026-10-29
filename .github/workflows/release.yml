@@ -1,0 +1,36 @@
+# Publishes an SS1 Tool release when its files are pushed to release-assets/<version> (e.g.
+# release-assets/1.32.0). That branch is the commit to release plus one commit adding release/:
+#   release/notes.md     the release notes
+#   release/SS1Tool.exe  the app (the name SS1 Tool's updater downloads)
+# This checks the exe is that version and the same as the repo's SS1Tool.exe, tags the commit, publishes
+# the release, then removes the branch.
+name: Release
+on:
+  push:
+    branches: ["release-assets/**"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Check and publish
+        run: |
+          set -e
+          V="${GITHUB_REF_NAME#release-assets/}"
+          [ "$(git diff --name-only HEAD^ HEAD | grep -cv '^release/')" = 0 ] || { echo "::error::the last commit must only add release/"; exit 1; }
+          target="$(git rev-parse HEAD^)"
+          [ -f release/notes.md ] && [ -f release/SS1Tool.exe ] || { echo "::error::release/notes.md and release/SS1Tool.exe are needed"; exit 1; }
+          grep -q "const appVersion = \"$V\"" SS1Tool-source/main.go || { echo "::error::main.go isn't $V"; exit 1; }
+          cmp -s release/SS1Tool.exe SS1Tool.exe || { echo "::error::release/SS1Tool.exe isn't the repo's SS1Tool.exe"; exit 1; }
+          gh release view "$V" > /dev/null 2>&1 && { echo "::error::$V is already released"; exit 1; }
+          sha256sum release/SS1Tool.exe
+          gh release create "$V" --target "$target" --title "SS1 Tool $V" --notes-file release/notes.md release/SS1Tool.exe
+      - name: Remove the staging branch
+        if: success()
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME" || echo "::warning::couldn't remove $GITHUB_REF_NAME"
