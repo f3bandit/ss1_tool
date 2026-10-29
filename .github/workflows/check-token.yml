@@ -1,0 +1,25 @@
+# Checks the RELEASE_TOKEN secret without showing it: a push to check/release-token says whether it's set,
+# which account it is, and whether it can write this repo's releases (it lists them). Removes its branch.
+name: Check the release token
+on:
+  push:
+    branches: ["check/release-token"]
+permissions:
+  contents: write
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: The token
+        env:
+          T: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -z "$T" ]; then echo "::warning title=RELEASE_TOKEN::not set"; exit 0; fi
+          who="$(GH_TOKEN="$T" gh api user -q .login 2>/dev/null || echo "?")"
+          push="$(GH_TOKEN="$T" gh api "repos/$GITHUB_REPOSITORY" -q .permissions.push 2>/dev/null || echo "?")"
+          echo "::notice title=RELEASE_TOKEN::set; account $who; can write this repo: $push"
+      - name: Remove the branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/heads/$GITHUB_REF_NAME" || true
