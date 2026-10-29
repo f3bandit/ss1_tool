@@ -163,12 +163,13 @@ func apiSdRepair(w http.ResponseWriter, r *http.Request) {
 		}
 		// a warm restart: SS1 Tool's usual one (a cold reset) clears the memory the request is in
 		kbdStop()
-		if msg, ok := act("restart"); !ok {
-			fail(w, 502, msg)
+		// (the SSH session can end with the restart: what it printed first counts)
+		if out, _ := run(rescueRun + "restart 2>&1"); !strings.Contains(out, "ok   restarting") {
+			fail(w, 502, rescueLastLine(out))
 			return
 		}
 		go func() { time.Sleep(2 * time.Second); disconnect() }()
-		writeJSON(w, map[string]any{"ok": true, "message": strings.TrimSpace(note + " Restarting to repair the SD card. The TV stays dark for about a minute while it's repaired, then the SuperStation starts again by itself. Reconnect after that to see the result.")})
+		writeJSON(w, map[string]any{"ok": true, "message": strings.TrimSpace(note + " Restarting to repair the SD card. Console Mode can take up to a minute to close, then the TV stays dark for about a minute while the card is repaired, and the SuperStation starts again by itself. Reconnect after that to see the result.")})
 	default:
 		fail(w, 400, "unknown action")
 	}

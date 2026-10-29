@@ -38,7 +38,7 @@ finish() {
 grep -q 'ss1tool.sdrepair=1' /proc/cmdline || { say "not asked to repair: restarting"; finish; }
 mkdir -p "$OUT"
 say "repairing the SD card, please wait"
-result() { printf 'at=%s\ncode=%s\nsummary=%s\n' "$at" "$1" "$2" > "$OUT/result.txt.new" && mv -f "$OUT/result.txt.new" "$OUT/result.txt"; sync; }
+result() { printf 'at=%s\nepoch=%s\ncode=%s\nsummary=%s\n' "$at" "$(date +%s)" "$1" "$2" > "$OUT/result.txt.new" && mv -f "$OUT/result.txt.new" "$OUT/result.txt"; sync; }
 
 i=0
 while [ ! -b "$SD" ] && [ $i -lt 20 ]; do sleep 1; i=$((i + 1)); done
