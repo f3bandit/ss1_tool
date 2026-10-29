@@ -164,7 +164,7 @@ wake_dock() {   # partuuid
 }
 
 cmd_result() {
-	local p m r a at code summary res
+	local p m r a at e code summary res
 	p="$(st_get partuuid)"; [ -n "$p" ] || return 0
 	m="$(mount_of_partuuid "$p")"
 	if [ -z "$m" ] && [ "${1:-}" = boot ]; then
@@ -177,7 +177,9 @@ cmd_result() {
 	[ -n "$m" ] || return 0
 	r="$m/$SUBDIR/result.txt"; [ -f "$r" ] || return 0
 	mv -f "$r" "$r.$$" 2> /dev/null || return 0             # (one reader at a time)
-	at="$(sed -n 's/^at=//p' "$r.$$")"; code="$(sed -n 's/^code=//p' "$r.$$")"; summary="$(sed -n 's/^summary=//p' "$r.$$")"
+	at="$(sed -n 's/^at=//p' "$r.$$")"; e="$(sed -n 's/^epoch=//p' "$r.$$")"
+	[ -n "$e" ] && at="$(date -d "@$e" '+%Y-%m-%d %H:%M:%S' 2> /dev/null || echo "$at")"   # (the copy has no time zone: UTC)
+	code="$(sed -n 's/^code=//p' "$r.$$")"; summary="$(sed -n 's/^summary=//p' "$r.$$")"
 	case "$code" in 0) res=clean ;; 1) res=repaired ;; 4) res=errors_left ;; *) res=failed ;; esac
 	st_set last_result "$res"; st_set last_at "${at:-$(now)}"; st_set last_summary "$summary"; st_set last_picked "$(date +%s)"; st_set armed_at ""
 	log "repair (${at:-?}): $res (fsck.exfat $code: $summary)"
@@ -240,13 +242,12 @@ cmd_arm() {
 cmd_restart() {
 	armed || { echo "FAIL not set for a repair (arm first)"; return 1; }
 	log "restarting to repair the SD card"
-	# Console Mode and MiSTer's Main kept off the FPGA while Linux restarts (as SS1 Tool's own restart)
-	for d in /proc/[0-9]*; do
-		case "$(cat "$d/comm" 2> /dev/null)" in MiSTer*|Mister*|ConsoleMode_arm*) kill -STOP "${d#/proc/}" 2> /dev/null ;; esac
-	done
 	sync
-	( sleep 2; sync; reboot ) > /dev/null 2>&1 < /dev/null &
 	echo "ok   restarting"
+	# Linux's own restart (a warm one): init stops Console Mode and the rest. Not stopped by the SSH
+	# session ending with it (reboot only asks init and returns)
+	trap '' HUP PIPE
+	reboot < /dev/null > /dev/null 2>&1
 }
 
 cmd_remove() {

@@ -1494,7 +1494,7 @@ function srDraw(){const r=SR,c=r.candidates||[];let h="",a="";
  if(r.last_result)h+=kv("Last repair",esc(srRes(r.last_result).replace(/^./,c=>c.toUpperCase()))+" · "+esc((r.last_at||"").slice(0,16)));
  $("srBody").innerHTML=h+`<div class="row" style="margin-top:10px">${a}<button class="b" onclick="srLoad()">Refresh</button></div>`}
 function srDo(what,target){
- if(what==="go"&&!confirm("Restart the SuperStation and repair the SD card?\n\nThe TV stays dark for about a minute while it's repaired, then the SuperStation starts again by itself. Don't switch it off in between."))return;
+ if(what==="go"&&!confirm("Restart the SuperStation and repair the SD card?\n\nConsole Mode can take up to a minute to close, then the TV stays dark for about a minute while the card is repaired, and the SuperStation starts again by itself. Don't switch it off in between."))return;
  if(what==="remove"&&!confirm("Turn off offline repair?\n\nIts lines come off the SD card's u-boot.txt and its copy of Linux off the drive."))return;
  const o=$("srOut");o.style.display="block";o.textContent=what==="setup"?"Copying the SuperStation's Linux to the drive (about 400 MB, under a minute on an NVMe drive)...":what==="go"?"Getting the repair ready...":"...";
  busy(event&&event.target,async()=>{try{const j=await apiCM("/api/sdrepair",{do:what,target:target||""});o.textContent=j.message||"Done";toast(j.message||"Done");if(what!=="go")srLoad()}catch(e){o.textContent=e.message;throw e}})}
