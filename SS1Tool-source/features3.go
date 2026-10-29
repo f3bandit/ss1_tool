@@ -558,7 +558,12 @@ func humanBytes(n int64) string {
 
 // ================================================================ dashboard
 
-const dashCmd = `F=/media/fat/Scripts/.ss1tool/ss1fb C=/tmp/ss1tool-nvmetemp
+// the CPU reading first: two samples of /proc/stat with only the wait between them, so the
+// dashboard's own commands below aren't counted as load
+const dashCmd = `grep '^cpu' /proc/stat | sed 's/^/S1 /'
+sleep 0.5
+grep '^cpu' /proc/stat | sed 's/^/S2 /'
+F=/media/fat/Scripts/.ss1tool/ss1fb C=/tmp/ss1tool-nvmetemp
 if [ -x "$F" ]; then
  a=$(date -r "$C" +%s 2>/dev/null || echo 0)
  if [ $(( $(date +%s) - a )) -ge 20 ]; then
@@ -572,7 +577,6 @@ for z in /sys/class/thermal/thermal_zone*; do [ -r "$z/temp" ] && echo "SENSOR $
 for h in /sys/class/hwmon/hwmon*; do n=$(cat "$h/name" 2>/dev/null); for t in "$h"/temp*_input "$h"/device/temp*_input; do [ -r "$t" ] || continue; l=$(cat "${t%_input}_label" 2>/dev/null); echo "SENSOR $(cat "$t" 2>/dev/null) ${n:-hwmon}${l:+ $l}"; done; done
 echo "UPTIME $(cut -d' ' -f1 /proc/uptime)"
 echo "LOAD $(cut -d' ' -f1-3 /proc/loadavg)"
-grep '^cpu' /proc/stat | sed 's/^/S1 /'
 grep -E '^(processor|model name|Processor|CPU part|BogoMIPS|Hardware)[[:space:]]*:' /proc/cpuinfo | sed 's/^/CI /'
 for c in /sys/devices/system/cpu/cpu[0-9]*; do echo "TOPO $(basename "$c") $(cat "$c/topology/core_id" 2>/dev/null || echo -) $(cat "$c/topology/physical_package_id" 2>/dev/null || echo -) $(cat "$c/online" 2>/dev/null || echo 1) $(cat "$c/cpufreq/scaling_cur_freq" 2>/dev/null || echo -)"; done
 awk '/^(MemTotal|MemAvailable|MemFree|Buffers|Cached|SwapTotal|SwapFree):/{print "MEM "$1" "$2}' /proc/meminfo
@@ -582,8 +586,6 @@ ip -4 -o addr show 2>/dev/null | awk '$2!="lo"{print "IP "$2" "$4}'
 awk 'NR>2{gsub(":","",$1); if($1!="lo") print "NET "$1" "$2" "$10}' /proc/net/dev
 awk '$3 ~ /^(mmcblk[0-9]+|sd[a-z]+|nvme[0-9]+n[0-9]+)$/ {print "IO "$3" "$6" "$10}' /proc/diskstats
 command -v i2cdetect >/dev/null 2>&1 && i2cdetect -l 2>/dev/null | sed 's/^/I2C /'
-sleep 0.5
-grep '^cpu' /proc/stat | sed 's/^/S2 /'
 echo "PROCS"; COLUMNS=200 top -b -n 1 2>/dev/null | head -n 400
 true`
 
