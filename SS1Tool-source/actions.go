@@ -46,6 +46,7 @@ func registerRoutes(mux *http.ServeMux) {
 	h("/api/ini", apiIni)
 	h("/api/targets", apiTargets)
 	h("/api/diag", apiDiag)
+	h("/api/sdrepair", apiSdRepair)
 	h("/api/debug-report", apiDebugReport)
 	h("/api/debug-report/save", apiDebugReportSave)
 	h("/api/open-path", apiOpenPath)
