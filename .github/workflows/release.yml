@@ -3,7 +3,8 @@
 #   release/notes.md     the release notes
 #   release/SS1Tool.exe  the app (the name SS1 Tool's updater downloads)
 # This checks the exe is that version and the same as the repo's SS1Tool.exe, tags the commit, publishes
-# the release, then removes the branch.
+# the release, then removes the branch. Published as f3bandit when the RELEASE_TOKEN secret is set (a
+# fine-grained token for this repo, Contents: read and write); otherwise as github-actions.
 name: Release
 on:
   push:
@@ -14,7 +15,7 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     env:
-      GH_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
