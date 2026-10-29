@@ -986,7 +986,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <p class="muted" style="margin:10px 0 0">Deep scans (read every file, surface read, write/verify) take a long time and run on the SuperStation itself: <a href="#" onclick="term('sd_integrity');return false" style="color:#79c0ff">open sd_integrity in a terminal</a>.</p>
   <pre class="out" id="diagOut">No test run yet.</pre></div>
  <div class="card" id="srCard"><h3>Repair the SD card offline</h3>
-  <p class="muted" style="margin:0 0 10px">The SD card can't be repaired while the SuperStation runs from it. SS1 Tool puts a copy of the SuperStation's own MiSTer Linux on a USB or NVMe drive (exFAT, 1 GB free; about 400 MB in <code>ss1tool/rescue</code> on it, nothing else changes) and a few lines in the SD card's <code>linux/u-boot.txt</code> that do nothing until you ask. <b>Restart and repair</b> then starts that copy, which checks and repairs the SD card while nothing is using it, and starts the SuperStation again. Every other start-up stays exactly as it is.</p>
+  <p class="muted" style="margin:0 0 10px">The SD card can't be repaired while the SuperStation runs from it. SS1 Tool puts a copy of the SuperStation's own MiSTer Linux on a repair drive: <b>a spare USB stick is best</b> (exFAT, 1 GB free; about 400 MB in <code>ss1tool/rescue</code> on it, nothing else changes) and a few lines in the SD card's <code>linux/u-boot.txt</code> that do nothing until you ask. <b>Restart and repair</b> then starts that copy, which checks and repairs the SD card while nothing is using it, and starts the SuperStation again. Every other start-up stays exactly as it is.</p>
+  <p class="muted" style="margin:0 0 10px">Why a USB stick: the repair runs from the repair drive, so that drive can't be repaired offline itself. With a spare stick, your NVMe drive stays free to be repaired too. The NVMe drive works as the repair drive if you don't have a stick.</p>
   <div id="srBody"><p class="muted">Open this page while connected to see it.</p></div>
   <pre class="out" id="srOut" style="display:none"></pre></div>
 </div>
@@ -1477,18 +1478,21 @@ function bkDelete(i){const b=BKSETS[i];if(!b||!confirm("Delete backup "+b.name+"
 // ---------- diagnostics / debug
 // ---------- offline SD card repair
 let SR={};
+function srNvme(d){return d&&d.model==="NVMe drive"}
+function srSort(c){return c.slice().sort((a,b)=>srNvme(a)-srNvme(b))}
 function srName(d){return (d.model==="NVMe drive"?"NVMe drive":"USB drive"+(d.model?" · "+d.model:""))+" ("+(d.path||"").split("/").pop()+")"}
 async function srLoad(){try{SR=await api("/api/sdrepair",{});srDraw();
   if(SR.fresh&&SR.last_result&&localStorage.getItem("srShown")!==SR.last_at){localStorage.setItem("srShown",SR.last_at);toast("SD card repaired offline: "+srRes(SR.last_result))}}
  catch(e){$("srBody").innerHTML=`<p class="muted">${esc(e.message)}</p>`}}
 function srRes(r){return {clean:"no errors found, the card is marked clean",repaired:"the card was repaired",errors_left:"errors are left: repair it on a PC"}[r]||"the repair didn't run"}
-function srDraw(){const r=SR,c=r.candidates||[];let h="",a="";
+function srDraw(){const r=SR,c=srSort(r.candidates||[]);let h="",a="";
  const kv=(k,v)=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`;
- if(!r.drive&&!c.length)h=`<p style="margin:0"><b>No NVMe drive?</b> Plug a USB drive (exFAT, 1 GB free) into the SuperStation to repair the SD card without taking it out, then press Refresh.</p>`;
- else if(!r.drive){h=`<p style="margin:0">Choose the drive that repairs the SD card:</p>`;a=c.map((d,i)=>`<button class="b p" onclick="srDo('setup','${esc(d.path)}')">Use the ${esc(srName(d))}</button>`).join("")}
- else if(!r.drive_present){const n=r.new_drive;h=kv("Repair drive",esc(r.drive_model||"a USB drive")+" · not plugged in")+(n?`<p style="margin:8px 0 0">Another drive is plugged in: make it the repair drive?</p>`:`<p class="muted" style="margin:8px 0 0">Plug it back in, or another USB drive to use instead.</p>`);
+ if(!r.drive&&!c.length)h=`<p style="margin:0"><b>Plug a spare USB stick into the SuperStation</b> (exFAT, 1 GB free) to repair the SD card without taking it out, then press Refresh. Nothing else on the stick changes.</p>`;
+ else if(!r.drive){const usb=c.some(d=>!srNvme(d));h=`<p style="margin:0">Choose the drive that repairs the SD card. A spare USB stick is recommended: the repair drive itself can't be repaired offline.</p>`+(usb?"":`<p class="muted" style="margin:8px 0 0">For the best repair, plug in any spare USB stick (exFAT, 1 GB free) and press Refresh. Or use the NVMe drive.</p>`);
+  a=c.map(d=>`<button class="b${srNvme(d)?"":" p"}" onclick="srDo('setup','${esc(d.path)}')">Use the ${esc(srName(d))}${srNvme(d)?"":" (recommended)"}</button>`).join("")}
+ else if(!r.drive_present){const n=r.new_drive;h=kv("Repair drive",esc(r.drive_model||"a USB drive")+" · not plugged in")+(n?`<p style="margin:8px 0 0">Another drive is plugged in: make it the repair drive?</p>`:`<p class="muted" style="margin:8px 0 0">Plug it back in, or another spare USB stick to use instead.</p>`);
   if(n)a=`<button class="b p" onclick="srDo('setup','${esc(n.path)}')">Use the ${esc(srName(n))}</button>`;a+=`<button class="b d" onclick="srDo('remove')">Turn off offline repair</button>`}
- else{h=kv("Repair drive",esc(srName({path:r.drive_mount,model:r.drive_model})))+kv("SD card at start-up",r.sd_dirty_at_boot?"<b>Wasn't shut down safely</b>":"Clean")+(r.armed?kv("Next restart","Repairs the SD card"):"");
+ else{h=kv("Repair drive",esc(srName({path:r.drive_mount,model:r.drive_model})))+kv("SD card at start-up",r.sd_dirty_at_boot?"<b>Wasn't shut down safely</b>":"Clean")+(r.armed?kv("Next restart","Repairs the SD card"):"")+(srNvme({model:r.drive_model})&&c.some(d=>!srNvme(d))?`<p class="muted" style="margin:8px 0 0">A USB stick is plugged in: use it as the repair drive instead, so the NVMe drive isn't the drive the repair runs from.</p>`:"");
   a=`<button class="b p" onclick="srDo('go')">Restart and repair</button>`+(r.armed?`<button class="b" onclick="srDo('disarm')">Not at the next restart</button>`:"")+c.filter(d=>d.path!==r.drive_mount).map(d=>`<button class="b" onclick="srDo('setup','${esc(d.path)}')">Use the ${esc(srName(d))} instead</button>`).join("")+`<button class="b d" onclick="srDo('remove')">Turn off offline repair</button>`;
   h+=`<p class="muted" style="margin:8px 0 0">The TV stays dark for about a minute while the SD card is repaired. Go back to the main menu first.</p>`}
  if(r.last_result)h+=kv("Last repair",esc(srRes(r.last_result).replace(/^./,c=>c.toUpperCase()))+" · "+esc((r.last_at||"").slice(0,16)));
