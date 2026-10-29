@@ -64,9 +64,10 @@ model_of() {
 }
 # mount|partuuid|model|free_mb: mounted exFAT USB / NVMe partitions with a PARTUUID and the room
 candidates() {
-	local dev m fs p free
+	local dev m fs p free seen=" "
 	while read -r dev m fs _; do
 		case "$m" in /media/usb[0-9]*) ;; *) continue ;; esac
+		case "$seen" in *" $dev "*) continue ;; esac; seen="$seen$dev "
 		[ "$fs" = exfat ] || continue
 		p="$(blkid -s PARTUUID -o value "$dev" 2> /dev/null)"; [ -n "$p" ] || continue
 		free=$(( $(df -kP "$m" 2> /dev/null | awk 'NR == 2 {print $4}') / 1024 ))
@@ -206,6 +207,14 @@ cmd_selfrepair() {
 	if [ -z "$m" ]; then res=failed; sum="the repair drive isn't plugged in"
 	elif [ ! -f "$FAT/Scripts/sd_integrity.sh" ]; then res=skipped; sum="sd_integrity.sh isn't on the SD card"
 	else
+		# MiSTer sometimes mounts a USB drive twice (/media/usb0 and usb1): the other mount goes first,
+		# so the checker never runs on a drive that's still mounted
+		local dev mp
+		dev="$(awk -v m="$m" '$2 == m {print $1; exit}' "$MOUNTS")"
+		for mp in $(awk -v d="$dev" -v m="$m" '$1 == d && $2 != m {print $2}' "$MOUNTS"); do umount "$mp" 2> /dev/null; done
+		if [ -n "$dev" ] && [ "$(awk -v d="$dev" '$1 == d' "$MOUNTS" | wc -l)" -gt 1 ]; then
+			st_set self_result failed; st_set self_summary "the drive is mounted twice and in use: restart, then repair it in SD diagnostics"; st_set self_state done; return
+		fi
 		out="$(NODIALOG=1 bash "$FAT/Scripts/sd_integrity.sh" --run fsrepair "$m" 2>&1)"
 		printf '%s\n' "$out" > "$DATA/last-self.log"
 		sum="$(printf '%s\n' "$out" | sed -n 's/^RESULT: //p' | tail -1)"
@@ -237,8 +246,10 @@ cmd_status() {
 		[ -n "$p" ] && [ "$cp" != "$p" ] && [ -z "${m:-}" ] && echo "new_drive=$cm|$cp|$cmod"
 	done
 	# every drive plugged in (what a repair would repair): mount|partuuid|model|fs|label
+	local seen=" "
 	while read -r dev mpt fs _; do
 		case "$mpt" in /media/usb[0-9]*) ;; *) continue ;; esac
+		case "$seen" in *" $dev "*) continue ;; esac; seen="$seen$dev "   # (MiSTer can mount a drive twice)
 		[ "$fs" = fuseblk ] && fs="$(blkid -s TYPE -o value "$dev" 2> /dev/null)"
 		echo "plugged=$mpt|$(blkid -s PARTUUID -o value "$dev" 2> /dev/null)|$(model_of "$dev")|$fs|$(blkid -s LABEL -o value "$dev" 2> /dev/null | tr '|' ' ')"
 	done < "$MOUNTS"
