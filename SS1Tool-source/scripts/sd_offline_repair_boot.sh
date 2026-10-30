@@ -78,10 +78,15 @@ while [ $i -lt 20 ] && [ $same -lt 3 ]; do
 done
 : > "$OUT/drives.txt.new"
 : > "$OUT/drives.log"
-for b in /sys/class/block/sd*[0-9]; do
+# the device this Linux runs from (the repair drive), as major:minor too; no pass at all without knowing it
+selfdev="$(awk '$5 == "/media/fat" {print $3; exit}' /proc/self/mountinfo)"
+[ -n "$self" ] || say "repair drive unknown: the other drives are left alone"
+[ -n "$self" ] && for b in /sys/class/block/sd*; do
 	[ -e "$b" ] || continue
 	dev="/dev/${b##*/}"
 	[ -b "$dev" ] || continue
+	case "${b##*/}" in *[0-9]) ;; *) ls -d "$b/${b##*/}"[0-9]* > /dev/null 2>&1 && continue ;; esac   # (a whole disk only without partitions)
+	[ -n "$selfdev" ] && [ "$(cat "$b/dev" 2> /dev/null)" = "$selfdev" ] && continue
 	fs="$(blkid -s TYPE -o value "$dev" 2> /dev/null)"
 	[ -n "$fs" ] || continue                               # (no file system: a reserved partition)
 	pu="$(blkid -s PARTUUID -o value "$dev" 2> /dev/null)"
@@ -94,12 +99,12 @@ for b in /sys/class/block/sd*[0-9]; do
 	say "repairing ${label:-$m} ($fs), please wait"
 	case "$fs" in
 		exfat)
-			fsck.exfat -p "$dev" > /tmp/d.log 2>&1; c=$?
-			if [ $c -ge 4 ] && [ $c -lt 8 ]; then echo "--- -y" >> /tmp/d.log; fsck.exfat -y "$dev" >> /tmp/d.log 2>&1; c2=$?; [ $c2 -lt 4 ] && c=1 || c=$c2; fi ;;
+			fsck.exfat -p "$dev" < /dev/null > /tmp/d.log 2>&1; c=$?
+			if [ $c -ge 4 ] && [ $c -lt 8 ]; then echo "--- -y" >> /tmp/d.log; fsck.exfat -y "$dev" < /dev/null >> /tmp/d.log 2>&1; c2=$?; [ $c2 -lt 4 ] && c=1 || c=$c2; fi ;;
 		vfat)
-			if command -v fsck.vfat > /dev/null 2>&1; then fsck.vfat -a -w "$dev" > /tmp/d.log 2>&1; c=$?; else line 9 "no FAT checker here"; continue; fi ;;
+			if command -v fsck.vfat > /dev/null 2>&1; then fsck.vfat -a -w "$dev" < /dev/null > /tmp/d.log 2>&1; c=$?; else line 9 "no FAT checker here"; continue; fi ;;
 		ext2|ext3|ext4)
-			if command -v e2fsck > /dev/null 2>&1; then e2fsck -f -p "$dev" > /tmp/d.log 2>&1; c=$?; case $c in 0) ;; 1|2|3) c=1 ;; *) c=4 ;; esac; else line 9 "no ext checker here"; continue; fi ;;
+			if command -v e2fsck > /dev/null 2>&1; then e2fsck -f -p "$dev" < /dev/null > /tmp/d.log 2>&1; c=$?; case $c in 0) ;; 1|2|3) c=1 ;; 4|5|6|7) c=4 ;; *) c=8 ;; esac; else line 9 "no ext checker here"; continue; fi ;;
 		*) line 9 "$fs: repair it on a PC"; continue ;;
 	esac
 	cat /tmp/d.log >> "$OUT/drives.log"

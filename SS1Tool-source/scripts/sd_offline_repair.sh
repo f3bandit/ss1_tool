@@ -195,7 +195,7 @@ cmd_result() {
 	rm -f "$r.$$"; sync
 	# and the repair drive itself, now nothing runs from it: unmounted and repaired, in the background
 	st_set self_state running; st_set self_result ""; st_set self_summary ""
-	setsid -f bash "$SELF" selfrepair < /dev/null > /dev/null 2>&1 || bash "$SELF" selfrepair < /dev/null > /dev/null 2>&1 &
+	( setsid bash "$SELF" selfrepair & ) < /dev/null > /dev/null 2>&1   # (detached: the caller's output isn't held open)
 	echo "result=$res"
 }
 
