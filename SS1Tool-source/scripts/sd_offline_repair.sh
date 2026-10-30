@@ -23,6 +23,10 @@
 #   sd_offline_repair.sh result [boot]   a repair's result, from the drive; boot: wake the dock's NVMe first
 #   sd_offline_repair.sh selfrepair      repair the repair drive itself (result does it after a repair)
 #   sd_offline_repair.sh remove          the lines off the SD card, the copy off the drive
+#
+# On a SuperStation running Phosphor, the repair drive is at /media/repair, read-only, not a /media/usbN
+# (so nothing looking for games or room on /media/usb* uses it): made writable only while this writes to
+# it, and read-only again.
 
 set -u
 SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"
@@ -41,6 +45,15 @@ UBT="$FAT/linux/u-boot.txt"
 NEED_MB=1024
 SUBDIR="ss1tool/rescue"                                 # MiSTer's kernel keeps "/root2/<loop=>" in 32 bytes:
 IMG="os.img"                                            # "/root2/ss1tool/rescue/os.img" is 28
+REPAIR_MNT="${SDR_REPAIR_MNT:-/media/repair}"
+RW_DONE=""
+need_rw() {   # mount: /media/repair writable until this script ends
+	[ "${1:-}" = "$REPAIR_MNT" ] && [ -z "$RW_DONE" ] || return 0
+	awk -v m="$REPAIR_MNT" '$2 == m' "$MOUNTS" | grep -q ' ro[, ]' || return 0
+	mount -o remount,rw "$REPAIR_MNT" 2> /dev/null && RW_DONE=1
+}
+back_ro() { [ -n "$RW_DONE" ] && sync && mount -o remount,ro "$REPAIR_MNT" 2> /dev/null; RW_DONE=""; }
+trap back_ro EXIT
 
 st_get() { sed -n "s/^$1=//p" "$STATE" 2>/dev/null | head -1; }
 st_set() {
@@ -66,7 +79,7 @@ model_of() {
 candidates() {
 	local dev m fs p free seen=" "
 	while read -r dev m fs _; do
-		case "$m" in /media/usb[0-9]*) ;; *) continue ;; esac
+		case "$m" in /media/usb[0-9]*|"$REPAIR_MNT") ;; *) continue ;; esac
 		case "$seen" in *" $dev "*) continue ;; esac; seen="$seen$dev "
 		[ "$fs" = exfat ] || continue
 		p="$(blkid -s PARTUUID -o value "$dev" 2> /dev/null)"; [ -n "$p" ] || continue
@@ -123,6 +136,7 @@ image_state() {
 }
 make_image() {   # mount
 	local m="$1" mnt=/tmp/ss1tool-sdrepair rc
+	need_rw "$m"
 	mkdir -p "$m/$SUBDIR" || return 1
 	cp "$FAT/linux/linux.img" "$m/$SUBDIR/$IMG.new" || { rm -f "$m/$SUBDIR/$IMG.new"; echo "FAIL couldn't copy Linux to the drive"; return 1; }
 	mkdir -p "$mnt"
@@ -178,6 +192,7 @@ cmd_result() {
 	fi
 	[ -n "$m" ] || return 0
 	r="$m/$SUBDIR/result.txt"; [ -f "$r" ] || return 0
+	need_rw "$m"
 	mv -f "$r" "$r.$$" 2> /dev/null || return 0             # (one reader at a time)
 	at="$(sed -n 's/^at=//p' "$r.$$")"; e="$(sed -n 's/^epoch=//p' "$r.$$")"
 	[ -n "$e" ] && at="$(date -d "@$e" '+%Y-%m-%d %H:%M:%S' 2> /dev/null || echo "$at")"   # (the copy has no time zone: UTC)
@@ -216,6 +231,7 @@ cmd_selfrepair() {
 			st_set self_result failed; st_set self_summary "the drive is mounted twice and in use: restart, then repair it in SD diagnostics"; st_set self_state done; return
 		fi
 		out="$(NODIALOG=1 bash "$FAT/Scripts/sd_integrity.sh" --run fsrepair "$m" 2>&1)"
+		[ "$m" = "$REPAIR_MNT" ] && grep -q " $REPAIR_MNT " "$MOUNTS" && mount -o remount,ro "$REPAIR_MNT" 2> /dev/null
 		printf '%s\n' "$out" > "$DATA/last-self.log"
 		sum="$(printf '%s\n' "$out" | sed -n 's/^RESULT: //p' | tail -1)"
 		case "$sum" in
@@ -248,7 +264,7 @@ cmd_status() {
 	# every drive plugged in (what a repair would repair): mount|partuuid|model|fs|label
 	local seen=" "
 	while read -r dev mpt fs _; do
-		case "$mpt" in /media/usb[0-9]*) ;; *) continue ;; esac
+		case "$mpt" in /media/usb[0-9]*|"$REPAIR_MNT") ;; *) continue ;; esac
 		case "$seen" in *" $dev "*) continue ;; esac; seen="$seen$dev "   # (MiSTer can mount a drive twice)
 		[ "$fs" = fuseblk ] && fs="$(blkid -s TYPE -o value "$dev" 2> /dev/null)"
 		echo "plugged=$mpt|$(blkid -s PARTUUID -o value "$dev" 2> /dev/null)|$(model_of "$dev")|$fs|$(blkid -s LABEL -o value "$dev" 2> /dev/null | tr '|' ' ')"
@@ -283,6 +299,7 @@ cmd_arm() {
 	m="$(mount_of_partuuid "$p")"; [ -n "$m" ] || { echo "FAIL the repair drive ($(st_get model)) isn't plugged in"; return 1; }
 	[ "$(image_state)" = ok ] || { echo "refreshing the copy of Linux on the drive"; make_image "$m" || return 1; }
 	[ "$(block_state)" = ok ] || write_block "$p" || return 1
+	need_rw "$m"
 	rm -f "$m/$SUBDIR/result.txt"
 	$DEVMEM $MARK 32 $WORD || { echo "FAIL couldn't set the restart word"; return 1; }
 	st_set armed_at "$(date +%s)"
@@ -305,7 +322,7 @@ cmd_remove() {
 	local p m
 	p="$(st_get partuuid)"; m="$( [ -n "$p" ] && mount_of_partuuid "$p")"
 	[ -f "$UBT" ] && { strip_block "$UBT" > "$UBT.ss1tool" && mv -f "$UBT.ss1tool" "$UBT"; }
-	[ -n "$m" ] && rm -rf "${m:?}/$SUBDIR" && rmdir "$m/ss1tool" 2> /dev/null
+	[ -n "$m" ] && need_rw "$m" && rm -rf "${m:?}/$SUBDIR" && rmdir "$m/ss1tool" 2> /dev/null
 	$DEVMEM $MARK 32 0 2> /dev/null
 	log "offline repair removed"
 	rm -f "$STATE"; sync

@@ -664,7 +664,7 @@ func apiTargets(w http.ResponseWriter, r *http.Request) {
 }
 
 var diagTests = map[string]bool{"quick": true, "windows": true, "partition": true, "boot": true, "kernel": true, "drive": true, "fscheck": true, "fsrepair": true, "health": true, "speed": true}
-var targetRe = regexp.MustCompile(`^/media/(fat|usb[0-9]+)$`)
+var targetRe = regexp.MustCompile(`^/media/(fat|usb[0-9]+|repair)$`) // (repair: Phosphor keeps its repair drive there)
 
 func apiDiag(w http.ResponseWriter, r *http.Request) {
 	if !needConn(w) {
