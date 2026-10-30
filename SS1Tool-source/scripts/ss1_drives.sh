@@ -56,6 +56,16 @@ link_fix() {   # device mount
 	done
 }
 
+# when the hook runs for a drive it just moved: MiSTer's next hook (00_create_model_symlink) names it in
+# /var/run/usbmount after the mount it was given, and skips a name that's there: named here first
+name_first() {   # new mount (UM_VENDOR, UM_MODEL, UM_DEVICE from usbmount)
+	local v o n p
+	[ -n "${UM_DEVICE:-}" ] || return 0
+	v="$(echo "${UM_VENDOR:-}" | sed 's/ /_/g; s/[^0-9A-Za-z._-]//g')"; o="$(echo "${UM_MODEL:-}" | sed 's/ /_/g; s/[^0-9A-Za-z._-]//g')"
+	n="${v}${v:+${o:+_}}$o"; p="$(echo "$UM_DEVICE" | sed 's/^.*[^0-9]\([0-9]*\)/\1/')"
+	[ -n "$n" ] && mkdir -p /var/run/usbmount && ln -sfn "$1" "/var/run/usbmount/$n${p:+_$p}"
+}
+
 is_repair() {   # mount device
 	[ -f "$1/ss1tool/rescue/os.img" ] || [ -f "$1/phosphor/rescue/os.img" ] || return 1
 	is_nvme "$2" && return 1                      # (an older Phosphor kept its repair copy on the NVMe drive)
@@ -74,7 +84,7 @@ hide_repair() {   # mount device
 		return 0
 	fi
 	mkdir -p "$R" && mount --move "$m" "$R" && mount -o remount,ro "$R" || return 1
-	link_fix "$d" "$R" "$m"
+	link_fix "$d" "$R" "$m"; name_first "$R"
 	log "the repair drive ($d) at $R, read-only (not $m)"
 }
 
@@ -84,7 +94,7 @@ pin_games() {   # mount device
 	[ "$m" = /media/usb0 ] && return 0
 	if ! mounted_at /media/usb0; then
 		mkdir -p /media/usb0 && mount --move "$m" /media/usb0 || return 1
-		link_fix "$d" /media/usb0 "$m"
+		link_fix "$d" /media/usb0 "$m"; name_first /media/usb0
 		log "the games drive ($d) at /media/usb0 (not $m)"
 		return 0
 	fi
@@ -95,7 +105,7 @@ pin_games() {   # mount device
 	if mount --move "$m" /media/usb0; then
 		mount --move "$o" "$m"
 		link_fix "$od" "$m" /media/usb0
-		link_fix "$d" /media/usb0 "$m"
+		link_fix "$d" /media/usb0 "$m"; name_first /media/usb0
 		log "the games drive ($d) at /media/usb0; $od moved from usb0 to $m"
 	else
 		mount --move "$o" /media/usb0
