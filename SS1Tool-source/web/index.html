@@ -1482,7 +1482,7 @@ let SR={},SRW=null;
 function srNvme(d){return d&&d.model==="NVMe drive"}
 function srSort(c){return c.slice().sort((a,b)=>srNvme(a)-srNvme(b))}
 function srName(d){return srNvme(d)?"NVMe drive":(d.label?`USB drive "${d.label}"`:"USB drive"+(d.model?" · "+d.model:""))}
-function srPath(d){return " ("+(d.path||"").split("/").pop()+")"}
+function srPath(d){return d.path==="/media/repair"?"":" ("+(d.path||"").split("/").pop()+")"}
 function srRes(r){return {clean:"no errors",repaired:"repaired",errors_left:"errors left",failed:"not repaired",skipped:"not checked"}[r]||"not repaired"}
 function srCol(r){return r==="clean"||r==="repaired"?"#3fb950":r==="errors_left"?"#f85149":"#e3b341"}
 async function srLoad(){try{SR=await api("/api/sdrepair",{});srDraw();
