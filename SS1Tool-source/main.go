@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.32.1"
+const appVersion = "1.32.2"
 
 // displayVersion is the version shown in the app: SS1 Tool for Android has its own numbers,
 // passed on by the Android app.
@@ -65,6 +65,8 @@ type Config struct {
 	SettingsUpdated int64  `json:"settings_updated"` // when saved SuperStations or port labels last changed here
 	// MiSTer & Linux backups turned off on this copy (an option on phones): no checks, not synced here
 	SysBackupOff bool `json:"sysbk_off"`
+	// Drive guard (drives.go) turned off: the games drive isn't kept at usb0, the repair drive not hidden
+	DriveGuardOff bool `json:"drive_guard_off"`
 }
 
 var (
@@ -175,6 +177,7 @@ func main() {
 	registerRoutes3(mux)
 	registerRoutesSys(mux)
 	registerRoutesPower(mux)
+	registerRoutesDrives(mux)
 	registerRoutesBT(mux)
 	registerRoutesSaves(mux)
 	registerRoutesCIFS(mux)
