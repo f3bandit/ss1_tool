@@ -106,6 +106,7 @@ func session() (*ssh.Session, error) {
 	go sysCheck() // reconnected (the SuperStation may have restarted after an update)
 	go powerSync()
 	go cmAutoConfirm()
+	go driveGuard() // the games drive at usb0, the repair drive hidden (drives.go)
 	sshMu.Lock()
 	c = sshClient
 	sshMu.Unlock()

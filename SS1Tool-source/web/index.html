@@ -991,6 +991,9 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <details style="margin:0 0 10px"><summary class="muted" style="cursor:pointer">How it works</summary><p class="muted" style="margin:8px 0 0">The SD card can't be repaired while the SuperStation runs from it. SS1 Tool puts a copy of the SuperStation's own MiSTer Linux on a repair drive (exFAT, 1 GB free; about 400 MB in <code>ss1tool/rescue</code> on it, nothing else changes) and a few lines in the SD card's <code>linux/u-boot.txt</code> that do nothing until you ask. The restart starts that copy, which repairs the drives and restarts normally; every other start-up stays exactly as it is. The repair runs from the repair drive, so that one is repaired after the restart instead. <b>A spare USB stick is the best repair drive</b>: it leaves the NVMe drive free to be repaired offline with the SD card.</p></details>
   <div id="srBody"><p class="muted">Open this page while connected to see it.</p></div>
   <pre class="out" id="srOut" style="display:none"></pre></div>
+ <div class="card" id="dgCard"><h3>Drive guard</h3>
+  <p class="muted" style="margin:0 0 10px">Keeps the games drive at <code>/media/usb0</code>, even when a USB stick comes up before the NVMe drive (it used to take usb0, and Console Mode's lists, MiSTer's recent files and favourites, MGLs and Zaparoo cards then pointed at the wrong drive). The repair drive is kept out of the drive list, read-only at <code>/media/repair</code>, so nothing puts games on it. On by default; it's set again at every start-up, so MiSTer Linux updates don't undo it.</p>
+  <div id="dgBody"><p class="muted">Open this page while connected to see it.</p></div></div>
 </div>
 <div class="subpage" id="power">
  <h2>Power</h2><p class="sub">A power adapter that can't keep up resets the SuperStation instantly under load: no crash, no error, no log. The power watch catches it: heavy work that started and never finished, with no normal restart in between, means the power went. Switching off while nothing heavy is running is never counted.</p>
@@ -1253,7 +1256,7 @@ async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const 
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
 const SUBLOAD={stSync:()=>{syncLoad();syncDrives()},fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},sysbk:()=>sysLoad(true),power:()=>pwLoad(true),shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
- sddiag:()=>{loadTargets();srLoad()},padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
+ sddiag:()=>{loadTargets();srLoad();dgLoad()},padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
 function openPage(s){
@@ -1485,6 +1488,12 @@ function srName(d){return srNvme(d)?"NVMe drive":(d.label?`USB drive "${d.label}
 function srPath(d){return d.path==="/media/repair"?"":" ("+(d.path||"").split("/").pop()+")"}
 function srRes(r){return {clean:"no errors",repaired:"repaired",errors_left:"errors left",failed:"not repaired",skipped:"not checked"}[r]||"not repaired"}
 function srCol(r){return r==="clean"||r==="repaired"?"#3fb950":r==="errors_left"?"#f85149":"#e3b341"}
+async function dgLoad(what){try{const j=await api("/api/driveguard",what?{do:what}:{});
+ const kv=(k,v)=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`;
+ $("dgBody").innerHTML=kv("Status",j.on?(j.hook==="1"?"On":"On (set at the next connect)"):"Off")+kv("Games drive",j.games_mount?esc(j.games_mount):(j.games?"not plugged in":"none found yet"))+kv("Repair drive",j.repair_mount?"hidden, read-only":"-")
+  +((j.log||[]).length?`<pre class="out">${esc(j.log.join("\n"))}</pre>`:"")
+  +`<div class="row" style="margin-top:10px">${j.on?`<button class="b" onclick="busy(this,()=>dgLoad('off'))">Turn off</button>`:`<button class="b p" onclick="busy(this,()=>dgLoad('on'))">Turn on</button>`}</div>`}
+ catch(e){$("dgBody").innerHTML=`<p class="muted">${esc(e.message)}</p>`}}
 async function srLoad(){try{SR=await api("/api/sdrepair",{});srDraw();
   if(SR.fresh&&SR.last_result&&localStorage.getItem("srShown")!==SR.last_at){try{localStorage.setItem("srShown",SR.last_at)}catch(e){}toast("Drives repaired: SD card "+srRes(SR.last_result))}
   if(SR.self_state==="running"){clearTimeout(srLoad._t);srLoad._t=setTimeout(()=>{if($("srBody").offsetParent)srLoad()},4000)}}
