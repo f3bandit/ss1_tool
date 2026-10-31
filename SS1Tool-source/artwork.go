@@ -14,6 +14,7 @@ package main
 // tables (art_tables.go). Games are never touched: only image files in media folders.
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -1334,6 +1335,81 @@ func artCleanupList() []artOrphan {
 	return res
 }
 
+// artBackup copies pictures from a media folder on the SuperStation to a folder on this PC (before they're
+// deleted). Every picture has to arrive, or it fails.
+func artBackup(dir string, files []string, dest string) error {
+	if err := os.MkdirAll(dest, 0o755); err != nil {
+		return err
+	}
+	var args []string
+	want := map[string]bool{}
+	for _, f := range files {
+		if strings.ContainsAny(f, "/\x00") || !artImgExt.MatchString(f) {
+			continue
+		}
+		args = append(args, shq("./"+f)) // ("./": busybox tar on MiSTer, a name starting with "-")
+		want[f] = true
+	}
+	for len(args) > 0 {
+		n := len(args)
+		if n > 200 {
+			n = 200
+		}
+		pr, pw := io.Pipe()
+		errc := make(chan error, 1)
+		go func(part []string) {
+			err := runTo("cd "+shq(dir)+" && tar cf - "+strings.Join(part, " "), pw)
+			pw.CloseWithError(err)
+			errc <- err
+		}(args[:n])
+		tr := tar.NewReader(pr)
+		for {
+			h, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				pr.CloseWithError(err)
+				<-errc
+				return err
+			}
+			name := path.Base(h.Name)
+			if h.Typeflag != tar.TypeReg || !want[name] {
+				continue
+			}
+			tmp := filepath.Join(dest, name+".part")
+			f, err := os.Create(tmp)
+			if err != nil {
+				pr.CloseWithError(err)
+				<-errc
+				return err
+			}
+			_, err = io.Copy(f, tr)
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
+			if err == nil {
+				err = os.Rename(tmp, filepath.Join(dest, name))
+			}
+			if err != nil {
+				pr.CloseWithError(err)
+				<-errc
+				return err
+			}
+			delete(want, name)
+		}
+		_, _ = io.Copy(io.Discard, pr) // (tar pads its end: read it all, or the SSH side waits for a reader)
+		if err := <-errc; err != nil {
+			return err
+		}
+		args = args[n:]
+	}
+	if len(want) > 0 {
+		return fmt.Errorf("%d pictures didn't arrive", len(want))
+	}
+	return nil
+}
+
 // artDelete removes image files from media folders only.
 func artDelete(dir string, files []string) error {
 	if !strings.HasSuffix(dir, "/"+artMediaDir) || !(strings.HasPrefix(dir, "/media/fat/games/") || strings.HasPrefix(dir, "/media/usb")) || strings.Contains(dir, "..") {
@@ -1695,8 +1771,13 @@ func apiArtDelete(w http.ResponseWriter, r *http.Request) {
 		Mode    string
 		Dirs    []string
 		Scrapes bool
+		Backup  bool // copy the pictures to this PC first (scrapes/_deleted/<date>/<system>/)
 	}
 	_ = readJSON(r, &req)
+	backupDir := ""
+	if req.Backup {
+		backupDir = filepath.Join(artRoot(), "_deleted", time.Now().Format("2006-01-02 150405"))
+	}
 	want := map[string]bool{}
 	for _, d := range req.Dirs {
 		want[d] = true
@@ -1712,6 +1793,12 @@ func apiArtDelete(w http.ResponseWriter, r *http.Request) {
 		}
 		if len(files) == 0 {
 			continue
+		}
+		if backupDir != "" {
+			if err := artBackup(o.Dir, files, filepath.Join(backupDir, artSafe(o.Name))); err != nil {
+				fail(w, 502, "Nothing was deleted: the backup to this PC failed ("+err.Error()+")")
+				return
+			}
 		}
 		if err := artDelete(o.Dir, files); err != nil {
 			fail(w, 502, err.Error())
@@ -1731,5 +1818,9 @@ func apiArtDelete(w http.ResponseWriter, r *http.Request) {
 	if req.Mode == "backgrounds" {
 		what = "backgrounds"
 	}
-	writeJSON(w, map[string]any{"ok": true, "message": fmt.Sprintf("Deleted %d %s from the SuperStation. Games weren't touched.", n, what)})
+	msg := fmt.Sprintf("Deleted %d %s from the SuperStation. Games weren't touched.", n, what)
+	if backupDir != "" && n > 0 {
+		msg += " A copy of each is on this PC in " + backupDir + "."
+	}
+	writeJSON(w, map[string]any{"ok": true, "message": msg, "backup": backupDir})
 }
