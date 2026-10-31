@@ -1,0 +1,71 @@
+# Console Mode safety check (replaces the Linux watch): every hour it looks for a new Console Mode
+# release (Retro-Remake/ConsoleMode_Distribution), a new MiSTer Linux image (Distribution_MiSTer, the one
+# Update All installs) and new MiSTer Main commits. When something is new it checks what that breaks for
+# Console Mode and writes the verdicts and alerts SS1 Tool shows (update_flags/linux_update*.ini,
+# cores_update*.ini) plus update_flags/cm_report.md. GitHub can't start a workflow on a release in
+# someone else's repo, so it looks every hour; when nothing changed it stops after a few small requests.
+# When a verdict changes it opens an issue (which emails the repo owner) with the report.
+name: Console Mode safety check
+
+on:
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Check again even if nothing is new"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths: ["update_flags/known_problems.ini", ".github/scripts/cm_safety.py"]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: cm-safety
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0       # (history without file contents: to see what a push changed)
+          filter: blob:none
+      - name: Tools (debugfs, 7z, readelf)
+        run: |
+          command -v debugfs >/dev/null && command -v 7z >/dev/null && command -v readelf >/dev/null || {
+            sudo apt-get update -qq && sudo apt-get install -y -qq e2fsprogs p7zip-full binutils xz-utils; }
+      - name: Check Console Mode against MiSTer's updates
+        id: check
+        # (a change to known_problems.ini alone redoes the alerts, not the Linux download)
+        run: |
+          args=""
+          [ "${{ inputs.force }}" = "true" ] && args="--force"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            args="--force"
+            git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" 2>/dev/null | grep -q cm_safety.py || args="--force --keep-linux"
+          fi
+          python3 .github/scripts/cm_safety.py $args
+      - name: Save the verdicts
+        run: |
+          git add update_flags/
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Console Mode safety: ${{ steps.check.outputs.summary || 'checked' }}"
+            git pull --rebase -q && git push
+          fi
+      - name: Email the report when a verdict changes (GitHub issue)
+        if: steps.check.outputs.verdict_changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create cm-safety --color d93f0b --description "Console Mode safety verdict changed" --force
+          gh issue create --title "Console Mode safety: ${{ steps.check.outputs.summary }}" \
+            --label cm-safety --assignee "${{ github.repository_owner }}" --body-file update_flags/cm_report.md
