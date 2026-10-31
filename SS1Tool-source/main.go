@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.32.3"
+const appVersion = "1.32.4"
 
 // displayVersion is the version shown in the app: SS1 Tool for Android has its own numbers,
 // passed on by the Android app.
@@ -58,6 +58,7 @@ type Config struct {
 	TrayTipShown bool              `json:"tray_tip_shown"`
 	TrayPromoted bool              `json:"tray_promoted"`
 	AdvisorySeen string            `json:"advisory_seen"`
+	CoresSeen    string            `json:"cores_seen"` // the cores advisory last notified about
 	PCShare      PCShare           `json:"pc_share"`
 	// Sync
 	DeviceID        string `json:"device_id"`        // this copy of SS1 Tool
