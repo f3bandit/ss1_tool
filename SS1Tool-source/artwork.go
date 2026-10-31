@@ -120,23 +120,25 @@ type artGame struct {
 	Manual string `json:"manual,omitempty"` // name typed for a manual scrape
 	File   string `json:"-"`                // the game's file on the SuperStation (a folder's first disc)
 	Found  string `json:"found,omitempty"`  // how it was matched: disc code, checksum, name, similar name, based on, manual
+	// a disc set's art that is only there under its first disc's name (copied under the folder's name on install)
+	boxFrom, bgFrom string
 }
 
 type artSystem struct {
-	Key    string                      `json:"key"` // Console Mode section, e.g. SNES
-	Name   string                      `json:"name"`
-	Exts   []string                    `json:"-"`
-	Dirs   []string                    `json:"dirs"`
-	Games  []*artGame                  `json:"-"`
-	Count  int                         `json:"games"`
-	WithBx int                         `json:"with_box"`
-	WithBG int                         `json:"with_bg"`
-	LR     bool                        `json:"libretro"`
-	SS     bool                        `json:"screenscraper"`
-	TG     bool                        `json:"thegamesdb"`
-	media  map[string]map[string]int64 // dir -> file -> size
-	opt    map[string]map[string]int64 // dir -> file in media/optimized -> size
-	art    map[string]map[string]bool  // dir -> lower-case name without extension of each picture in media (.png, .jpg, .jpeg)
+	Key    string                       `json:"key"` // Console Mode section, e.g. SNES
+	Name   string                       `json:"name"`
+	Exts   []string                     `json:"-"`
+	Dirs   []string                     `json:"dirs"`
+	Games  []*artGame                   `json:"-"`
+	Count  int                          `json:"games"`
+	WithBx int                          `json:"with_box"`
+	WithBG int                          `json:"with_bg"`
+	LR     bool                         `json:"libretro"`
+	SS     bool                         `json:"screenscraper"`
+	TG     bool                         `json:"thegamesdb"`
+	media  map[string]map[string]int64  // dir -> file -> size
+	opt    map[string]map[string]int64  // dir -> file in media/optimized -> size
+	art    map[string]map[string]string // dir -> lower-case name without extension -> file name, of each picture in media (.png, .jpg, .jpeg)
 }
 
 var (
@@ -280,7 +282,7 @@ done; true`)
 	for _, s := range systems {
 		s.media = map[string]map[string]int64{}
 		s.opt = map[string]map[string]int64{}
-		s.art = map[string]map[string]bool{}
+		s.art = map[string]map[string]string{}
 		for _, d := range s.Dirs {
 			byDir[d] = s
 		}
@@ -313,9 +315,9 @@ done; true`)
 				// art Console Mode shows: PNG or JPEG (its own scraper saves .jpg when ScreenScraper serves a JPEG)
 				if l[0] == 'm' && artPicExt[strings.ToLower(path.Ext(p[2]))] {
 					if s.art[cur] == nil {
-						s.art[cur] = map[string]bool{}
+						s.art[cur] = map[string]string{}
 					}
-					s.art[cur][strings.ToLower(strings.TrimSuffix(p[2], path.Ext(p[2])))] = true
+					s.art[cur][strings.ToLower(strings.TrimSuffix(p[2], path.Ext(p[2])))] = p[2]
 				}
 			}
 		case strings.HasPrefix(l, "d|./"), strings.HasPrefix(l, "f|./"):
@@ -360,8 +362,22 @@ done; true`)
 				if folder {
 					g.File = d + "/" + folderFile[e.p]
 				}
-				g.HasBox = s.art[d][strings.ToLower(t)]
-				g.HasBG = s.art[d][strings.ToLower(t+artBGSuffix)]
+				g.HasBox = s.art[d][strings.ToLower(t)] != ""
+				g.HasBG = s.art[d][strings.ToLower(t+artBGSuffix)] != ""
+				// a disc set in its own folder: Console Mode lists it under the folder's name and looks for art by
+				// that name. Art packs name it by disc ("Game (USA) (Disc 1).png"): the first disc's picture is used,
+				// and copied under the folder's name when the art is copied to the SuperStation
+				if folder {
+					disc := strings.ToLower(strings.TrimSuffix(path.Base(folderFile[e.p]), path.Ext(folderFile[e.p])))
+					for _, k := range []string{disc, strings.ToLower(t + " (Disc 1)")} {
+						if f := s.art[d][k]; f != "" && !g.HasBox {
+							g.HasBox, g.boxFrom = true, f
+						}
+						if f := s.art[d][k+strings.ToLower(artBGSuffix)]; f != "" && !g.HasBG {
+							g.HasBG, g.bgFrom = true, f
+						}
+					}
+				}
 				s.Games = append(s.Games, g)
 			}
 		}
@@ -1180,12 +1196,43 @@ func artPending(systems map[string]bool) map[string][]restoreItem {
 	return res
 }
 
+// artDiscCopies: the SuperStation-side copies that give a disc set's folder its first disc's art.
+// Returns the shell commands (one per picture) and how many there are.
+func artDiscCopies(systems map[string]bool) []string {
+	var cmds []string
+	artMu.Lock()
+	defer artMu.Unlock()
+	for _, s := range artSystems2 {
+		if systems != nil && !systems[s.Key] {
+			continue
+		}
+		for _, g := range s.Games {
+			for _, c := range [][2]string{{g.boxFrom, g.Title}, {g.bgFrom, g.Title + artBGSuffix}} {
+				if c[0] == "" {
+					continue
+				}
+				m := g.Dir + "/" + artMediaDir + "/"
+				dst := m + c[1] + strings.ToLower(path.Ext(c[0]))
+				cmds = append(cmds, "[ -e "+shq(dst)+" ] || cp "+shq(m+c[0])+" "+shq(dst))
+			}
+		}
+	}
+	return cmds
+}
+
 func artInstall(systems map[string]bool) (string, error) {
 	artJob.Next("Checking what's already on the SuperStation")
 	if err := artScan(); err != nil {
 		return "", err
 	}
 	pend := artPending(systems)
+	discs := artDiscCopies(systems)
+	if len(discs) > 0 {
+		artJob.Next(fmt.Sprintf("Giving %d disc sets their first disc's art", len(discs)))
+		if out, err := run(strings.Join(discs, "; ") + "; sync; echo ok"); err != nil || !strings.Contains(out, "ok") {
+			return "", fmt.Errorf("copying the first disc's art under the folder's name: %v %s", err, strings.TrimSpace(out))
+		}
+	}
 	var total int64
 	n := 0
 	for _, items := range pend {
@@ -1195,6 +1242,10 @@ func artInstall(systems map[string]bool) (string, error) {
 		n += len(items)
 	}
 	if n == 0 {
+		_ = artScan()
+		if len(discs) > 0 {
+			return fmt.Sprintf("%d disc sets now have their first disc's art under the folder's name, so Console Mode shows it. Everything else was already there.", len(discs)), nil
+		}
 		return "The SuperStation already has all the art in " + artRoot() + ".", nil
 	}
 	artJob.Next(fmt.Sprintf("Copying %d pictures (%s)", n, humanBytes(total)))
@@ -1213,7 +1264,11 @@ func artInstall(systems map[string]bool) (string, error) {
 		}
 	}
 	_ = artScan()
-	return fmt.Sprintf("Copied %d pictures (%s) to the SuperStation. Console Mode shows them the next time it lists those games.", n, humanBytes(total)), nil
+	extra := ""
+	if len(discs) > 0 {
+		extra = fmt.Sprintf(" %d disc sets got their first disc's art under the folder's name.", len(discs))
+	}
+	return fmt.Sprintf("Copied %d pictures (%s) to the SuperStation.%s Console Mode shows them the next time it lists those games.", n, humanBytes(total), extra), nil
 }
 
 // ---------------------------------------------------------------- clean up
@@ -1336,6 +1391,7 @@ func apiArtState(w http.ResponseWriter, r *http.Request) {
 		for _, items := range artPending(nil) {
 			pending += len(items)
 		}
+		pending += len(artDiscCopies(nil))
 	}
 	res := map[string]any{"systems": sys, "dir": artRoot(), "pending": pending, "job": artJob.Snapshot(), "box_max": artBoxMax, "bg_max": artBGMax}
 	if !sc.IsZero() {
