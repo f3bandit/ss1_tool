@@ -61,7 +61,7 @@ Kernel updates can still bring breaking changes in the future, though. SS1 Tool 
 
 ### Linux update advisory
 
-SS1 Tool also shows whether Linux updates are currently considered **safe**, need **caution**, or are **not recommended**. This advisory is maintained by hand in [`update_flags/`](https://github.com/f3bandit/ss1_tool/tree/main/update_flags) in this repo and updated when a problem is found or resolved. The app reads it from GitHub each time you open it, so you always see the latest status without updating the tool. It appears in **Setup → Update All** and in the **System status** panel:
+SS1 Tool also shows whether Linux updates are currently considered **safe**, need **caution**, or are **not recommended**. This advisory is checked automatically: every hour a GitHub Action in this repo looks for a new Console Mode release, a new MiSTer Linux image and new MiSTer Main changes, and when one drops it checks what it breaks for Console Mode (the libraries, tools and files Console Mode's programs use, the WiFi/Bluetooth adapters its drivers support, a new kernel series, and the MiSTer support newer cores need that Console Mode's own MiSTer program doesn't have yet). The alert lists the breaking changes it found. Problems that only show up when testing on the SS1 are added by hand and can only raise the verdict. Everything is in [`update_flags/`](https://github.com/f3bandit/ss1_tool/tree/main/update_flags), with the full report in [`cm_report.md`](https://github.com/f3bandit/ss1_tool/blob/main/update_flags/cm_report.md). The app reads it from GitHub each time you open it, so you always see the latest status without updating the tool. It appears in **Setup → Update All** and in the **System status** panel:
 
 | Status | Color | What it means |
 |---|---|---|
@@ -78,7 +78,9 @@ The advisory is only information. SS1 Tool never changes your settings by itself
 <summary>Advisory file format (for maintainers)</summary>
 
 - `update_flags/linux_update.ini` contains one line: `Linux_update = safe`, `Linux_update = warning` or `Linux_update = unsafe` (not case-sensitive; `warn` and `caution` also mean warning). Any other value shows as "No advisory".
-- `update_flags/linux_update_readme.ini` contains a short plain-text explanation, shown to users under the status.
+- `update_flags/linux_update_readme.ini` contains the alert text (the breaking changes found), shown to users under the status.
+- Both are written by `.github/scripts/cm_safety.py` (run by `.github/workflows/cm-safety.yml`), together with `cores_update.ini` / `cores_update_readme.ini` (cores that need newer MiSTer support than Console Mode has) and `cm_report.md`.
+- `update_flags/known_problems.ini` is the one file kept by hand: problems found on the SS1, per MiSTer Linux release (`[linux 260912]`), for every release (`[linux]`) or for cores (`[cores]`), each with `level = warning|unsafe` and `- ` lines. It can only raise a verdict.
 
 </details>
 
