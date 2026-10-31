@@ -502,7 +502,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 <div class="subpage" id="stUA">
  <div class="card" id="uaCard"><h3>Update All</h3><p>Downloads the latest update_all.sh and sets downloader.ini to the MiSTer-devel main distribution with <b>update_linux = false</b>. That keeps your SS1 in a stable lane: cores and the menu still update, but the Linux kernel stays as it is, so a breaking kernel change can't force you to reflash your SD card. A backup of downloader.ini is kept.</p>
   <div class="row"><button class="b p" onclick="act('/api/update-all')">Install Update All + apply settings</button><button class="b" onclick="term('update_all')">Run Update All (terminal)</button></div><div class="sst" id="ssUA"></div>
-  <div class="adv" id="advBox"></div></div>
+  <div class="adv" id="advBox"></div><div class="adv" id="coresBox" style="display:none"></div></div>
 </div>
 <div class="subpage" id="stPsx">
  <div class="card" id="psxCfgCard"><h3>PSX SNAC settings</h3><p>Sets which front ports the PlayStation core reads real controllers and memory cards from, right in its settings file (<code>/media/fat/config/PSX.CFG</code>). Every PSX core on the SS1 shares that file, Console Mode included. For real controllers in both front ports, SNAC has to be on for port 1 and port 2. Only these options are changed: all your other PSX settings stay as they are, and a copy of the file is kept in <code>config/ss1tool_backup</code> first.</p>
@@ -1227,19 +1227,37 @@ const ADVS={safe:{c:"good",i:"&#10003;",s:"reported safe",l:"Linux updates: repo
  unsafe:{c:"bad",i:"&#10007;",s:"NOT recommended",l:"Linux updates: NOT recommended right now"},
  unknown:{c:"muted",i:"",s:"no advisory",l:"No Linux update advisory right now"},
  unavailable:{c:"muted",i:"",s:"couldn't check",l:"Couldn't check the advisory"}};
+// the cores advisory (Console Mode runs its own MiSTer program; cores that need newer MiSTer support may not work fully)
+const CADVS={safe:{c:"good",i:"&#10003;",s:"all supported",l:"Cores: all supported by Console Mode"},
+ warning:{c:"warn",i:"&#9888;",s:"some may not work fully",l:"Cores: some may not work fully in Console Mode"},
+ unsafe:{c:"bad",i:"&#10007;",s:"NOT recommended",l:"Cores: updating NOT recommended in Console Mode"},
+ unknown:{c:"muted",i:"",s:"no advisory",l:"No cores advisory right now"},
+ unavailable:{c:"muted",i:"",s:"couldn't check",l:"Couldn't check the advisory"}};
+function coresPill(long){if(!ADV)return'<span class="pill muted">checking...</span>';const a=CADVS[ADV.state==="unavailable"?"unavailable":(ADV.cores_state||"unknown")]||CADVS.unknown;return`<span class="pill ${a.c}">${a.i?a.i+" ":""}${long?a.l:a.s}</span>`}
+// the alert text without its "< state >" tag (the heading says it)
+function advText(t){return String(t||"").replace(/^\s*<\s*(safe|warning|unsafe)\s*>\s*/i,"")}
 function advPill(long){if(!ADV)return'<span class="pill muted">checking...</span>';const a=ADVS[ADV.state]||ADVS.unknown;return`<span class="pill ${a.c}">${a.i?a.i+" ":""}${long?a.l:a.s}</span>`}
 // update_linux: false is always green; when Linux updates are on, the color follows the advisory.
 function ulCls(v){if(v==="false")return"good";const st=ADV&&ADV.state;return st==="unsafe"?"bad":st==="safe"?"good":"warn"}
 async function loadAdvisory(refresh){try{ADV=await api("/api/advisory"+(refresh?"?refresh=1":""))}catch(e){ADV={state:"unavailable",error:e.message}}advChanged()}
 function renderAdvisory(){const a=ADV,box=$("advBox");if(!a||!box)return;const ul=UL==="false";
- const src=`<span class="muted" style="display:block;margin-top:8px">Linux update advisory maintained by f3bandit on <a href="https://github.com/f3bandit/ss1_tool/tree/main/update_flags" target="_blank" rel="noopener">GitHub</a>${a.checked?" · checked "+new Date(a.checked*1000).toLocaleTimeString():""} · <a href="#" onclick="loadAdvisory(true);return false">Check again</a>${a.checked&&!a.fresh&&a.state!=="unavailable"?" · a change on GitHub can take up to 5 minutes to show":""}</span>`;
- const desc=a.description&&(a.state==="safe"||a.state==="warning"||a.state==="unsafe")?`<div class="desc">${esc(a.description)}</div>`:"";
+ const src=`<span class="muted" style="display:block;margin-top:8px">Linux update advisory, checked automatically against each Console Mode and MiSTer release (f3bandit, <a href="https://github.com/f3bandit/ss1_tool/tree/main/update_flags" target="_blank" rel="noopener">GitHub</a>)${a.checked?" · checked "+new Date(a.checked*1000).toLocaleTimeString():""} · <a href="#" onclick="loadAdvisory(true);return false">Check again</a>${a.checked&&!a.fresh&&a.state!=="unavailable"?" · a change on GitHub can take up to 5 minutes to show":""}</span>`;
+ const desc=a.description&&(a.state==="safe"||a.state==="warning"||a.state==="unsafe")?`<div class="desc">${esc(advText(a.description))}</div>`:"";
+ renderCores();
  const prot=ul?`<div class="advline"><span class="pill good">&#10003; You're protected: update_linux = false, so Update All won't change your kernel.</span></div>`:"";
  if(a.state==="unsafe"){box.className="adv unsafe";box.innerHTML=`<h4 class="bad">&#10007; Linux updates are NOT recommended right now</h4>${desc}`+(ul?prot:`<div class="advline"><span class="pill bad">&#10007; Your SS1 will install Linux updates. Click <b>Install Update All + apply settings</b> to turn them off.</span></div>`)+src}
  else if(a.state==="warning"){box.className="adv warning";box.innerHTML=`<h4 class="warn">&#9888; Linux updates: use caution</h4>${desc}`+(ul?prot:`<div class="advline"><span class="pill warn">&#9888; Your SS1 will install Linux updates. Read the note above first, or click <b>Install Update All + apply settings</b> to turn them off.</span></div>`)+src}
  else if(a.state==="safe"){box.className="adv safe";box.innerHTML=`<h4 class="good">&#10003; Linux updates are currently reported safe</h4>${desc}<div class="muted">Keeping update_linux = false is still the most stable choice. Only change it if you need a newer kernel.</div>`+src}
  else if(a.state==="unknown"){box.className="adv";box.innerHTML=`<h4>No Linux update advisory published right now</h4>`+src}
  else{box.className="adv";box.innerHTML=`<h4 class="muted">Couldn't check the Linux update advisory</h4><div class="muted">${esc(a.error||"No internet connection?")}</div>`+src}}
+function renderCores(){const a=ADV,box=$("coresBox");if(!a||!box)return;const st=a.cores_state;
+ if(a.state==="unavailable"||!(st==="safe"||st==="warning"||st==="unsafe")){box.style.display="none";return}
+ box.style.display="";box.className="adv "+st;
+ const h={safe:`<h4 class="good">&#10003; Cores: Console Mode supports every core Update All updates</h4>`,
+  warning:`<h4 class="warn">&#9888; Cores: some may not work fully in Console Mode</h4>`,
+  unsafe:`<h4 class="bad">&#10007; Cores: updating is NOT recommended in Console Mode</h4>`}[st];
+ box.innerHTML=h+(a.cores_description?`<div class="desc">${esc(advText(a.cores_description))}</div>`:"")+
+  `<span class="muted" style="display:block;margin-top:8px">Checked automatically each time Console Mode or MiSTer releases an update. Full report on <a href="https://github.com/f3bandit/ss1_tool/blob/main/update_flags/cm_report.md" target="_blank" rel="noopener">GitHub</a>.</span>`}
 function advChanged(){renderAdvisory();if(LASTSTATUS&&$("statusCard").style.display!=="none")showStatus(LASTSTATUS)}
 async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const ok=t=>`<span class="pill good">&#10003; ${t}</span>`,no=t=>`<span class="pill warn">&#10007; ${t}</span>`,bad=t=>`<span class="pill bad">&#10007; ${t}</span>`;
  const ids=["ssScripts","ssSamba","ssUA","ssOverlap"];
@@ -1337,6 +1355,7 @@ function showStatus(s){LASTSTATUS=s;
   const rows=[["Kernel",s.kernel],["/MiSTer.version",s.misterver||"missing"],["SD card",s.fat_space],
    ["Console Mode",s.cm==="1"?'<span class="pill good">installed</span>':'<span class="pill warn">not found</span>'],["Samba",s.samba==="enabled"?'<span class="pill good">enabled · '+s.smbd+'</span>':'<span class="pill warn">'+s.samba+"</span>"],
    ["Linux updates",advPill(false)],
+   ...(s.cm==="1"?[["Cores (Console Mode)",coresPill(false)]]:[]),
    ["update_linux",`<span class="pill ${ulCls(s.update_linux)}">${esc(s.update_linux||"true (default)")}</span>`],
    ["Scraper login",s.scraper==="1"?'<span class="pill good">set</span>':'<span class="pill warn">not set</span>'],
    ["sd_integrity.sh",yes(s["script_sd_integrity.sh"])],["shutdown.sh",yes(s["script_shutdown.sh"])],
@@ -2345,7 +2364,9 @@ const WZSTEPS=[
  ${wchk("reflex","Reflex Adapt Manager","For Reflex Adapt controller adapters. Latest version from MiSTer Addons.")}
  ${wchk("psx","PSX BIOS Patcher","Patches the PlayStation BIOS so memory cards that support GameID can switch per game. Latest version from IncognitoMan.")}`,
 ()=>`<h3>Update All settings</h3><p>Update All downloads new cores and the MiSTer menu. It can also replace the Linux system underneath. One Linux update broke some hybrid cores (like Street Fighter III: 3rd Strike, Quake and Duke Nukem 3D) and front ends until it was fixed.</p>
- <div class="row">${ADV?advPill(true):""}</div>
+ <div class="row">${ADV?advPill(true)+" "+(ADV.cores_state&&ADV.cores_state!=="unknown"?coresPill(true):""):""}</div>
+ ${ADV&&ADV.state!=="unavailable"&&ADV.description?`<div class="adv ${ADV.state}"><div class="desc">${esc(advText(ADV.description))}</div></div>`:""}
+ ${ADV&&(ADV.cores_state==="warning"||ADV.cores_state==="unsafe")&&ADV.cores_description?`<div class="adv ${ADV.cores_state}"><div class="desc">${esc(advText(ADV.cores_description))}</div></div>`:""}
  ${wopt("ua","rec",W.ua,"Recommended: stable lane","Installs the latest Update All and sets update_linux = false with the official MiSTer-devel distribution. Cores and the menu keep updating, but Linux stays put, so a breaking change can't force a reflash.")}
  ${wopt("ua","keep",W.ua,"Keep my current settings","Leave Update All and downloader.ini as they are.")}
  ${CECNOTE}`,

@@ -72,6 +72,8 @@ SS1 Tool also shows whether Linux updates are currently considered **safe**, nee
 
 The same colors are used everywhere the advisory appears: **Connect → System status**, **Setup → Update All** and the **Wizard**. The `update_linux` setting follows them too: green when it's `false`, and when Linux updates are on, green, yellow or red to match the advisory.
 
+**Cores in Console Mode.** Console Mode runs its own MiSTer program, so Update All's MiSTer update never replaces it, but Update All's cores are made for the newest MiSTer. Under the Linux advisory SS1 Tool shows a second one: which cores need newer MiSTer support than Console Mode's program has, so they may not work fully under it (for example N64 64DD or Saturn RAM cartridges), system by system. It's also in **System status** (when Console Mode is installed) and in the **Wizard**, and SS1 Tool notifies you when it changes.
+
 The advisory is only information. SS1 Tool never changes your settings by itself.
 
 <details>

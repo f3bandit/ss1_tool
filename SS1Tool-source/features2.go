@@ -982,6 +982,10 @@ type advisory struct {
 	Source      string `json:"source"`
 	Error       string `json:"error,omitempty"`
 	Fresh       bool   `json:"fresh"` // read through the GitHub API (not the 5-minute raw-file cache)
+	// the cores verdict (cores_update.ini): Console Mode runs its own MiSTer program, and cores that need
+	// newer MiSTer support than it has may not work fully under it. Written by the safety check with Linux's.
+	CoresState       string `json:"cores_state"`
+	CoresDescription string `json:"cores_description"`
 }
 
 // advisoryAPI reads the flag files through the GitHub contents API, which isn't behind the
@@ -1031,7 +1035,10 @@ func fetchText(url string) (string, error) {
 }
 
 // parseAdvisory reads "Linux_update = safe|warning|unsafe" (key and value are case-insensitive; anything else is "unknown").
-func parseAdvisory(text string) (state, raw string) {
+func parseAdvisory(text string) (state, raw string) { return parseFlag(text, "linux_update") }
+
+// parseFlag reads "<key> = safe|warning|unsafe" the same way.
+func parseFlag(text, key string) (state, raw string) {
 	state = "unknown"
 	for _, l := range strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n") {
 		t := strings.TrimSpace(l)
@@ -1039,7 +1046,7 @@ func parseAdvisory(text string) (state, raw string) {
 			continue
 		}
 		k, v, ok := strings.Cut(t, "=")
-		if !ok || !strings.EqualFold(strings.TrimSpace(k), "linux_update") {
+		if !ok || !strings.EqualFold(strings.TrimSpace(k), key) {
 			continue
 		}
 		raw = strings.TrimSpace(v)
@@ -1084,6 +1091,15 @@ func getAdvisory(force bool) advisory {
 	if d, f2, err := fetchFlag("linux_update_readme.ini"); err == nil {
 		a.Description = cleanDescription(d)
 		fresh = fresh && f2
+	}
+	a.CoresState = "unknown"
+	if c, f3, err := fetchFlag("cores_update.ini"); err == nil {
+		a.CoresState, _ = parseFlag(c, "cores_update")
+		if d, f4, err := fetchFlag("cores_update_readme.ini"); err == nil {
+			a.CoresDescription = cleanDescription(d)
+			f3 = f3 && f4
+		}
+		fresh = fresh && f3
 	}
 	a.Fresh = fresh
 	advCache = &a
@@ -1347,6 +1363,23 @@ func advisoryWatch() {
 					trayNotify("Linux updates: use caution", note, "setup", true)
 				case seen != "" && !strings.HasPrefix(seen, "safe|"): // back to safe after a warning or unsafe
 					trayNotify("Linux updates: reported safe again", "No known problems with the current Linux update.", "setup", false)
+				}
+			}
+		}
+		// the cores advisory: a notification when it becomes warning or unsafe (or changes while it is)
+		if a.CoresState == "warning" || a.CoresState == "unsafe" || a.CoresState == "safe" {
+			key := a.CoresState + "|" + a.CoresDescription
+			cfgMu.Lock()
+			seen := cfg.CoresSeen
+			if key != seen {
+				cfg.CoresSeen = key
+			}
+			cfgMu.Unlock()
+			if key != seen {
+				saveConfig()
+				if a.CoresState != "safe" {
+					trayNotify("Console Mode: some cores may not work fully",
+						"Cores that need newer MiSTer support than Console Mode has. Open SS1 Tool to see which.", "setup", a.CoresState == "unsafe")
 				}
 			}
 		}
