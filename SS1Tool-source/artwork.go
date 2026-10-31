@@ -122,6 +122,7 @@ type artGame struct {
 	Found  string `json:"found,omitempty"`  // how it was matched: disc code, checksum, name, similar name, based on, manual
 	// a disc set's art that is only there under its first disc's name (copied under the folder's name on install)
 	boxFrom, bgFrom string
+	discs           []string // a disc set's discs (file names without extension): their art isn't leftover
 }
 
 type artSystem struct {
@@ -357,8 +358,16 @@ done; true`)
 				if t == "" || seen[t] || strings.HasPrefix(t, ".") || artIsBios(path.Base(e.p)) {
 					continue
 				}
+				var discs []string
+				if folder {
+					for _, f := range lists[d] {
+						if !f.dir && strings.HasPrefix(f.p, e.p+"/") && ext[strings.ToLower(path.Ext(f.p))] {
+							discs = append(discs, strings.TrimSuffix(path.Base(f.p), path.Ext(f.p)))
+						}
+					}
+				}
 				seen[t] = true
-				g := &artGame{Title: t, Dir: d, Folder: folder, File: d + "/" + e.p}
+				g := &artGame{Title: t, Dir: d, Folder: folder, File: d + "/" + e.p, discs: discs}
 				if folder {
 					g.File = d + "/" + folderFile[e.p]
 				}
@@ -1291,6 +1300,11 @@ func artCleanupList() []artOrphan {
 		titles := map[string]bool{}
 		for _, g := range s.Games {
 			titles[strings.ToLower(artSafe(g.Title))] = true
+			titles[strings.ToLower(g.Title)] = true
+			for _, n := range g.discs { // a disc set's discs, each with its own art (Console Mode lists them inside the folder)
+				titles[strings.ToLower(artSafe(n))] = true
+				titles[strings.ToLower(n)] = true
+			}
 		}
 		for _, d := range s.Dirs {
 			o := artOrphan{System: s.Key, Name: s.Name, Dir: d + "/" + artMediaDir}
