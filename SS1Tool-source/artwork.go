@@ -73,6 +73,9 @@ const (
 func artBoxFile(title string) string { return title + ".png" }
 func artBGFile(title string) string  { return title + artBGSuffix + ".png" }
 
+// the picture types Console Mode shows as art (SS1 Tool itself saves PNG)
+var artPicExt = map[string]bool{".png": true, ".jpg": true, ".jpeg": true}
+
 // BIOS and system files sit in the games folders too; they aren't games and get no art.
 var artBiosRe = regexp.MustCompile(`(?i)(^|[\s_\-\[(])bios([\s_\-\])]|\.|$)|^boot\d*\.rom$|^scph[\s_-]?\d+|^syscard\d*|^(000-lo|sfix|sp-s2|sm1|neo-epo|neopen|uni-bios)`)
 
@@ -133,6 +136,7 @@ type artSystem struct {
 	TG     bool                        `json:"thegamesdb"`
 	media  map[string]map[string]int64 // dir -> file -> size
 	opt    map[string]map[string]int64 // dir -> file in media/optimized -> size
+	art    map[string]map[string]bool  // dir -> lower-case name without extension of each picture in media (.png, .jpg, .jpeg)
 }
 
 var (
@@ -276,6 +280,7 @@ done; true`)
 	for _, s := range systems {
 		s.media = map[string]map[string]int64{}
 		s.opt = map[string]map[string]int64{}
+		s.art = map[string]map[string]bool{}
 		for _, d := range s.Dirs {
 			byDir[d] = s
 		}
@@ -305,6 +310,13 @@ done; true`)
 					mm[cur] = map[string]int64{}
 				}
 				mm[cur][p[2]] = sz
+				// art Console Mode shows: PNG or JPEG (its own scraper saves .jpg when ScreenScraper serves a JPEG)
+				if l[0] == 'm' && artPicExt[strings.ToLower(path.Ext(p[2]))] {
+					if s.art[cur] == nil {
+						s.art[cur] = map[string]bool{}
+					}
+					s.art[cur][strings.ToLower(strings.TrimSuffix(p[2], path.Ext(p[2])))] = true
+				}
 			}
 		case strings.HasPrefix(l, "d|./"), strings.HasPrefix(l, "f|./"):
 			lists[cur] = append(lists[cur], entry{l[0] == 'd', l[4:]})
@@ -348,8 +360,8 @@ done; true`)
 				if folder {
 					g.File = d + "/" + folderFile[e.p]
 				}
-				_, g.HasBox = s.media[d][artBoxFile(t)]
-				_, g.HasBG = s.media[d][artBGFile(t)]
+				g.HasBox = s.art[d][strings.ToLower(t)]
+				g.HasBG = s.art[d][strings.ToLower(t+artBGSuffix)]
 				s.Games = append(s.Games, g)
 			}
 		}
