@@ -141,6 +141,7 @@ type artSystem struct {
 	media  map[string]map[string]int64  // dir -> file -> size
 	opt    map[string]map[string]int64  // dir -> file in media/optimized -> size
 	art    map[string]map[string]string // dir -> lower-case name without extension -> file name, of each picture in media (.png, .jpg, .jpeg)
+	deep   map[string]bool              // lower-case names (and names without extension) of everything deeper than 2 levels: games in collection folders
 }
 
 var (
@@ -273,6 +274,7 @@ echo "@@MOUNTS"; awk '$2 ~ /^\/media\/usb[0-9]+$/ {print $2}' /proc/mounts`)
 	}
 	sb.WriteString(`; do [ -d "$d" ] || continue; echo "@@D|$d"
   ( cd "$d" && find . -mindepth 1 -maxdepth 2 -path ./` + artMediaDir + ` -prune -o -print 2>/dev/null | while IFS= read -r p; do [ -d "$p" ] && echo "d|$p" || echo "f|$p"; done )
+  ( cd "$d" && find . -path ./` + artMediaDir + ` -prune -o -print 2>/dev/null | awk -F/ 'NF>3{print "n|" $NF}' )
   [ -d "$d/` + artMediaDir + `" ] && ( cd "$d/` + artMediaDir + `" && for f in *; do [ -f "$f" ] && echo "m|$(stat -c %s "$f")|$f"; done )
   [ -d "$d/` + artMediaDir + `/` + artOptDir + `" ] && ( cd "$d/` + artMediaDir + `/` + artOptDir + `" && for f in *; do [ -f "$f" ] && echo "o|$(stat -c %s "$f")|$f"; done )
 done; true`)
@@ -285,6 +287,7 @@ done; true`)
 		s.media = map[string]map[string]int64{}
 		s.opt = map[string]map[string]int64{}
 		s.art = map[string]map[string]string{}
+		s.deep = map[string]bool{}
 		for _, d := range s.Dirs {
 			byDir[d] = s
 		}
@@ -321,6 +324,12 @@ done; true`)
 					}
 					s.art[cur][strings.ToLower(strings.TrimSuffix(p[2], path.Ext(p[2])))] = p[2]
 				}
+			}
+		case strings.HasPrefix(l, "n|"):
+			if s := byDir[cur]; s != nil {
+				n := strings.ToLower(l[2:])
+				s.deep[n] = true
+				s.deep[strings.TrimSuffix(n, path.Ext(n))] = true
 			}
 		case strings.HasPrefix(l, "d|./"), strings.HasPrefix(l, "f|./"):
 			lists[cur] = append(lists[cur], entry{l[0] == 'd', l[4:]})
@@ -1320,7 +1329,9 @@ func artCleanupList() []artOrphan {
 					o.BGs = append(o.BGs, f)
 					o.BGSize += sz
 				}
-				if !titles[strings.ToLower(t)] {
+				// art is only leftover when nothing on the drive has its name: not a game, a disc, nor a file or
+				// folder deeper down (a collection folder of games, "Arc the Lad Collection/Arc the Lad (USA)/...")
+				if !titles[strings.ToLower(t)] && !s.deep[strings.ToLower(t)] && !s.deep[strings.ToLower(artSafe(t))] {
 					o.Files = append(o.Files, f)
 					o.Bytes += sz
 				}
