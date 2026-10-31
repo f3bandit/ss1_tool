@@ -288,7 +288,7 @@ func apiRemote(w http.ResponseWriter, r *http.Request) {
 	_ = readJSON(r, &req)
 	cmNote := ""
 	switch req.Action {
-	case "reboot", "shutdown", "menu":
+	case "reboot", "shutdown", "menu", "menu_art":
 		// each of these starts Console Mode again: work with its update guard first
 		ask, note := cmBeforeRestart(req.Force)
 		if ask != "" {
@@ -334,6 +334,23 @@ func apiRemote(w http.ResponseWriter, r *http.Request) {
 			msg = "Safe shutdown started. " + note
 		}
 		writeJSON(w, map[string]any{"ok": true, "message": withNote(msg), "warn": note != ""})
+	case "menu_art":
+		// Reload Console Mode for new art: Console Mode keeps the art it decoded in caches/icons/<hash>.pack (and a
+		// copy in RAM, /tmp/consolemode_icons) and keeps showing the old pictures from it. The cache is deleted
+		// before the reload and again once the old Console Mode has closed (it may write the cache as it exits);
+		// the new one rebuilds it from the pictures in each media folder.
+		out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }
+clear() { rm -f /media/fat/ConsoleMode/caches/icons/*.pack; rm -rf /tmp/consolemode_icons; }
+old=""; for d in /proc/[0-9]*; do case "$(cat $d/comm 2>/dev/null)" in ConsoleMode_arm*) old="$old ${d#/proc/}";; esac; done
+clear
+timeout 3 sh -c 'echo "load_core menu.rbf" > /dev/MiSTer_cmd' || { echo "MiSTer did not accept the command"; exit 1; }
+for i in $(seq 100); do left=""; for p in $old; do [ -d /proc/$p ] && ! grep -q '^State:[[:space:]]*Z' /proc/$p/status 2>/dev/null && left=1; done; [ -z "$left" ] && break; sleep 0.05; done
+clear; sync; echo ok`)
+		if err != nil || !strings.Contains(out, "ok") {
+			fail(w, 502, "MiSTer did not accept the command (is the menu busy?) "+strings.TrimSpace(out))
+			return
+		}
+		writeJSON(w, map[string]any{"ok": true, "message": withNote("Console Mode is reloading with its art cache cleared.")})
 	case "menu":
 		out, err := run(`[ -p /dev/MiSTer_cmd ] || { echo "MiSTer command pipe not found"; exit 1; }; timeout 3 sh -c 'echo "load_core menu.rbf" > /dev/MiSTer_cmd' && echo ok`)
 		if err != nil {
