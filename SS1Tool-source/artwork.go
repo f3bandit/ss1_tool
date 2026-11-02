@@ -266,14 +266,15 @@ echo "@@MOUNTS"; awk '$2 ~ /^\/media\/usb[0-9]+$/ {print $2}' /proc/mounts`)
 		s.Dirs = dirs
 		all = append(all, dirs...)
 	}
-	// one pass over every folder: games (2 levels, skipping media) and the art in media
+	// one pass over every folder: games (5 levels: region, letter and collection folders, skipping media folders)
+	// and the art in media
 	var sb strings.Builder
 	sb.WriteString("for d in")
 	for _, d := range all {
 		sb.WriteString(" " + shq(d))
 	}
 	sb.WriteString(`; do [ -d "$d" ] || continue; echo "@@D|$d"
-  ( cd "$d" && find . -mindepth 1 -maxdepth 2 -path ./` + artMediaDir + ` -prune -o -print 2>/dev/null | while IFS= read -r p; do [ -d "$p" ] && echo "d|$p" || echo "f|$p"; done )
+  ( cd "$d" && find . -mindepth 1 -maxdepth 5 -name ` + artMediaDir + ` -type d -prune -o -print 2>/dev/null | while IFS= read -r p; do [ -d "$p" ] && echo "d|$p" || echo "f|$p"; done )
   ( cd "$d" && find . -path ./` + artMediaDir + ` -prune -o -print 2>/dev/null | awk -F/ 'NF>3{print "n|" $NF}' )
   [ -d "$d/` + artMediaDir + `" ] && ( cd "$d/` + artMediaDir + `" && for f in *; do [ -f "$f" ] && echo "m|$(stat -c %s "$f")|$f"; done )
   [ -d "$d/` + artMediaDir + `/` + artOptDir + `" ] && ( cd "$d/` + artMediaDir + `/` + artOptDir + `" && for f in *; do [ -f "$f" ] && echo "o|$(stat -c %s "$f")|$f"; done )
@@ -341,53 +342,23 @@ done; true`)
 			ext[e] = true
 		}
 		for _, d := range s.Dirs {
-			seen := map[string]bool{}
-			folderHas := map[string]bool{}
-			folderFile := map[string]string{} // the disc to identify a folder by: its first .cue/.chd, else its first file
+			var paths []artPath
 			for _, e := range lists[d] {
-				if !e.dir && strings.Contains(e.p, "/") && ext[strings.ToLower(path.Ext(e.p))] {
-					f := strings.SplitN(e.p, "/", 2)[0]
-					folderHas[f] = true
-					x := strings.ToLower(path.Ext(e.p))
-					cur := folderFile[f]
-					better := cur == "" || ((x == ".cue" || x == ".chd") && !strings.HasSuffix(strings.ToLower(cur), ".cue") && !strings.HasSuffix(strings.ToLower(cur), ".chd")) || (strings.ToLower(path.Ext(cur)) == x && e.p < cur)
-					if better {
-						folderFile[f] = e.p
-					}
-				}
+				paths = append(paths, artPath{e.dir, e.p})
 			}
-			for _, e := range lists[d] {
-				var t string
-				folder := false
-				switch {
-				case e.dir && !strings.Contains(e.p, "/") && folderHas[e.p]:
-					t, folder = e.p, true // a folder of disc images: art goes under the folder's name
-				case !e.dir && !strings.Contains(e.p, "/") && ext[strings.ToLower(path.Ext(e.p))]:
-					t = strings.TrimSuffix(e.p, path.Ext(e.p))
-				}
-				if t == "" || seen[t] || strings.HasPrefix(t, ".") || artIsBios(path.Base(e.p)) {
+			for _, u := range artUnits(paths, ext) {
+				t, folder := u.Title, u.Folder
+				if artIsBios(path.Base(u.File)) {
 					continue
 				}
-				var discs []string
-				if folder {
-					for _, f := range lists[d] {
-						if !f.dir && strings.HasPrefix(f.p, e.p+"/") && ext[strings.ToLower(path.Ext(f.p))] {
-							discs = append(discs, strings.TrimSuffix(path.Base(f.p), path.Ext(f.p)))
-						}
-					}
-				}
-				seen[t] = true
-				g := &artGame{Title: t, Dir: d, Folder: folder, File: d + "/" + e.p, discs: discs}
-				if folder {
-					g.File = d + "/" + folderFile[e.p]
-				}
+				g := &artGame{Title: t, Dir: d, Folder: folder, File: d + "/" + u.File, discs: u.Discs}
 				g.HasBox = s.art[d][strings.ToLower(t)] != ""
 				g.HasBG = s.art[d][strings.ToLower(t+artBGSuffix)] != ""
 				// a disc set in its own folder: Console Mode lists it under the folder's name and looks for art by
 				// that name. Art packs name it by disc ("Game (USA) (Disc 1).png"): the first disc's picture is used,
 				// and copied under the folder's name when the art is copied to the SuperStation
 				if folder {
-					disc := strings.ToLower(strings.TrimSuffix(path.Base(folderFile[e.p]), path.Ext(folderFile[e.p])))
+					disc := strings.ToLower(strings.TrimSuffix(path.Base(u.File), path.Ext(u.File)))
 					for _, k := range []string{disc, strings.ToLower(t + " (Disc 1)")} {
 						if f := s.art[d][k]; f != "" && !g.HasBox {
 							g.HasBox, g.boxFrom = true, f
