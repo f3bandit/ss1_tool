@@ -997,7 +997,8 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="card" id="trCard"><h3>NVMe TRIM</h3>
   <p class="muted" style="margin:0 0 10px">TRIM tells the NVMe drive which space is free after games are deleted or moved, so it keeps writing at full speed and wears evenly. The SuperStation's NVMe bridge (JMicron JMS583) supports it, but MiSTer's Linux leaves it switched off. This switches it on at every start-up and trims the free space on a schedule. Only free space is trimmed: games and saves are never touched.</p>
   <details style="margin:0 0 10px"><summary class="muted" style="cursor:pointer">How it works, and doing it by hand</summary><div class="muted" style="margin:8px 0 0">
-   <p style="margin:0 0 8px">Linux asks the bridge whether it supports TRIM, and the JMS583 answers no although it does. SS1 Tool sets the drive's <code>provisioning_mode</code> to <code>unmap</code> at every start-up (from <code>linux/user-startup.sh</code>, like Drive guard), then runs <code>fstrim</code> on the schedule below, when nothing heavy is running (no game or core, update, backup or file system check). A trim missed while the SuperStation was off runs at the next quiet moment. If a drive ever rejects TRIM, Linux switches it off again by itself. Tested on an SS1: 728 GB of free space trimmed in 2 seconds, every game read back fine. Only the JMS583 (USB 152d:0583) is switched on, as it's the one tested.</p>
+   <p style="margin:0 0 8px">Linux asks the bridge whether it supports TRIM, and the JMS583 answers no although it does. SS1 Tool sets the drive's <code>provisioning_mode</code> at every start-up (from <code>linux/user-startup.sh</code>, like Drive guard): <code>unmap</code>, or <code>writesame_16</code> / <code>writesame_10</code> if the bridge refuses that one with your drive (each is tried with a real trim and the first that works is kept). Then it trims on the schedule below, when nothing heavy is running (no game or core, update, backup or file system check). A trim missed while the SuperStation was off runs at the next quiet moment. If a drive ever rejects TRIM, Linux switches it off again by itself.</p>
+   <p style="margin:0 0 8px"><b>exFAT drives</b> (as the SS1's NVMe drive comes): MiSTer's Linux reads exFAT with an old driver that can't trim at all, so <code>fstrim</code> always says "not supported" there, whatever the bridge does. SS1 Tool trims them with its own small helper (<code>ss1trimfs</code>): the drive goes read-only for a moment (only when nothing is writing to it), the helper reads exFAT's own map of used space, checks it against the free space Linux reports, tells the drive which clusters are free, and makes the drive writable again. Files are never touched. Tested on an SS1: 782 GB of free space trimmed in 3 seconds, games read back unchanged. Other file systems (ext4) use <code>fstrim</code>. Only the JMS583 (USB 152d:0583) is switched on, as it's the one tested.</p>
    <p style="margin:0 0 6px"><b>By hand</b>, in a terminal on the SuperStation (SS1 Tool's Terminal, or SSH as root):</p>
 <pre class="out" style="margin:0 0 8px"># 1. find the NVMe drive (JMicron 152d:0583, "JMicron Generic")
 lsblk -o NAME,SIZE,VENDOR,MODEL,MOUNTPOINT
@@ -1008,9 +1009,11 @@ echo unmap &gt; /sys/block/sdb/device/scsi_disk/*/provisioning_mode
 # 3. check: discard_max_bytes should no longer be 0
 cat /sys/block/sdb/queue/discard_max_bytes
 
-# 4. trim the free space on the games drive
+# 4. trim the free space on the games drive: ext4 only
+#    (on exFAT this says "not supported": MiSTer's exFAT
+#    driver can't; Trim now here uses SS1 Tool's helper)
 fstrim -v /media/usb0</pre>
-   <p style="margin:0">Step 2 has to be done again after every restart: SS1 Tool does it for you while TRIM is on here. Turn off puts it back the way MiSTer's Linux sets it and takes SS1 Tool's start-up line out.</p></div></details>
+   <p style="margin:0">If step 3 still shows 0, try <code>writesame_16</code> in step 2. Step 2 has to be done again after every restart: SS1 Tool does it for you while TRIM is on here. Turn off puts it back the way MiSTer's Linux sets it and takes SS1 Tool's start-up line out.</p></div></details>
   <div id="trBody"><p class="muted">Open this page while connected to see it.</p></div></div>
 </div>
 <div class="subpage" id="power">
@@ -1541,7 +1544,7 @@ async function trLoad(what,extra){try{const j=await api("/api/nvmetrim",Object.a
   $("trBody").innerHTML=kv("Status","Off")+kv("Drive at /media/usb0",j.other?esc(j.other):"none plugged in")+kv("TRIM in Linux",'<span class="pill">'+(j.other?"not supported by this bridge":"no NVMe drive")+'</span>')
    +`<p class="muted" style="margin:10px 0 0">TRIM can only be switched on for the SuperStation's own NVMe bridge (JMicron JMS583, 152d:0583), the one tested. Other bridges and USB sticks are left as they are.</p>`;return}
  const drive=esc(j.mount||"not mounted")+" · JMicron JMS583 · "+esc(j.size_gb||"?")+" GB";
- const lin=j.mode==="unmap"?'<span class="pill good">on (unmap)</span>':'<span class="pill">switched off by MiSTer\'s Linux</span>';
+ const lin=j.mode==="none"?'<span class="pill bad">the bridge refused every way of TRIM for this drive</span>':/^(unmap|writesame_16|writesame_10)$/.test(j.mode_now||"")?'<span class="pill good">on ('+esc(j.mode_now)+')</span>'+(j.fs==="exfat"?' <span class="muted">exFAT: trimmed by SS1 Tool\'s own helper (MiSTer\'s exFAT driver can\'t)</span>':""):'<span class="pill">switched off by MiSTer\'s Linux</span>';
  if(!j.on){
   $("trBody").innerHTML=kv("Status","Off")+kv("NVMe drive",drive)+kv("TRIM in Linux",lin)
    +`<div class="row" style="margin-top:10px"><button class="b p" onclick="busy(this,()=>trLoad('on'))">Turn on TRIM</button><span class="muted">Switches it on now and at every start-up, then trims the free space once.</span></div>`;return}
