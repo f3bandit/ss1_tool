@@ -107,6 +107,7 @@ func session() (*ssh.Session, error) {
 	go powerSync()
 	go cmAutoConfirm()
 	go driveGuard() // the games drive at usb0, the repair drive hidden (drives.go)
+	go nvmeTrim()   // NVMe TRIM at every start-up, while it's on (nvmetrim.go)
 	sshMu.Lock()
 	c = sshClient
 	sshMu.Unlock()

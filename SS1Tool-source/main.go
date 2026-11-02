@@ -21,7 +21,7 @@ import (
 // The Windows icon, version information and manifest are generated from appVersion:
 //
 //go:generate go run ./tools/winres
-const appVersion = "1.32.9"
+const appVersion = "1.32.10"
 
 // displayVersion is the version shown in the app: SS1 Tool for Android has its own numbers,
 // passed on by the Android app.
@@ -68,6 +68,7 @@ type Config struct {
 	SysBackupOff bool `json:"sysbk_off"`
 	// Drive guard (drives.go) turned off: the games drive isn't kept at usb0, the repair drive not hidden
 	DriveGuardOff bool `json:"drive_guard_off"`
+	NvmeTrimOn    bool `json:"nvme_trim_on"`
 }
 
 var (
@@ -179,6 +180,7 @@ func main() {
 	registerRoutesSys(mux)
 	registerRoutesPower(mux)
 	registerRoutesDrives(mux)
+	registerRoutesTrim(mux)
 	registerRoutesBT(mux)
 	registerRoutesSaves(mux)
 	registerRoutesCIFS(mux)

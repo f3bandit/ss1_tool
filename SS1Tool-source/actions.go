@@ -112,6 +112,7 @@ func apiConnect(w http.ResponseWriter, r *http.Request) {
 	go cmAutoConfirm()    // a Console Mode update still waiting: confirm it so it stays
 	go powerSync()        // power watch: read its events
 	go driveGuard()       // the games drive at usb0, the repair drive hidden (drives.go)
+	go nvmeTrim()         // NVMe TRIM at every start-up, while it's on (nvmetrim.go)
 	// keep already-installed SS1 scripts and helpers current (the status below uses the helper)
 	if out, _ := run("[ -d " + scriptsDir + "/.ss1tool ] && echo yes"); strings.TrimSpace(out) == "yes" {
 		_, _ = ensureScripts(false)
