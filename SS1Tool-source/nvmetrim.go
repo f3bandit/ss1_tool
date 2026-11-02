@@ -9,6 +9,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	_ "embed"
 	"encoding/base64"
 	"encoding/hex"
 	"net/http"
@@ -18,9 +19,13 @@ import (
 const (
 	trimDir    = scriptsDir + "/.ss1tool/trim"
 	trimScript = trimDir + "/ss1_trim.sh"
+	trimFS     = trimDir + "/ss1trimfs" // exFAT's trim: MiSTer's exFAT driver has no FITRIM (tools/ss1trimfs)
 	trimBegin  = "# ss1tool nvme trim: BEGIN"
 	trimEnd    = "# ss1tool nvme trim: END"
 )
+
+//go:embed bin/ss1trimfs_arm
+var ss1trimfsArm []byte
 
 // nvmeTrim brings TRIM up to date on the SuperStation while it's on (nothing when it's off)
 func nvmeTrim() {
@@ -34,14 +39,19 @@ func nvmeTrim() {
 
 func nvmeTrimInstall() error {
 	b, _ := scriptFS.ReadFile("scripts/ss1_trim.sh")
-	sum := md5.Sum(b)
-	out, _ := run("md5sum " + trimScript + " 2>/dev/null")
-	if f := strings.Fields(out); len(f) < 1 || f[0] != hex.EncodeToString(sum[:]) {
-		if _, err := run("mkdir -p " + trimDir); err != nil {
-			return err
-		}
-		if err := upload(trimScript, bytes.NewReader(b), "755"); err != nil {
-			return err
+	for _, f := range []struct {
+		path string
+		data []byte
+	}{{trimScript, b}, {trimFS, ss1trimfsArm}} {
+		sum := md5.Sum(f.data)
+		out, _ := run("md5sum " + f.path + " 2>/dev/null")
+		if fs := strings.Fields(out); len(fs) < 1 || fs[0] != hex.EncodeToString(sum[:]) {
+			if _, err := run("mkdir -p " + trimDir); err != nil {
+				return err
+			}
+			if err := upload(f.path, bytes.NewReader(f.data), "755"); err != nil {
+				return err
+			}
 		}
 	}
 	_, err := run(`U=` + userStartup + `
