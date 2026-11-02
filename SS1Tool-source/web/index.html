@@ -994,6 +994,24 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="card" id="dgCard"><h3>Drive guard</h3>
   <p class="muted" style="margin:0 0 10px">Keeps the games drive at <code>/media/usb0</code>, even when a USB stick comes up before the NVMe drive (it used to take usb0, and Console Mode's lists, MiSTer's recent files and favourites, MGLs and Zaparoo cards then pointed at the wrong drive). The repair drive is kept out of the drive list, read-only at <code>/media/repair</code>, so nothing puts games on it. On by default; it's set again at every start-up, so MiSTer Linux updates don't undo it.</p>
   <div id="dgBody"><p class="muted">Open this page while connected to see it.</p></div></div>
+ <div class="card" id="trCard"><h3>NVMe TRIM</h3>
+  <p class="muted" style="margin:0 0 10px">TRIM tells the NVMe drive which space is free after games are deleted or moved, so it keeps writing at full speed and wears evenly. The SuperStation's NVMe bridge (JMicron JMS583) supports it, but MiSTer's Linux leaves it switched off. This switches it on at every start-up and trims the free space on a schedule. Only free space is trimmed: games and saves are never touched.</p>
+  <details style="margin:0 0 10px"><summary class="muted" style="cursor:pointer">How it works, and doing it by hand</summary><div class="muted" style="margin:8px 0 0">
+   <p style="margin:0 0 8px">Linux asks the bridge whether it supports TRIM, and the JMS583 answers no although it does. SS1 Tool sets the drive's <code>provisioning_mode</code> to <code>unmap</code> at every start-up (from <code>linux/user-startup.sh</code>, like Drive guard), then runs <code>fstrim</code> on the schedule below, when nothing heavy is running (no game or core, update, backup or file system check). A trim missed while the SuperStation was off runs at the next quiet moment. If a drive ever rejects TRIM, Linux switches it off again by itself. Tested on an SS1: 728 GB of free space trimmed in 2 seconds, every game read back fine. Only the JMS583 (USB 152d:0583) is switched on, as it's the one tested.</p>
+   <p style="margin:0 0 6px"><b>By hand</b>, in a terminal on the SuperStation (SS1 Tool's Terminal, or SSH as root):</p>
+<pre class="out" style="margin:0 0 8px"># 1. find the NVMe drive (JMicron 152d:0583, "JMicron Generic")
+lsblk -o NAME,SIZE,VENDOR,MODEL,MOUNTPOINT
+
+# 2. switch TRIM on for it (sdb here; lasts until a restart)
+echo unmap &gt; /sys/block/sdb/device/scsi_disk/*/provisioning_mode
+
+# 3. check: discard_max_bytes should no longer be 0
+cat /sys/block/sdb/queue/discard_max_bytes
+
+# 4. trim the free space on the games drive
+fstrim -v /media/usb0</pre>
+   <p style="margin:0">Step 2 has to be done again after every restart: SS1 Tool does it for you while TRIM is on here. Turn off puts it back the way MiSTer's Linux sets it and takes SS1 Tool's start-up line out.</p></div></details>
+  <div id="trBody"><p class="muted">Open this page while connected to see it.</p></div></div>
 </div>
 <div class="subpage" id="power">
  <h2>Power</h2><p class="sub">A power adapter that can't keep up resets the SuperStation instantly under load: no crash, no error, no log. The power watch catches it: heavy work that started and never finished, with no normal restart in between, means the power went. Switching off while nothing heavy is running is never counted.</p>
@@ -1274,7 +1292,7 @@ async function loadSetupStatus(){mcSetupStatus();ptCoreStatus();psxLoad();const 
 // after its page opens, so a page like Files doesn't load everything at once.
 const PAGELOAD={dash:dashLoad,video:vLoad,setup:()=>{loadCommunity();loadScraper();loadSetupStatus();loadAdvisory();raLoad()},wizard:wzOpen};
 const SUBLOAD={stSync:()=>{syncLoad();syncDrives()},fm:filesInit,nvmebk:()=>{nbLoad();nbPoll();ntLoad()},saves:()=>{svLoad();svPoll();liveWatch("saves",svLoad)},sdbackup:()=>{sdBackupList();pollSDBackup()},sysbk:()=>sysLoad(true),power:()=>pwLoad(true),shots:()=>{shotsPC();shotsSS1();liveWatch("shots",shotsSS1)},art:artLoad,mcards:mcLoad,
- sddiag:()=>{loadTargets();srLoad();dgLoad()},padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
+ sddiag:()=>{loadTargets();srLoad();dgLoad();trLoad()},padtest:ptInit,padsnac:ptInit,bioscheck:biosLoad,usb:usbLoad,bt:()=>{btLoad();btPoll()},ctrl:ctrlLoad,eth:ethLoad,settings:()=>{loadIniList()},cifs:()=>{cfLoad();cfPoll();pcLoad()},wifi:()=>{wlLoad();wifiInfo();wifiRemoteState()},
  flash:()=>{pollRestorePoint();checkAdmin();loadDisks();pollFlash();if(!IMGS.length)loadImages()}};
 let subObs=null;
 function openPage(s){
@@ -1513,6 +1531,25 @@ async function dgLoad(what){try{const j=await api("/api/driveguard",what?{do:wha
   +((j.log||[]).length?`<pre class="out">${esc(j.log.join("\n"))}</pre>`:"")
   +`<div class="row" style="margin-top:10px">${j.on?`<button class="b" onclick="busy(this,()=>dgLoad('off'))">Turn off</button>`:`<button class="b p" onclick="busy(this,()=>dgLoad('on'))">Turn on</button>`}</div>`}
  catch(e){$("dgBody").innerHTML=`<p class="muted">${esc(e.message)}</p>`}}
+// NVMe TRIM (nvmetrim.go, scripts/ss1_trim.sh)
+const TR_SCHED=[["weekly","Weekly (Sunday 3 AM)"],["daily","Daily (3 AM)"],["deletes","After big deletes only (10 GB freed)"],["never","Never (Trim now only)"]];
+function trGB(b){b=+b||0;return b>=1e9?(b/1073741824).toFixed(1)+" GB":(b/1048576).toFixed(0)+" MB"}
+async function trLoad(what,extra){try{const j=await api("/api/nvmetrim",Object.assign(what?{do:what}:{},extra||{}));
+ const kv=(k,v)=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`;
+ if(j.result_error)toast("Trim: "+j.result_error);else if(j.result_trimmed!==undefined)toast("Trimmed "+trGB(j.result_trimmed)+" of free space");
+ if(j.bridge!=="152d:0583"){
+  $("trBody").innerHTML=kv("Status","Off")+kv("Drive at /media/usb0",j.other?esc(j.other):"none plugged in")+kv("TRIM in Linux",'<span class="pill">'+(j.other?"not supported by this bridge":"no NVMe drive")+'</span>')
+   +`<p class="muted" style="margin:10px 0 0">TRIM can only be switched on for the SuperStation's own NVMe bridge (JMicron JMS583, 152d:0583), the one tested. Other bridges and USB sticks are left as they are.</p>`;return}
+ const drive=esc(j.mount||"not mounted")+" · JMicron JMS583 · "+esc(j.size_gb||"?")+" GB";
+ const lin=j.mode==="unmap"?'<span class="pill good">on (unmap)</span>':'<span class="pill">switched off by MiSTer\'s Linux</span>';
+ if(!j.on){
+  $("trBody").innerHTML=kv("Status","Off")+kv("NVMe drive",drive)+kv("TRIM in Linux",lin)
+   +`<div class="row" style="margin-top:10px"><button class="b p" onclick="busy(this,()=>trLoad('on'))">Turn on TRIM</button><span class="muted">Switches it on now and at every start-up, then trims the free space once.</span></div>`;return}
+ const last=j.last_at?new Date(j.last_at*1000).toLocaleString()+" · "+trGB(j.last_bytes)+" of free space · "+(j.last_secs||0)+" s"+(j.last_error?' · <span style="color:var(--bad)">'+esc(j.last_error)+"</span>":""):"not yet";
+ $("trBody").innerHTML=kv("Status",'On <span class="pill good">set at every start-up</span>')+kv("NVMe drive",drive)+kv("TRIM in Linux",lin)+kv("Last trim",last)
+  +`<div class="row" style="margin-top:10px"><span class="muted">Trim automatically:</span><select id="trSched" onchange="trLoad('schedule',{schedule:this.value})">${TR_SCHED.map(([k,n])=>`<option value="${k}"${k===(j.schedule||"weekly")?" selected":""}>${n}</option>`).join("")}</select><span class="muted">skipped while a game, an update or a backup runs</span></div>`
+  +`<div class="row" style="margin-top:10px"><button class="b p" onclick="busy(this,()=>trLoad('trim'))">Trim now</button><button class="b" onclick="busy(this,()=>trLoad('off'))">Turn off TRIM</button></div>`}
+ catch(e){$("trBody").innerHTML=`<p class="muted">${esc(e.message)}</p>`}}
 async function srLoad(){try{SR=await api("/api/sdrepair",{});srDraw();
   if(SR.fresh&&SR.last_result&&localStorage.getItem("srShown")!==SR.last_at){try{localStorage.setItem("srShown",SR.last_at)}catch(e){}toast("Drives repaired: SD card "+srRes(SR.last_result))}
   if(SR.self_state==="running"){clearTimeout(srLoad._t);srLoad._t=setTimeout(()=>{if($("srBody").offsetParent)srLoad()},4000)}}
