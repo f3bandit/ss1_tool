@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-10-31 19:22 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, MiSTer Main `afb917f`.
+Checked 2026-11-02 18:33 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, MiSTer Main `7912f76`.
 
 | | Verdict |
 |---|---|
@@ -33,7 +33,7 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • Nintendo 64: Improved CIC detection (Sep 18); 64DD Support (Jul 25); and 1 more
 • Saturn: detect RAM cartridge via boot metadata (Oct 16)
 • PC-FX: Adds PCFX system support (Oct 17)
-• Minimig (Amiga): CD read speed Max Speed (Oct 27); the cartridge, HRTmon or the Action Replay (AR5) (Oct 28); and 20 more
+• Minimig (Amiga): CD32 disc spin-up at Original speed (Oct 31); CD32 drive protocol of the real Chinon (Oct 30); and 23 more
 • Atari ST: apply MGL file items (floppy, ACSI, cartridge, TOS) (Oct 19)
 • Apple II: floppy disk fixes (Sep 18); WOZ support, save states, screenshots (Sep 13)
 • Apple IIgs: disk-format codec + MiSTer integration (Jun 15)
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 23.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 259. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 84.
+Commits checked since 2025-10-01: 268. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 90.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -90,6 +90,9 @@ Commits checked since 2025-10-01: 259. Its base: about **2026-05-26**. Commits a
 - `035b86f` 2026-08-02 Mac: add BlueSCSI Toolbox, CD changer, and CD-ROM image support (#1255)
 
 ### Minimig (Amiga)
+- `c7715f3` 2026-10-31 Minimig: CD32 disc spin-up at Original speed
+- `6b310ec` 2026-10-30 Minimig: CD32 drive protocol of the real Chinon
+- `ea69b48` 2026-10-22 Minimig: SNAC joystick on the user port
 - `9a96aa8` 2026-10-27 Minimig: CD read speed Max Speed
 - `b57370d` 2026-10-28 Minimig: the cartridge, HRTmon or the Action Replay (AR5) (#1397)
 - `4f2da7a` 2026-10-26 Minimig: CD32 read speed 1x, 2x or 4x
