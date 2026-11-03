@@ -124,6 +124,8 @@ switch_on_and_trim() {
 do_trim() {
 	exec 9> "$LOCK"
 	flock -n 9 || { echo "busy"; return 1; }
+	exec 8> /tmp/cmtrim.lock                    # Console Mode for Windows' copy, if it's running a trim now
+	flock -n 8 || { echo "busy"; return 1; }
 	local t0 t1 err=""
 	t0=$(date +%s)
 	TRIMMED=0

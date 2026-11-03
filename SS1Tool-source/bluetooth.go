@@ -78,7 +78,11 @@ const btDirSh = `D=""; if [ -e /var/lib/bluetooth ]; then D=$(readlink -f /var/l
 `
 
 // btStopSh / btStartSh stop and start bluetoothd while pairing files are rewritten.
-const btStopSh = `S=$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1); rm -f /tmp/ss1tool_btd.cmd
+// Console Mode for Windows pairs and forgets through MiSTer's btctl with bluetoothd running: a btctl pair
+// (up to 90 s) is waited for first, and /tmp/ss1_bt.busy tells it Bluetooth is being changed here meanwhile.
+const btStopSh = `i=0; while ps 2>/dev/null | grep -q "[b]tctl pair" && [ $i -lt 100 ]; do sleep 1; i=$((i+1)); done
+date +%s > /tmp/ss1_bt.busy
+S=$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1); rm -f /tmp/ss1tool_btd.cmd
 if [ -n "$S" ]; then "$S" stop >/dev/null 2>&1
 else for p in $(pidof bluetoothd); do [ -s /tmp/ss1tool_btd.cmd ] || tr '\0' ' ' < /proc/$p/cmdline > /tmp/ss1tool_btd.cmd; kill $p 2>/dev/null; done; fi
 i=0; while pidof bluetoothd >/dev/null 2>&1 && [ $i -lt 20 ]; do sleep 0.2; i=$((i+1)); done
@@ -88,6 +92,7 @@ if [ -n "$S" ]; then "$S" start >/dev/null 2>&1
 elif [ -s /tmp/ss1tool_btd.cmd ]; then setsid sh -c "$(cat /tmp/ss1tool_btd.cmd)" >/dev/null 2>&1 </dev/null & fi
 i=0; while ! pidof bluetoothd >/dev/null 2>&1 && [ $i -lt 25 ]; do sleep 0.2; i=$((i+1)); done
 sleep 1; timeout 4 bluetoothctl power on >/dev/null 2>&1
+rm -f /tmp/ss1_bt.busy
 pidof bluetoothd >/dev/null 2>&1 && echo BTD=up || echo BTD=down
 `
 
