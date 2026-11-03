@@ -78,42 +78,57 @@ const btDirSh = `D=""; if [ -e /var/lib/bluetooth ]; then D=$(readlink -f /var/l
 `
 
 // btStopSh / btStartSh stop and start bluetoothd while pairing files are rewritten.
+// Only the daemon: MiSTer's S45bluetooth stop also unmounts the pairings (the image linux/bluetooth,
+// mounted at /var/lib/bluetooth), and the files written then went into the bare folder under it (on
+// Linux's read-only system: "writing the pairing files failed"; else hidden when it was mounted again).
+// The daemon is started again the way it ran (its command line); with nothing to go by, S45bluetooth start
+// (which mounts the image) only when it isn't mounted already, else the daemon on its own.
 // Console Mode for Windows pairs and forgets through MiSTer's btctl with bluetoothd running: a btctl pair
 // (up to 90 s) is waited for first, and /tmp/ss1_bt.busy tells it Bluetooth is being changed here meanwhile.
 const btStopSh = `i=0; while ps 2>/dev/null | grep -q "[b]tctl pair" && [ $i -lt 100 ]; do sleep 1; i=$((i+1)); done
 date +%s > /tmp/ss1_bt.busy
 S=$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1); rm -f /tmp/ss1tool_btd.cmd
-if [ -n "$S" ]; then "$S" stop >/dev/null 2>&1
-else for p in $(pidof bluetoothd); do [ -s /tmp/ss1tool_btd.cmd ] || tr '\0' ' ' < /proc/$p/cmdline > /tmp/ss1tool_btd.cmd; kill $p 2>/dev/null; done; fi
-i=0; while pidof bluetoothd >/dev/null 2>&1 && [ $i -lt 20 ]; do sleep 0.2; i=$((i+1)); done
+for p in $(pidof bluetoothd); do [ -s /tmp/ss1tool_btd.cmd ] || tr '\0' ' ' < /proc/$p/cmdline > /tmp/ss1tool_btd.cmd; kill $p 2>/dev/null; done
+i=0; while pidof bluetoothd >/dev/null 2>&1 && [ $i -lt 25 ]; do sleep 0.2; i=$((i+1)); done
 `
 const btStartSh = `sync
-if [ -n "$S" ]; then "$S" start >/dev/null 2>&1
-elif [ -s /tmp/ss1tool_btd.cmd ]; then setsid sh -c "$(cat /tmp/ss1tool_btd.cmd)" >/dev/null 2>&1 </dev/null & fi
+if ! pidof bluetoothd >/dev/null 2>&1; then
+  c=$(cat /tmp/ss1tool_btd.cmd 2>/dev/null); c=${c% }
+  [ -n "$c" ] || c="/usr/libexec/bluetooth/bluetoothd -n -E -C"
+  if [ -z "$(cat /tmp/ss1tool_btd.cmd 2>/dev/null)" ] && [ -n "$S" ] && ! grep -q " /var/lib/bluetooth " /proc/mounts; then "$S" start >/dev/null 2>&1
+  else x=${c%% *}; a=""; [ "$x" != "$c" ] && a=${c#* }
+    if command -v start-stop-daemon >/dev/null 2>&1; then start-stop-daemon -S -q -m -b -p /var/run/bluetoothd.pid -x "$x" -- $a
+    else setsid sh -c "$c" >/dev/null 2>&1 </dev/null & fi
+  fi
+fi
 i=0; while ! pidof bluetoothd >/dev/null 2>&1 && [ $i -lt 25 ]; do sleep 0.2; i=$((i+1)); done
 sleep 1; timeout 4 bluetoothctl power on >/dev/null 2>&1
 rm -f /tmp/ss1_bt.busy
 pidof bluetoothd >/dev/null 2>&1 && echo BTD=up || echo BTD=down
 `
 
-// btKeepSh (bluetoothd stopped): when the pairings folder isn't on the SD card (MiSTer links
-// /var/lib/bluetooth to linux/bluetooth so they survive a restart; a different Linux may not), the pairings
-// there are copied to linux/bluetooth and the link put back, so what's written now is kept. Where the link
-// can't be made (Linux read-only), the pairings go where they are and the page still says they may be lost.
-const btKeepSh = `P=/media/fat/linux/bluetooth
-case "$D" in /media/fat/*) ;; *)
-  if mkdir -p "$P" 2>/dev/null && touch "$P/.ss1tool_w" 2>/dev/null && rm -f "$P/.ss1tool_w"; then
-    [ -d "$D" ] && cp -a "$D"/. "$P"/ 2>/dev/null
-    if [ ! -e /var/lib/bluetooth ] && ln -s "$P" /var/lib/bluetooth 2>/dev/null; then D="$P"; echo BTRELINK
-    elif mv /var/lib/bluetooth /var/lib/bluetooth.ss1tool-old 2>/dev/null; then
-      if ln -s "$P" /var/lib/bluetooth 2>/dev/null; then rm -rf /var/lib/bluetooth.ss1tool-old; D="$P"; echo BTRELINK
-      else mv /var/lib/bluetooth.ss1tool-old /var/lib/bluetooth; fi
-    fi
-  fi;;
-esac
+// btImgStopSh / btImgStartSh: for writing the pairings' own store from the SD card (the SD restore). MiSTer's
+// is an image (linux/bluetooth is a file): S45bluetooth stop stops the daemon and unmounts it, start mounts it
+// and starts the daemon. A folder of pairings: btStopSh / btStartSh.
+const btImgStopSh = `if [ -f /media/fat/linux/bluetooth ] && S=$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1) && [ -n "$S" ]; then
+  i=0; while ps 2>/dev/null | grep -q "[b]tctl pair" && [ $i -lt 100 ]; do sleep 1; i=$((i+1)); done
+  date +%s > /tmp/ss1_bt.busy; "$S" stop >/dev/null 2>&1; sync
+  grep -q " /var/lib/bluetooth " /proc/mounts && umount /var/lib/bluetooth 2>/dev/null; true
+else
+` + btStopSh + `fi
+`
+const btImgStartSh = `S=$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1)
+if [ -f /media/fat/linux/bluetooth ] && [ -n "$S" ]; then
+  sync; grep -q " /var/lib/bluetooth " /proc/mounts || "$S" start >/dev/null 2>&1
+  i=0; while ! pidof bluetoothd >/dev/null 2>&1 && [ $i -lt 25 ]; do sleep 0.2; i=$((i+1)); done
+  sleep 1; timeout 4 bluetoothctl power on >/dev/null 2>&1; rm -f /tmp/ss1_bt.busy
+  pidof bluetoothd >/dev/null 2>&1 && echo BTD=up || echo BTD=down
+else
+` + btStartSh + `fi
 `
 
 const btListCmd = btDirSh + `echo "@@DIR|$D"
+echo "@@MNT|$(awk '$2=="/var/lib/bluetooth"{print $1}' /proc/mounts | tail -n1)"
 pidof bluetoothd >/dev/null 2>&1 && echo "@@DAEMON|running" || echo "@@DAEMON|stopped"
 ls -d /sys/class/bluetooth/hci* >/dev/null 2>&1 && echo "@@HCI|yes" || echo "@@HCI|no"
 timeout 4 bluetoothctl show 2>/dev/null | sed -n 's/^Controller \([0-9A-Fa-f:]*\).*/@@CTRL|\1/p; s/^[[:space:]]*Powered: \(.*\)/@@POWERED|\1/p; s/^[[:space:]]*Discovering: \(.*\)/@@SCAN|\1/p'
@@ -235,6 +250,7 @@ func btScan() (map[string]any, error) {
 		body.Reset()
 	}
 	inMaps := false
+	btMnt := ""
 	for _, l := range strings.Split(out, "\n") {
 		if inMaps {
 			if t := strings.TrimSpace(l); t != "" {
@@ -253,6 +269,8 @@ func btScan() (map[string]any, error) {
 		switch p[0] {
 		case "DIR":
 			res["dir"] = p[1]
+		case "MNT":
+			btMnt = strings.TrimSpace(p[1])
 		case "DAEMON":
 			res["daemon"] = p[1]
 		case "HCI":
@@ -328,7 +346,7 @@ func btScan() (map[string]any, error) {
 	res["devices"] = devs
 	res["adapters"] = adapters
 	dir, _ := res["dir"].(string)
-	res["persistent"] = strings.HasPrefix(dir, "/media/fat/")
+	res["persistent"] = strings.HasPrefix(dir, "/media/fat/") || strings.HasPrefix(btMnt, "/dev/loop") // MiSTer's: the image linux/bluetooth
 	return res, nil
 }
 
@@ -640,7 +658,7 @@ func btPush(files map[string][]byte, replaceAll bool, devices []string) (string,
 		}
 	}
 	cmd := btDirSh + `echo "@@STEP|stop"
-` + btStopSh + btKeepSh + `mkdir -p "$D" 2>/dev/null
+` + btStopSh + `mkdir -p "$D" 2>/dev/null
 if ! { touch "$D/.ss1tool_w" && rm -f "$D/.ss1tool_w"; } 2>/dev/null; then
   echo "NOWRITE|$D|$(df -P "$D" 2>/dev/null | awk 'NR==2{print $4}')|$(awk -v d="$D/" '{p=$2; sub(/\/$/,"",p); p=p "/"} index(d,p)==1 && length(p)>=l {l=length(p); m=$4} END{print m}' /proc/mounts)"
 else
@@ -667,8 +685,6 @@ echo "@@STEP|start"
 			btNote("Bluetooth is running again")
 		case "BTD=down":
 			btNote("Bluetooth did not come back up")
-		case "BTRELINK":
-			btNote("The pairings were moved to the SD card (linux/bluetooth), so they're kept after a restart")
 		}
 	})
 	if i := strings.Index(out, "NOWRITE|"); i >= 0 {
