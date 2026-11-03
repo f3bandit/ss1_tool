@@ -250,7 +250,15 @@ func apiRestoreStart(w http.ResponseWriter, r *http.Request) {
 
 		restoreJob.Next(fmt.Sprintf("Copying %d file(s), %s, to the SuperStation", len(items), humanBytes(total)))
 		restoreJob.Progress(0, len(items), 0, total)
+		/* the pairings are written with Bluetooth stopped (as the Bluetooth page does), not under a running bluetoothd */
+		if want["bluetooth"] {
+			_, _ = run(btStopSh)
+		}
 		if err := tarUpload("/media/fat", items, func(n int64) { restoreJob.Progress(0, len(items), min64(n, total), total) }); err != nil {
+			if want["bluetooth"] {
+				_, _ = run(`S=$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1)
+` + btStartSh)
+			}
 			return "", err
 		}
 
@@ -259,8 +267,9 @@ func apiRestoreStart(w http.ResponseWriter, r *http.Request) {
 			restoreJob.Note("SS1 Tool scripts are installed")
 		}
 		if want["bluetooth"] {
-			if _, err := run(btStopSh + btStartSh); err == nil {
-				restoreJob.Note("Restarted Bluetooth so it uses the restored pairings")
+			if _, err := run(`chmod -R go-rwx /media/fat/linux/bluetooth 2>/dev/null; S=$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1)
+` + btStartSh); err == nil {
+				restoreJob.Note("Started Bluetooth again with the restored pairings")
 			}
 		}
 		if want["cifs"] {
