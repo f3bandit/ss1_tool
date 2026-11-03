@@ -91,6 +91,23 @@ sleep 1; timeout 4 bluetoothctl power on >/dev/null 2>&1
 pidof bluetoothd >/dev/null 2>&1 && echo BTD=up || echo BTD=down
 `
 
+// btKeepSh (bluetoothd stopped): when the pairings folder isn't on the SD card (MiSTer links
+// /var/lib/bluetooth to linux/bluetooth so they survive a restart; a different Linux may not), the pairings
+// there are copied to linux/bluetooth and the link put back, so what's written now is kept. Where the link
+// can't be made (Linux read-only), the pairings go where they are and the page still says they may be lost.
+const btKeepSh = `P=/media/fat/linux/bluetooth
+case "$D" in /media/fat/*) ;; *)
+  if mkdir -p "$P" 2>/dev/null && touch "$P/.ss1tool_w" 2>/dev/null && rm -f "$P/.ss1tool_w"; then
+    [ -d "$D" ] && cp -a "$D"/. "$P"/ 2>/dev/null
+    if [ ! -e /var/lib/bluetooth ] && ln -s "$P" /var/lib/bluetooth 2>/dev/null; then D="$P"; echo BTRELINK
+    elif mv /var/lib/bluetooth /var/lib/bluetooth.ss1tool-old 2>/dev/null; then
+      if ln -s "$P" /var/lib/bluetooth 2>/dev/null; then rm -rf /var/lib/bluetooth.ss1tool-old; D="$P"; echo BTRELINK
+      else mv /var/lib/bluetooth.ss1tool-old /var/lib/bluetooth; fi
+    fi
+  fi;;
+esac
+`
+
 const btListCmd = btDirSh + `echo "@@DIR|$D"
 pidof bluetoothd >/dev/null 2>&1 && echo "@@DAEMON|running" || echo "@@DAEMON|stopped"
 ls -d /sys/class/bluetooth/hci* >/dev/null 2>&1 && echo "@@HCI|yes" || echo "@@HCI|no"
@@ -617,11 +634,15 @@ func btPush(files map[string][]byte, replaceAll bool, devices []string) (string,
 			clear += `rm -rf "$D"/??:??:??:??:??:??/` + d + "\n"
 		}
 	}
-	cmd := btDirSh + `mkdir -p "$D" || exit 3
-echo "@@STEP|stop"
-` + btStopSh + `echo "@@STEP|write"
+	cmd := btDirSh + `echo "@@STEP|stop"
+` + btStopSh + btKeepSh + `mkdir -p "$D" 2>/dev/null
+if ! { touch "$D/.ss1tool_w" && rm -f "$D/.ss1tool_w"; } 2>/dev/null; then
+  echo "NOWRITE|$D|$(df -P "$D" 2>/dev/null | awk 'NR==2{print $4}')|$(awk -v d="$D/" '{p=$2; sub(/\/$/,"",p); p=p "/"} index(d,p)==1 && length(p)>=l {l=length(p); m=$4} END{print m}' /proc/mounts)"
+else
+echo "@@STEP|write"
 ` + clear + `tar -xf - -C "$D" || echo TARFAIL
 chmod -R go-rwx "$D" 2>/dev/null
+fi
 echo "@@STEP|start"
 ` + btStartSh
 	what := fmt.Sprintf("Writing %d pairing file(s)", len(files))
@@ -641,8 +662,28 @@ echo "@@STEP|start"
 			btNote("Bluetooth is running again")
 		case "BTD=down":
 			btNote("Bluetooth did not come back up")
+		case "BTRELINK":
+			btNote("The pairings were moved to the SD card (linux/bluetooth), so they're kept after a restart")
 		}
 	})
+	if i := strings.Index(out, "NOWRITE|"); i >= 0 {
+		f := strings.Split(strings.SplitN(out[i:], "\n", 2)[0], "|")
+		dir, free, opts := f[1], "", ""
+		if len(f) > 2 {
+			free = strings.TrimSpace(f[2])
+		}
+		if len(f) > 3 {
+			opts = strings.TrimSpace(f[3])
+		}
+		switch {
+		case free == "0":
+			return out, fmt.Errorf("the pairings couldn't be written: %s is full. Make some room on the SD card and try again", dir)
+		case strings.HasPrefix(opts, "ro"):
+			return out, fmt.Errorf("the pairings couldn't be written: %s is read-only. If it's the SD card, Linux found errors on it: run the SD card check (Diag), then try again", dir)
+		default:
+			return out, fmt.Errorf("the pairings couldn't be written to %s on the SuperStation (it can't be written to). Nothing was changed", dir)
+		}
+	}
 	if strings.Contains(out, "TARFAIL") {
 		return out, fmt.Errorf("writing the pairing files failed")
 	}
