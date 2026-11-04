@@ -11,8 +11,6 @@
 
 <p align="center">
   <a href="../../releases/latest"><b>⬇ Download the latest release</b></a>
-  &nbsp;·&nbsp;
-  <a href="https://discord.gg/74pb5PJRxX"><b>💬 Taki Udon Discord</b></a>
 </p>
 
 > [!WARNING]
@@ -29,7 +27,7 @@ It's built around three jobs:
 
 - **Setup:** get a new or freshly flashed SS1 configured the right way. The **★ Wizard** walks a new owner through everything, from flashing the SD card to WiFi, scripts and Update All.
 - **Diagnostics:** check the SD card, NVMe drive and configuration for known problems.
-- **Support:** create one debug report you can post in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX), so the admins can see exactly what's on your system instead of asking question after question.
+- **Support:** create one debug report to send with a support request, so whoever helps you can see exactly what's on your system instead of asking question after question.
 
 ### Problems it helps prevent
 
@@ -40,7 +38,7 @@ It's built around three jobs:
 | **HDMI settings the SS1 doesn't support** | The SS1 HDMI fix comments out the HDMI-CEC, `hdmi_off` and `video_off_logo` settings and shows the state of each one |
 | **SD card problems:** corrupted cards, the faulty `fix_sd_overlap` tool, Windows asking to scan the card, failing or fake-capacity cards | Removes the faulty overlap tool, checks the partition table and exFAT health, tests whether Windows will complain, runs deep read/write tests, adds a safe shutdown, and flashes the official SS1 SD Card Installer |
 | **A controller or button that doesn't work** | The controller tester shows every button and stick live on a mock controller, for USB and Bluetooth controllers and the SNAC front port, without loading a core |
-| **Hard-to-explain problems** | One click creates a debug report with versions, configs, storage health and logs, ready to post in the Taki Udon Discord. Passwords, keys, WiFi names and MAC addresses are redacted. |
+| **Hard-to-explain problems** | One click creates a debug report with versions, configs, storage health and logs, ready to send with a support request. Passwords, keys, WiFi names and MAC addresses are redacted. |
 
 ### What it isn't
 
@@ -341,7 +339,7 @@ Shows what every controller on the SuperStation is pressing, live, without loadi
 - The tester only runs while it's on screen
 
 ### About
-- Links to the Taki Udon Discord and the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
+- Links to the official [SuperStation One documentation](https://github.com/Takiiiiiiii/SuperStation-Documentation) and [wiki](https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki)
 - **Winter mode:** falling snowflakes from November to March. Choose Automatic, Always on or Off; it stays hidden if animations are turned off in Windows.
 
 #### Updates
@@ -444,7 +442,7 @@ bash /media/fat/Scripts/sd_integrity.sh --run quick|windows|partition|boot|kerne
 
 1. Open **Diag**, go to **Debug report** and click **Create debug report**.
 2. Save the file.
-3. **Problem with your SS1:** post the file in the [Taki Udon Discord](https://discord.gg/74pb5PJRxX) along with a short description of what's wrong.
+3. **Problem with your SS1:** send the file to Retro Remake's support along with a short description of what's wrong.
    **Problem with SS1 Tool itself:** attach the file to a new [issue](https://github.com/f3bandit/ss1_tool/issues).
 
 Please say which version you're using; it's shown in the bottom right corner of the app.
@@ -504,9 +502,9 @@ For development on Linux or macOS, `go build .` produces a version without the W
 
 Developed by **f3bandit**.
 
-Special thanks to **Taki Udon** and the team, and all the admins on the Taki Discord.
+Special thanks to **Taki Udon** and the team.
 
-<p><a href="https://discord.gg/74pb5PJRxX"><b>💬 Join the Taki Udon Discord</b></a> &nbsp;·&nbsp; <a href="https://github.com/Takiiiiiiii/SuperStation-Documentation"><b>📖 SuperStation One Documentation</b></a></p>
+<p><a href="https://github.com/Takiiiiiiii/SuperStation-Documentation"><b>📖 SuperStation One Documentation</b></a></p>
 
 SuperStation One, Console Mode and MiSTer belong to their respective owners. This project uses [x/crypto/ssh](https://pkg.go.dev/golang.org/x/crypto/ssh) and downloads [Update All](https://github.com/theypsilon/Update_All_MiSTer) and the official [SS1 SD Card Installer](https://github.com/Retro-Remake/SuperStation-SD-Card-Installer) at runtime.
 

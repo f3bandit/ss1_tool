@@ -1044,7 +1044,7 @@ fstrim -v /media/usb0</pre>
 <div class="subpage" id="debug">
  <h2>Debug report</h2><p class="sub">Collects versions, configs, Console Mode files, game library layout, storage health and logs into one text file for Taki and the mods. Passwords, keys, WiFi names and MAC addresses are redacted.</p>
  <div class="card"><div class="row"><button class="b p" onclick="debugReport()">Create debug report</button><button class="b" id="dbgSave" style="display:none" onclick="saveReport()">Save report...</button><button class="b" id="dbgOpen" style="display:none" onclick="openReport()">Show in folder</button></div>
-  <pre class="out" id="dbgOut">Upload the generated file to your GitHub issue or the Discord support channel.</pre></div>
+  <pre class="out" id="dbgOut">Upload the generated file to your GitHub issue.</pre></div>
 </div>
 <div class="subpage" id="padtest">
  <h2>USB controller tester</h2><p class="sub">Shows what each controller on the SuperStation is pressing, live, without loading a core. SS1 Tool only watches: the controllers keep working in MiSTer and Console Mode while you test.</p>
@@ -1088,9 +1088,8 @@ fstrim -v /media/usb0</pre>
   <p class="muted" style="margin:2px 0 16px">Version {{VERSION}}</p>
   <p style="font-size:16px;margin:0 0 6px">Developed by <b>f3bandit</b></p>
   <p style="margin:0 0 18px">Unofficial Super Station One Tools</p>
-  <p style="margin:0 0 18px">Special thanks to Taki Udon and all the admins on the Taki Discord.</p>
-  <div class="row"><a class="b discord" href="https://discord.gg/74pb5PJRxX" target="_blank" rel="noopener noreferrer">Join the Taki Udon Discord</a>
-  <a class="b docs" href="https://github.com/Takiiiiiiii/SuperStation-Documentation" target="_blank" rel="noopener noreferrer">SuperStation One Documentation</a>
+  <p style="margin:0 0 18px">Special thanks to Taki Udon.</p>
+  <div class="row"><a class="b docs" href="https://github.com/Takiiiiiiii/SuperStation-Documentation" target="_blank" rel="noopener noreferrer">SuperStation One Documentation</a>
   <a class="b docs" href="https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki" target="_blank" rel="noopener noreferrer">SS1 Wiki</a></div>
   <p class="muted" style="margin:10px 0 0">Official SuperStation One guides and the Console Mode wiki.</p>
   <p class="muted" style="margin:14px 0 0">SS1 Tool is a community project and is not affiliated with or endorsed by Taki Udon or Retro Remake.</p>
@@ -1116,7 +1115,7 @@ fstrim -v /media/usb0</pre>
    <div class="row"><button class="b p" onclick="repSave(this)">Save the report file</button></div>
    <p style="margin:10px 0 6px"><b>2.</b> Open a GitHub issue (the text is filled in for you) and attach the file from step 1.</p>
    <div class="row"><button class="b p" onclick="repIssue()">Open a GitHub issue</button><button class="b" onclick="repCopy()">Copy the text</button></div>
-   <p class="muted" style="margin:8px 0 0">Problems with the app go to SS1 Tool's own GitHub (f3bandit/ss1_tool), where the app is maintained, and not to the Taki Udon Discord: the Discord is only for SuperStation problems. GitHub issues are public, and you need a free GitHub account to open one. Nothing is sent until you post it, and you can open the file to check it first.</p>
+   <p class="muted" style="margin:8px 0 0">Problems with the app go to SS1 Tool's own GitHub (f3bandit/ss1_tool), where the app is maintained. GitHub issues are public, and you need a free GitHub account to open one. Nothing is sent until you post it, and you can open the file to check it first.</p>
   </div>
  </div>
  <div class="card android-only privacy" id="privacyCard"><h3>Your privacy</h3><ul style="margin:0;padding-left:18px">
