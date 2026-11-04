@@ -6,6 +6,8 @@
 #
 #   ss1_bt_repair.sh check    what's wrong, changing nothing
 #   ss1_bt_repair.sh repair   fix it
+#   ss1_bt_repair.sh reset    start over with a blank pairings image (MiSTer's own S45bluetooth renew): every
+#                             pairing is gone, a copy of the old image is kept; restore a backup afterwards
 #
 # MiSTer keeps the pairings in an ext4 image, /media/fat/linux/bluetooth (2 MB), that /etc/init.d/S45bluetooth
 # mounts at /var/lib/bluetooth before it starts bluetoothd (it makes a new image when there's none). What goes
@@ -231,11 +233,33 @@ repair() {
 	else echo "RESULT|fail|Bluetooth was repaired as far as it could be, but $left problem(s) are left (see the log)"; fi
 }
 
+reset() {
+	[ -f "$IMG" ] && [ -n "$S" ] && grep -q "renew" "$S" 2>/dev/null || { echo "RESULT|fail|this Linux has no blank pairings image to start over with (S45bluetooth renew)"; return; }
+	step "Waiting for a pairing that's running, then stopping Bluetooth"
+	i=0; while ps 2>/dev/null | grep -q "[b]tctl pair" && [ $i -lt 100 ]; do sleep 1; i=$((i + 1)); done
+	date +%s > /tmp/ss1_bt.busy
+	step "Keeping a copy of the pairings image"
+	cp -p "$IMG" "$IMG.bak-$(date +%Y%m%d-%H%M%S)" && log "Copy: $IMG.bak-$(date +%Y%m%d-%H%M%S)"
+	ls -t "$IMG".bak-* 2>/dev/null | tail -n +4 | while read -r o; do rm -f "$o"; done
+	step "Starting over with a blank pairings image"
+	"$S" renew > /dev/null 2>&1
+	i=0; while ! pidof bluetoothd > /dev/null 2>&1 && [ $i -lt 30 ]; do sleep 0.2; i=$((i + 1)); done
+	sleep 1; timeout 4 bluetoothctl power on > /dev/null 2>&1
+	rm -f /tmp/ss1_bt.busy
+	step "Checking Bluetooth again"
+	mkdir -p "$W"; NF=0; AFTER=1 check > "$W/after"
+	grep '^LOG|' "$W/after"; left=$(grep -c '^FOUND|' "$W/after"); grep '^FOUND|' "$W/after" | sed 's/^FOUND|/LOG|Still: /'
+	rm -rf "$W"
+	if [ "$left" -eq 0 ]; then echo "RESULT|ok|Bluetooth started over with a blank pairings image: pair the controllers again, or restore a backup"
+	else echo "RESULT|fail|Bluetooth started over, but $left problem(s) are left (see the log)"; fi
+}
+
 case "$MODE" in
 check)
 	check
 	[ $NF -eq 0 ] && echo "RESULT|ok|No problems found" || echo "RESULT|ok|$NF problem(s) found"
 	rm -rf "$W" ;;
 repair) repair ;;
-*) echo "usage: $0 check|repair" >&2; exit 2 ;;
+reset) reset ;;
+*) echo "usage: $0 check|repair|reset" >&2; exit 2 ;;
 esac
