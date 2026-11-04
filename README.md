@@ -634,8 +634,8 @@ The artwork game reader `ss1ident` is built with [libchdr](https://github.com/rt
 
 Copyright (C) 2026 f3bandit (F3 Digital Systems)
 
-SS1 Tool and the SS1 storage scripts are free software: you can redistribute them and/or modify them under the terms of the **GNU General Public License version 3** as published by the Free Software Foundation. See [LICENSE](LICENSE).
+SS1 Tool and the SS1 storage scripts are licensed under the **PolyForm Noncommercial License 1.0.0**. See [LICENSE.md](LICENSE.md).
 
-They are distributed in the hope that they will be useful, but **without any warranty**; without even the implied warranty of merchantability or fitness for a particular purpose. See the GNU General Public License for details.
+In short: you can use, study, share and change SS1 Tool for anything that isn't commercial. Selling it, or a product built on it, isn't allowed. It comes **without any warranty**.
 
-In short: you can use, study, share and change SS1 Tool. If you share a changed version, it has to be under GPL-3.0 too, with its source code.
+Versions released before Nov 4 2026 were under the GNU General Public License version 3, and those copies keep it.

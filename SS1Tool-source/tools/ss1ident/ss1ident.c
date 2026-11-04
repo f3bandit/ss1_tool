@@ -1,6 +1,6 @@
 /* ss1ident: what a game file is, worked out on the SuperStation so only the answer crosses the
  * network. SS1 Tool's artwork lookups use it to find a game by its content, not its file name.
- * Copyright (C) 2026 f3bandit. GPL-3.0 (part of SS1 Tool; the method is the same as Phosphor's).
+ * Copyright (C) 2026 f3bandit. PolyForm Noncommercial 1.0.0 (part of SS1 Tool; the method is the same as Phosphor's).
  *
  * Reads lines "<kind>\t<path>" on stdin and prints "<path>\t<crc32>\t<product code>\t<size>" for
  * each (an empty field when it doesn't apply or couldn't be read). kind:

@@ -7,7 +7,7 @@ package main
 // warm restart; u-boot then starts the copy from the drive, which runs fsck.exfat on the unmounted SD
 // card (scripts/sd_offline_repair_boot.sh, inside the copy), leaves the result on the drive and restarts
 // normally. SS1 Tool reads the result when it connects again.
-// Copyright (C) 2026 f3bandit. GPL-3.0 (see LICENSE).
+// Copyright (C) 2026 f3bandit. PolyForm Noncommercial 1.0.0 (see LICENSE.md).
 
 import (
 	"bytes"

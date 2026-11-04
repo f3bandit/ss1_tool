@@ -512,5 +512,4 @@ SuperStation One, Console Mode and MiSTer belong to their respective owners. Thi
 
 ## License
 
-<!-- Add a LICENSE file to the repo and name it here, e.g. GPL-3.0 -->
-See [LICENSE](LICENSE).
+PolyForm Noncommercial License 1.0.0: see [LICENSE.md](../LICENSE.md).

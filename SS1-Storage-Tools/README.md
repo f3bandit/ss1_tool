@@ -57,4 +57,4 @@ The report starts with an automatic **FINDINGS** summary (missing system files, 
 
 ## License
 
-Copyright (C) 2026 f3bandit (F3 Digital Systems). Free software under the GNU General Public License version 3: see [LICENSE](LICENSE). No warranty.
+Copyright (C) 2026 f3bandit (F3 Digital Systems). Licensed under the PolyForm Noncommercial License 1.0.0 (no commercial use): see [LICENSE.md](LICENSE.md). No warranty.

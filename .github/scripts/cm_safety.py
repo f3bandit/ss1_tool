@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (C) 2026 f3bandit. GPL-3.0 (see LICENSE).
+# Copyright (C) 2026 f3bandit. PolyForm Noncommercial 1.0.0 (see LICENSE.md).
 """Console Mode safety check: what a MiSTer update from Update All breaks on a SuperStation One running
 Retro Remake's Console Mode. Run by .github/workflows/cm-safety.yml, every hour; it does the full check
 only when something new came out (Console Mode, MiSTer Linux, MiSTer Main), or with --force.

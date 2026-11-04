@@ -1,4 +1,4 @@
-// Copyright (C) 2026 f3bandit. GPL-3.0-or-later (see LICENSE).
+// Copyright (C) 2026 f3bandit. PolyForm Noncommercial 1.0.0 (see LICENSE.md).
 // SS1 Tool's controller tester: f3bandit's idea and design.
 
 package main

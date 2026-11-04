@@ -1,6 +1,6 @@
 #!/bin/sh
 # SS1 Tool: the offline drive repair's step (the SD card, then every other drive), in the repair copy of MiSTer's Linux on a USB or NVMe drive
-# (ss1tool/rescue/os.img). Copyright (C) 2026 f3bandit. GPL-3.0 (see LICENSE).
+# (ss1tool/rescue/os.img). Copyright (C) 2026 f3bandit. PolyForm Noncommercial 1.0.0 (see LICENSE.md).
 #
 # Only that copy runs it, and its inittab runs nothing else (sd_offline_repair.sh puts both in it): u-boot
 # started Linux from the drive, so /media/fat is the drive and the SD card isn't mounted. It checks and

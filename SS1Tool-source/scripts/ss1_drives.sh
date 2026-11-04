@@ -1,6 +1,6 @@
 #!/bin/sh
 # SS1 Tool: drive guard. The games drive always at /media/usb0, the repair drive hidden.
-# Copyright (C) 2026 f3bandit. GPL-3.0 (see LICENSE).
+# Copyright (C) 2026 f3bandit. PolyForm Noncommercial 1.0.0 (see LICENSE.md).
 #
 # MiSTer mounts USB drives at the next free /media/usbN in the order they show up. A USB stick that comes
 # up before the dock's NVMe drive takes usb0 and moves the games drive to usb1, and everything that keeps a
