@@ -97,10 +97,10 @@ check() {
 	fi
 }
 
-mkimg() {   # <file> <size in KB>: a new ext4 image, as S45bluetooth would make it
+mkimg() {   # <file> <size in KB>: a new ext4 image as S45bluetooth makes it, with 1024 file slots (its own get 256)
 	dd if=/dev/zero of="$1" bs=1024 count="$2" 2> /dev/null || return 1
-	if command -v mkfs.ext4 > /dev/null 2>&1; then mkfs.ext4 -q -F "$1" > /dev/null 2>&1
-	elif command -v mke2fs > /dev/null 2>&1; then mke2fs -q -F -t ext4 "$1" > /dev/null 2>&1
+	if command -v mkfs.ext4 > /dev/null 2>&1; then mkfs.ext4 -q -F -N 1024 "$1" > /dev/null 2>&1
+	elif command -v mke2fs > /dev/null 2>&1; then mke2fs -q -F -t ext4 -N 1024 "$1" > /dev/null 2>&1
 	else return 1; fi
 }
 
@@ -209,6 +209,13 @@ repair() {
 	if [ -n "$S" ]; then "$S" start > /dev/null 2>&1
 	else start-stop-daemon -S -q -m -b -p /var/run/bluetoothd.pid -x /usr/libexec/bluetooth/bluetoothd -- -n -E -C; fi
 	i=0; while ! pidof bluetoothd > /dev/null 2>&1 && [ $i -lt 30 ]; do sleep 0.2; i=$((i + 1)); done
+	# the Bluetooth chip missing or not answering: S45bluetooth's hcireset (unplugs and plugs it in again on USB)
+	if [ -n "$S" ] && grep -q hcireset "$S" 2>/dev/null; then
+		if ! ls -d /sys/class/bluetooth/hci* > /dev/null 2>&1 || ! timeout 4 bluetoothctl show 2>/dev/null | grep -q "^Controller"; then
+			found "The Bluetooth chip wasn't answering: reset it"; "$S" hcireset > /dev/null 2>&1; sleep 3
+			"$S" restart > /dev/null 2>&1; sleep 1
+		fi
+	fi
 	for h in /sys/class/bluetooth/hci*; do [ -e "$h" ] && command -v hciconfig > /dev/null 2>&1 && hciconfig "$(basename "$h")" up 2> /dev/null; done
 	sleep 1; timeout 4 bluetoothctl power on > /dev/null 2>&1
 	rm -f /tmp/ss1_bt.busy
