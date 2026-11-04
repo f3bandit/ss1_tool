@@ -1,6 +1,6 @@
 #!/bin/bash
 # SS1 Tool: repair a Console Mode SuperStation's SD card offline, from a USB or NVMe drive.
-# Copyright (C) 2026 f3bandit. GPL-3.0 (see LICENSE).
+# Copyright (C) 2026 f3bandit. PolyForm Noncommercial 1.0.0 (see LICENSE.md).
 #
 # The SD card can't be repaired while the SuperStation runs from it (Linux is linux/linux.img on it). So
 # SS1 Tool puts a copy of that same MiSTer Linux on a USB or NVMe drive (ss1tool/rescue/os.img, with one
