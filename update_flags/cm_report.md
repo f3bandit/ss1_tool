@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-03 09:43 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, MiSTer Main `a8ed7e9`.
+Checked 2026-11-04 11:45 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, MiSTer Main `a8ed7e9`.
 
 | | Verdict |
 |---|---|
