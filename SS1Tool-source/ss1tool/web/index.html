@@ -556,7 +556,7 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
 <div class="subpage" id="debug">
  <h2>Debug report</h2><p class="sub">Collects versions, configs, Console Mode files, game library layout, storage health and logs into one text file for Taki and the mods. Passwords, keys, WiFi names and MAC addresses are redacted.</p>
  <div class="card"><div class="row"><button class="b p" onclick="debugReport()">Create debug report</button><button class="b" id="dbgSave" style="display:none" onclick="saveReport()">Save report...</button><button class="b" id="dbgOpen" style="display:none" onclick="openReport()">Show in folder</button></div>
-  <pre class="out" id="dbgOut">Upload the generated file to your GitHub issue or the Discord support channel.</pre></div>
+  <pre class="out" id="dbgOut">Upload the generated file to your GitHub issue.</pre></div>
 </div>
 <div class="subpage" id="padtest">
  <h2>Controller tester</h2><p class="sub">Shows what each controller on the SuperStation is pressing, live, without loading a core. SS1 Tool only watches: the controllers keep working in MiSTer and Console Mode while you test.</p>
@@ -577,9 +577,8 @@ a.gift{text-decoration:none;font-size:18px;cursor:pointer;vertical-align:-1px}a.
   <p class="muted" style="margin:2px 0 16px">Version {{VERSION}}</p>
   <p style="font-size:16px;margin:0 0 6px">Developed by <b>f3bandit</b></p>
   <p style="margin:0 0 18px">Unofficial Super Station One Tools</p>
-  <p style="margin:0 0 18px">Special thanks to Taki Udon and all the admins on the Taki Discord.</p>
-  <div class="row"><a class="b discord" href="https://discord.gg/74pb5PJRxX" target="_blank" rel="noopener noreferrer">Join the Taki Udon Discord</a>
-  <a class="b docs" href="https://github.com/Takiiiiiiii/SuperStation-Documentation" target="_blank" rel="noopener noreferrer">SuperStation One Documentation</a>
+  <p style="margin:0 0 18px">Special thanks to Taki Udon.</p>
+  <div class="row"><a class="b docs" href="https://github.com/Takiiiiiiii/SuperStation-Documentation" target="_blank" rel="noopener noreferrer">SuperStation One Documentation</a>
   <a class="b docs" href="https://github.com/Takiiiiiiii/SuperStation-Documentation/wiki" target="_blank" rel="noopener noreferrer">SS1 Wiki</a></div>
   <p class="muted" style="margin:10px 0 0">Official SuperStation One guides and the Console Mode wiki.</p>
   <p class="muted" style="margin:14px 0 0">SS1 Tool is a community project and is not affiliated with or endorsed by Taki Udon or Retro Remake.</p>
@@ -1304,7 +1303,7 @@ async function diskReport(target){const box=$(target);if(!box)return;box.innerHT
  const gb=x=>x?(x/1e9).toFixed(1)+" GB":"-";
  box.innerHTML=`<table style="margin-top:10px"><thead><tr><th>Disk</th><th>Name</th><th>Size</th><th>Connected as</th><th>Drive</th><th></th></tr></thead><tbody>${d.map(x=>`<tr><td>${x.number}</td><td>${esc(x.name)}<div class="muted">${esc(x.media||"")}</div></td><td>${gb(x.size)}</td><td>${esc(x.bus)}</td><td>${esc(x.letters||"-")}</td>
   <td>${x.offered?'<span class="pill good">&#10003; Offered</span>':`<span class="muted">${esc(x.reason)}</span>`}</td></tr>`).join("")}</tbody></table>
-  <p class="muted" style="margin:8px 0 0">${d.some(x=>x.offered)?"Offered cards appear in the list above; click Refresh.":"If your card reader isn't in this table at all, Windows doesn't see a card in it: reseat the card or try another reader. If it's listed with a reason, send a screenshot of this table to the SS1 Tool GitHub issues or the Discord, so the reader can be supported."}</p>`}
+  <p class="muted" style="margin:8px 0 0">${d.some(x=>x.offered)?"Offered cards appear in the list above; click Refresh.":"If your card reader isn't in this table at all, Windows doesn't see a card in it: reseat the card or try another reader. If it's listed with a reason, send a screenshot of this table to the SS1 Tool GitHub issues, so the reader can be supported."}</p>`}
 // ---------- About: Retroblast81 gift
 function toggleGift(){const w=$("giftWrap"),c=$("giftCat");if(w.classList.toggle("open")){c.src="/api/gift.gif?t="+TOKEN+"&r="+Date.now()}else{setTimeout(()=>{if(!w.classList.contains("open"))c.removeAttribute("src")},450)}}
 async function ctrlLoad(){ctrlBackupsLoad();if(!connectedHost){$("ctrlList").innerHTML='<span class="pill warn">Not connected - connect on the Connect tab first</span>';$("ctrlFiles").innerHTML="";return}

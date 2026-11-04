@@ -1,7 +1,7 @@
 #!/bin/bash
 # ss1_debug_report.sh - SuperStation One / MiSTer debug report collector
 # Collects versions, config, Console Mode files, game library layout, storage
-# health and logs into ONE text file you can upload to GitHub/Discord.
+# health and logs into one text file you can upload to GitHub or send with a support request.
 # Read-only: nothing on the system is changed. MAC addresses, WiFi names and
 # passwords/keys/tokens are redacted.
 #
@@ -448,7 +448,7 @@ if [ "$CM_HIDDEN" = 1 ]; then
     if [ ${#FINDINGS[@]} -eq 0 ]; then echo "+ No problems detected."
     else printf '%s\n' "${FINDINGS[@]}" | head -n 6 | fbcolor
       [ ${#FINDINGS[@]} -gt 6 ] && echo "# ...and $(( ${#FINDINGS[@]} - 6 )) more in the report"; fi
-    echo ""; echo "Post this file in the Taki Udon Discord when asking for help."
+    echo ""; echo "Send this file with your support request when asking for help."
     echo "# Returning to Console Mode in 20 seconds..."; } | fbshow "Debug report saved" good
   sleep 20
 elif have_dialog; then dialog --backtitle "$BACKTITLE" --title "Done" --msgbox "$MSG" 14 56
