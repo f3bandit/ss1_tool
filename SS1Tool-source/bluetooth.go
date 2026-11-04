@@ -43,6 +43,8 @@ func registerRoutesBT(mux *http.ServeMux) {
 	h("/api/bt/remove-all", apiBTRemoveAll)
 	h("/api/bt/progress", apiBTProgress)
 	h("/api/bt/export-file", apiBTExportFile)
+	h("/api/bt/check", apiBTCheck)
+	h("/api/bt/repair", apiBTRepair)
 	h("/api/gift.gif", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/gif")
 		w.Header().Set("Cache-Control", "no-store")

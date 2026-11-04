@@ -907,6 +907,9 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <pre class="out" id="btJobLog" style="max-height:180px"></pre><div class="row" id="btJobBtns" style="margin-top:10px;display:none"><button class="b" onclick="btJobHide()">Close</button></div></div>
  <div class="card"><h3>Bluetooth on the SuperStation</h3><div class="row" id="btStatus"><span class="muted">-</span></div>
   <p class="muted" style="margin:10px 0 0"><b>Start pairing</b> presses F11 on the SuperStation, which starts pairing from the MiSTer menu. Put the controller in pairing mode first. If Console Mode is on screen, open the MiSTer menu first.</p></div>
+ <div class="card" id="btFix"><h3>Bluetooth not working?</h3><p class="muted" style="margin:0 0 10px">Controllers won't pair, pairings are gone after every restart, or Bluetooth won't switch on: <b>Check</b> looks for what's wrong (it changes nothing), <b>Repair Bluetooth</b> fixes it. The repair backs up the pairings on this PC first, keeps a copy of MiSTer's pairings image on the SD card, repairs or rebuilds the image, takes back pairings saved where they'd be lost, makes room in it, switches Bluetooth back on and checks it again. Bluetooth controllers disconnect for a few seconds.</p>
+  <div class="row"><button class="b" onclick="btCheck()">Check</button><button class="b p" onclick="btRepair()">Repair Bluetooth</button><span class="muted" id="btFixTime"></span></div>
+  <div id="btFixList" style="margin-top:10px"></div></div>
  <div class="card btctl"><h3>Paired devices</h3><div id="btList"><span class="muted">-</span></div>
   <div class="row" style="margin-top:10px"><button class="b" onclick="btExport('')">Export all pairings</button><label class="b" style="cursor:pointer">Import pairings<input type="file" accept=".zip" hidden onchange="btImport(this)"></label><button class="b d" onclick="btRemoveAll()">Remove all pairings</button><span class="muted">A backup is saved on this PC before anything is removed or replaced.</span></div></div>
  <div class="card btctl"><h3>Backups on this PC</h3><p class="muted" id="btDir" style="margin:0 0 8px"></p>
@@ -1761,6 +1764,12 @@ async function btPoll(fresh){if(btPolling)return;btPolling=true;let last=null;
   if(!first){if(last.error)toast(last.error,true);else{toast(last.result);if(last.download)location.href="/api/bt/export-file?t="+TOKEN}}
   btBackupsLoad();if(connectedHost)btLoad()}}
 function btRemove(mac,name){if(!confirm(`Remove the pairing for ${name}?\n\nA backup is saved on this PC first. To use it again, pair it again.`))return;btRun("/api/bt/action",{action:"remove",mac})}
+async function btCheck(){if(!connectedHost)return toast("Connect to the SuperStation first",true);
+ const L=$("btFixList");L.innerHTML='<span class="muted">Checking...</span>';
+ try{const j=await api("/api/bt/check");$("btFixTime").textContent=new Date().toLocaleTimeString();
+  L.innerHTML=j.found.length?'<ul style="margin:0">'+j.found.map(f=>`<li>&#9888; ${esc(f)}</li>`).join("")+'</ul><p class="muted" style="margin:8px 0 0">Repair Bluetooth fixes these.</p>':'<span class="pill good">&#10003; No problems found</span>'}
+ catch(e){L.innerHTML="";toast(e.message,true)}}
+function btRepair(){if(!connectedHost)return toast("Connect to the SuperStation first",true);if(!confirm("Repair Bluetooth on the SuperStation?\n\nThe pairings are backed up on this PC first. Bluetooth controllers disconnect for a few seconds."))return;$("btFixList").innerHTML="";btRun("/api/bt/repair")}
 function btRemoveAll(){if(!connectedHost)return toast("Connect to the SuperStation first",true);if(!confirm("Remove EVERY Bluetooth pairing from the SuperStation?\n\nA backup is saved on this PC first."))return;btRun("/api/bt/remove-all")}
 function btExport(mac){if(!connectedHost)return toast("Connect to the SuperStation first",true);btRun("/api/bt/export?t="+TOKEN+(mac?"&mac="+encodeURIComponent(mac):""))}
 async function btImport(inp){const f=inp.files[0];inp.value="";if(!f)return;if(!connectedHost)return toast("Connect to the SuperStation first",true);
