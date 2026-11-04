@@ -45,6 +45,41 @@ func btRepairRun(mode string, onLine func(kind, text string)) (found []string, o
 	return
 }
 
+// apiBTReset: start over with a blank pairings image (MiSTer's own S45bluetooth renew), the pairings backed up
+// on this PC first so they can be restored
+func apiBTReset(w http.ResponseWriter, r *http.Request) {
+	if !needConn(w) {
+		return
+	}
+	startOrFail(w, "Start Bluetooth fresh", 6, func() (string, error) {
+		saved, _, berr := btBackup("before-start-fresh")
+		switch {
+		case berr != nil:
+			btNote("The pairings couldn't be backed up on this PC first (" + berr.Error() + "); a copy of the image is kept on the SuperStation")
+		case saved != "":
+			btNote("Backed up the pairings on this PC: " + saved)
+		}
+		_, ok, result, err := btRepairRun("reset", func(kind, text string) {
+			switch kind {
+			case "STEP":
+				btNext(text)
+			case "LOG", "FOUND":
+				btNote(text)
+			}
+		})
+		if err != nil {
+			return "", err
+		}
+		if !ok {
+			return "", errors.New(result)
+		}
+		if saved != "" {
+			result += ". Your pairings are in the backup " + saved + " below."
+		}
+		return result, nil
+	})
+}
+
 func apiBTCheck(w http.ResponseWriter, r *http.Request) {
 	if !needConn(w) {
 		return
