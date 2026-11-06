@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-05 18:50 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, MiSTer Main `e0a234f`.
+Checked 2026-11-06 16:00 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, MiSTer Main `cc47bad`.
 
 | | Verdict |
 |---|---|
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 23.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 270. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 91.
+Commits checked since 2025-10-01: 271. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 92.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
