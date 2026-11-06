@@ -10,7 +10,7 @@ name: MiSTer Linux versions
 on:
   push:
     branches: [main]
-    paths: ["linux-versions/versions.txt", ".github/workflows/mister-linux.yml"]
+    paths: ["linux-versions/**", ".github/workflows/mister-linux.yml"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -30,6 +30,8 @@ jobs:
         run: |
           if ! gh release view "$TAG" > /dev/null 2>&1; then
             gh release create "$TAG" --latest=false --title "MiSTer Linux versions" --notes-file linux-versions/notes.md
+          else
+            gh release edit "$TAG" --latest=false --notes-file linux-versions/notes.md > /dev/null
           fi
           gh release view "$TAG" --json assets --jq '.assets[].name' > have.txt || true
           gh release download "$TAG" -p linux.json -O linux.json 2> /dev/null || echo '{"versions":[]}' > linux.json

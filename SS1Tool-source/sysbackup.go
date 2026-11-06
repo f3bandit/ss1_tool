@@ -2,7 +2,8 @@ package main
 
 // MiSTer & Linux backups: each time SS1 Tool connects, the parts an update replaces (MiSTer, the
 // menu core, Linux, and Console Mode's own program files) are checked, and any version not saved
-// yet is copied to backups\mister-linux\<part>\<version>\ next to SS1Tool.exe. A version is
+// yet is copied to backups\mister-linux\<part>\<version>\ next to SS1Tool.exe (Linux with the rest of
+// what MiSTer's Linux update replaces in the linux folder: u-boot's uboot.img and so on). A version is
 // written into "<version>.incomplete" first and only renamed once every file is copied and its
 // checksum matches the SuperStation's; a leftover .incomplete (SS1 Tool closed, connection lost)
 // is deleted the next time and that version is copied again. Saved versions are only ever deleted
@@ -34,13 +35,21 @@ import (
 type sysPart struct {
 	ID, Name string
 	Files    []string // relative to /media/fat
+	Extra    []string // saved and put back with it when they're there (the rest of a Linux update)
 	CM       bool     // Console Mode's own files
 }
+
+// the rest of files/linux in MiSTer's Linux release, which its Linux update copies over (MiSTer's downloader:
+// rsync of files/linux/ without gamecontrollerdb/, then updateboot writes uboot.img to the card's u-boot
+// partition). The same in every release from 231108 to 260912 (linux-versions on SS1 Tool's GitHub).
+var sysLinuxExtra = []string{"linux/uboot.img", "linux/updateboot", "linux/MidiLink.INI", "linux/ppp_options",
+	"linux/_samba.sh", "linux/_user-startup.sh", "linux/_wpa_supplicant.conf", "linux/u-boot.txt_example",
+	"linux/mt32-rom-data/README", "linux/soundfonts/README"}
 
 var sysParts = []sysPart{
 	{ID: "mister", Name: "MiSTer", Files: []string{"MiSTer"}},
 	{ID: "menu", Name: "Menu core", Files: []string{"menu.rbf"}},
-	{ID: "linux", Name: "Linux", Files: []string{"linux/zImage_dtb", "linux/linux.img"}},
+	{ID: "linux", Name: "Linux", Files: []string{"linux/zImage_dtb", "linux/linux.img"}, Extra: sysLinuxExtra},
 	{ID: "cm_main", Name: "Console Mode's MiSTer", Files: []string{"ConsoleMode/MiSTer_ConsoleMode"}, CM: true},
 	{ID: "cm_menu", Name: "Console Mode's menu core", Files: []string{"ConsoleMode/menu_ConsoleMode.rbf"}, CM: true},
 	{ID: "cm_app", Name: "Console Mode", Files: []string{"ConsoleMode/ConsoleMode_arm"}, CM: true},
@@ -132,8 +141,27 @@ func sysEnabled() bool {
 	return !cfg.SysBackupOff
 }
 
-const sysProbeCmd = `cd /media/fat 2>/dev/null || exit 1
-for f in MiSTer menu.rbf linux/zImage_dtb linux/linux.img ConsoleMode/MiSTer_ConsoleMode ConsoleMode/menu_ConsoleMode.rbf ConsoleMode/ConsoleMode_arm; do
+// a saved file's name in its version's folder: under linux/ the path inside it (mt32-rom-data/README),
+// otherwise the file's own name (as versions were always saved)
+func sysLocal(dir, path string) string {
+	if r, ok := strings.CutPrefix(path, "linux/"); ok {
+		return filepath.Join(dir, filepath.FromSlash(r))
+	}
+	return filepath.Join(dir, filepath.Base(path))
+}
+
+// every file of every part, its extras too
+func sysProbeList() string {
+	var l []string
+	for _, p := range sysParts {
+		l = append(l, p.Files...)
+		l = append(l, p.Extra...)
+	}
+	return strings.Join(l, " ")
+}
+
+var sysProbeCmd = `cd /media/fat 2>/dev/null || exit 1
+for f in ` + sysProbeList() + `; do
   if [ -f "$f" ]; then
     s=$(stat -c '%s %Y %a' "$f")
     if [ "$f" = linux/linux.img ]; then m=-; else m=$(nice -n 19 md5sum "$f" | cut -c1-32); fi
@@ -346,8 +374,14 @@ func sysSave(p sysPart, id, shown string, n *sysNow, dir string) error {
 	if err := os.MkdirAll(tmp, 0o755); err != nil {
 		return err
 	}
+	files := append([]string{}, p.Files...)
+	for _, f := range p.Extra {
+		if nf := n.Files[f]; nf != nil && nf.MD5 != "" {
+			files = append([]string{f}, files...) // (the extras first: put back swaps them in before Linux)
+		}
+	}
 	var total int64
-	for _, f := range p.Files {
+	for _, f := range files {
 		total += n.Files[f].Size
 	}
 	sysSet(func() {
@@ -356,7 +390,7 @@ func sysSave(p sysPart, id, shown string, n *sysNow, dir string) error {
 	})
 	info := sysInfo{Part: p.ID, ID: id, Version: shown, FirstSeen: time.Now().Unix()}
 	var base int64
-	for _, f := range p.Files {
+	for _, f := range files {
 		nf := n.Files[f]
 		want := nf.MD5
 		if want == "" { // linux.img: its checksum is worked out now, right before the copy
@@ -366,7 +400,10 @@ func sysSave(p sysPart, id, shown string, n *sysNow, dir string) error {
 			}
 			want = strings.TrimSpace(out)
 		}
-		local := filepath.Join(tmp, filepath.Base(f))
+		local := sysLocal(tmp, f)
+		if err := os.MkdirAll(filepath.Dir(local), 0o755); err != nil {
+			return err
+		}
 		lf, err := os.Create(local)
 		if err != nil {
 			return err
@@ -588,7 +625,7 @@ func apiSysStatus(w http.ResponseWriter, r *http.Request) {
 			whole := true
 			for _, f := range i.Files {
 				sz += f.Size
-				if st, err := os.Stat(filepath.Join(sysRoot(), p.ID, e.Name(), filepath.Base(f.Path))); err != nil || st.Size() != f.Size {
+				if st, err := os.Stat(sysLocal(filepath.Join(sysRoot(), p.ID, e.Name()), f.Path)); err != nil || st.Size() != f.Size {
 					whole = false // still arriving from another copy of SS1 Tool (Sync)
 				}
 			}
@@ -754,7 +791,7 @@ func apiSysRestore(w http.ResponseWriter, r *http.Request) {
 	// local files are checked before anything is sent
 	var need int64
 	for _, f := range info.Files {
-		b, err := sysFileMD5(filepath.Join(dir, filepath.Base(f.Path)))
+		b, err := sysFileMD5(sysLocal(dir, f.Path))
 		if err != nil || b != f.MD5 {
 			fail(w, 409, "the saved copy of "+f.Path+" on this PC is damaged; nothing was changed")
 			return
@@ -781,7 +818,7 @@ func apiSysRestore(w http.ResponseWriter, r *http.Request) {
 	for _, f := range info.Files {
 		target := "/media/fat/" + f.Path
 		tmp := target + ".ss1tool.new"
-		lf, err := os.Open(filepath.Join(dir, filepath.Base(f.Path)))
+		lf, err := os.Open(sysLocal(dir, f.Path))
 		if err != nil {
 			cleanup()
 			fail(w, 500, err.Error())
@@ -789,7 +826,7 @@ func apiSysRestore(w http.ResponseWriter, r *http.Request) {
 		}
 		sent = append(sent, tmp)
 		pr := &sysReadCounter{r: lf, base: base}
-		_, err = runIn("cat > "+shq(tmp), pr)
+		_, err = runIn("mkdir -p "+shq(pathDir(target))+" && cat > "+shq(tmp), pr)
 		lf.Close()
 		if err != nil {
 			cleanup()
@@ -804,13 +841,28 @@ func apiSysRestore(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// all there and checked: swap them in (the same rename MiSTer's own updater uses), Linux last
+	// all there and checked: swap them in (the same rename MiSTer's own updater uses), Linux last. A
+	// different u-boot (uboot.img) is written to the card with MiSTer's own updateboot before linux.img goes
+	// in, as MiSTer's Linux update does
 	var mv []string
+	ubootNew := false
 	for _, f := range info.Files {
+		if f.Path == "linux/uboot.img" {
+			if nf := now.Files[f.Path]; nf == nil || nf.MD5 != f.MD5 {
+				ubootNew = true
+			}
+		}
+	}
+	files := append([]sysFileInfo{}, info.Files...)
+	sort.SliceStable(files, func(a, b int) bool { return files[a].Path != "linux/linux.img" && files[b].Path == "linux/linux.img" })
+	for _, f := range files {
 		target := "/media/fat/" + f.Path
 		mode := f.Mode
 		if mode == "" {
 			mode = "755"
+		}
+		if f.Path == "linux/linux.img" && ubootNew {
+			mv = append(mv, "sync && sh /media/fat/linux/updateboot > /dev/null")
 		}
 		mv = append(mv, fmt.Sprintf("chmod %s %s && mv -f %s %s", mode, shq(target+".ss1tool.new"), shq(target+".ss1tool.new"), shq(target)))
 	}
@@ -914,4 +966,12 @@ exit $rc`, shq(tmp), shq(req.Path), shq(tmp), shq(tmp), shq(req.Path))
 		msg += " It's used after the next restart."
 	}
 	writeJSON(w, map[string]any{"ok": true, "message": msg})
+}
+
+// the folder of a path on the SuperStation ("/media/fat/linux/x" -> "/media/fat/linux")
+func pathDir(p string) string {
+	if i := strings.LastIndex(p, "/"); i > 0 {
+		return p[:i]
+	}
+	return "/"
 }
