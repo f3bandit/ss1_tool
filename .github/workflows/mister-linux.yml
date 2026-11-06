@@ -1,0 +1,73 @@
+# Publishes the MiSTer Linux versions listed in linux-versions/versions.txt on the "mister-linux" release, for
+# SS1 Tool's MiSTer & Linux backups (a version can be downloaded there and put back on the SuperStation by
+# anyone without a backup of it). For each version not published yet: MiSTer-devel's SD installer archive
+# (release_<date>.7z, or .7z.001 + .002), its files/linux/zImage_dtb and linux.img (gzipped), the version
+# read from inside the image (/MiSTer.version), and linux.json listing every version with each file's size
+# and md5 (of the file as it's put on the card). The release is never marked latest: SS1 Tool's own updater
+# reads releases/latest. Published as f3bandit when the RELEASE_TOKEN secret is set.
+name: MiSTer Linux versions
+on:
+  push:
+    branches: [main]
+    paths: ["linux-versions/versions.txt", ".github/workflows/mister-linux.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: mister-linux
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+      TAG: mister-linux
+      SRC: https://github.com/MiSTer-devel/SD-Installer-Win64_MiSTer/raw/master
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools
+        run: sudo apt-get install -y -qq p7zip-full e2fsprogs > /dev/null
+      - name: The release
+        run: |
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            gh release create "$TAG" --latest=false --title "MiSTer Linux versions" --notes-file linux-versions/notes.md
+          fi
+          gh release view "$TAG" --json assets --jq '.assets[].name' > have.txt || true
+          gh release download "$TAG" -p linux.json -O linux.json 2> /dev/null || echo '{"versions":[]}' > linux.json
+      - name: Each version
+        run: |
+          set -e
+          changed=0
+          for d in $(grep -v '^#' linux-versions/versions.txt | tr -d ' \r' | grep -E '^20[0-9]{6}$'); do
+            v="${d#20}"
+            if grep -qx "linux-$v.img.gz" have.txt && grep -qx "linux-$v.zImage_dtb" have.txt \
+              && jq -e --arg v "$v" '.versions[] | select(.id == $v)' linux.json > /dev/null; then
+              echo "$v: published"; continue
+            fi
+            rm -rf w && mkdir w
+            if curl -fsSL -o w/r.7z "$SRC/release_$d.7z"; then a=w/r.7z
+            else
+              curl -fsSL -o w/r.7z.001 "$SRC/release_$d.7z.001" && curl -fsSL -o w/r.7z.002 "$SRC/release_$d.7z.002"
+              curl -fsSL -o w/r.7z.003 "$SRC/release_$d.7z.003" 2> /dev/null || rm -f w/r.7z.003
+              a=w/r.7z.001
+            fi
+            7z x -y -ow/x "$a" files/linux/zImage_dtb files/linux/linux.img > /dev/null
+            z=w/x/files/linux/zImage_dtb; i=w/x/files/linux/linux.img
+            [ -s "$z" ] && [ -s "$i" ] || { echo "::error::$d: no zImage_dtb or linux.img in the archive"; exit 1; }
+            inside="$(debugfs -R 'cat /MiSTer.version' "$i" 2> /dev/null | tr -d ' \r\n')"
+            [ "$inside" = "$v" ] || { echo "::error::$d: the image says it's '$inside', not $v"; exit 1; }
+            cp "$z" "w/linux-$v.zImage_dtb"
+            gzip -9 -n -c "$i" > "w/linux-$v.img.gz"
+            jq --arg v "$v" --arg d "$d" \
+              --argjson zs "$(stat -c %s "$z")" --arg zm "$(md5sum "$z" | cut -c1-32)" \
+              --argjson is "$(stat -c %s "$i")" --arg im "$(md5sum "$i" | cut -c1-32)" \
+              --argjson gs "$(stat -c %s "w/linux-$v.img.gz")" \
+              '.versions = ([.versions[] | select(.id != $v)] + [{id: $v, date: $d, source: ("release_" + $d + ".7z"), files: [
+                 {path: "linux/zImage_dtb", asset: ("linux-" + $v + ".zImage_dtb"), size: $zs, md5: $zm},
+                 {path: "linux/linux.img", asset: ("linux-" + $v + ".img.gz"), gzip: true, size: $is, md5: $im, download_size: $gs}]}]
+               | sort_by(.id))' linux.json > linux.json.new && mv linux.json.new linux.json
+            gh release upload "$TAG" --clobber "w/linux-$v.zImage_dtb" "w/linux-$v.img.gz"
+            echo "$v: published ($(stat -c %s "$i") bytes, md5 $(md5sum "$i" | cut -c1-32))"
+            changed=1
+            rm -rf w
+          done
+          jq . linux.json
+          [ "$changed" = 1 ] && gh release upload "$TAG" --clobber linux.json || echo "nothing new"
