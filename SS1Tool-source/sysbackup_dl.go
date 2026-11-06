@@ -8,6 +8,7 @@ package main
 // (Retro Remake's build, its own kernel) can carry the same version number, and the two are kept apart.
 
 import (
+	"archive/tar"
 	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
@@ -23,7 +24,7 @@ import (
 	"time"
 )
 
-const sysLinuxRelease = "https://github.com/f3bandit/ss1_tool/releases/download/mister-linux/"
+var sysLinuxRelease = "https://github.com/f3bandit/ss1_tool/releases/download/mister-linux/"
 
 type sysLinuxFile struct {
 	Path         string `json:"path"`
@@ -38,6 +39,12 @@ type sysLinuxVer struct {
 	ID    string         `json:"id"`
 	Date  string         `json:"date"`
 	Files []sysLinuxFile `json:"files"`
+	// the rest of files/linux the Linux update copies over, in one .tar.gz
+	Other *struct {
+		Asset        string         `json:"asset"`
+		DownloadSize int64          `json:"download_size"`
+		Files        []sysLinuxFile `json:"files"`
+	} `json:"other"`
 }
 
 var (
@@ -73,6 +80,16 @@ func sysLinuxVersions(refresh bool) ([]sysLinuxVer, error) {
 				good = false
 			}
 		}
+		if o := v.Other; o != nil {
+			if !sysLinuxAsset.MatchString(o.Asset) {
+				good = false
+			}
+			for _, f := range o.Files {
+				if !sysLinuxExtraOK(f.Path) || len(f.MD5) != 32 || f.Size < 0 {
+					good = false
+				}
+			}
+		}
 		if good {
 			ok = append(ok, v)
 		}
@@ -82,6 +99,16 @@ func sysLinuxVersions(refresh bool) ([]sysLinuxVer, error) {
 }
 
 func sysLinuxDir(id string) string { return id + "-mister" }
+
+// only the files SS1 Tool knows a Linux update replaces are ever taken from the .tar.gz
+func sysLinuxExtraOK(path string) bool {
+	for _, e := range sysLinuxExtra {
+		if e == path {
+			return true
+		}
+	}
+	return false
+}
 
 func registerRoutesSysLinux(mux *http.ServeMux) {
 	h := func(p string, f http.HandlerFunc) { mux.HandleFunc(p, guard(f)) }
@@ -111,6 +138,9 @@ func apiSysLinuxList(w http.ResponseWriter, r *http.Request) {
 			} else {
 				dl += f.Size
 			}
+		}
+		if v.Other != nil {
+			dl += v.Other.DownloadSize
 		}
 		_, err := os.Stat(filepath.Join(sysRoot(), "linux", sysLinuxDir(v.ID), "info.json"))
 		rows = append(rows, row{v.ID, v.Date, sz, dl, err == nil})
@@ -187,6 +217,9 @@ func sysLinuxDownload(v sysLinuxVer, dir string) error {
 			total += f.Size
 		}
 	}
+	if v.Other != nil {
+		total += v.Other.DownloadSize
+	}
 	sysSet(func() {
 		sysState.Running, sysState.Error, sysState.Saved, sysState.Note = true, "", nil, ""
 		sysState.Part, sysState.Version, sysState.Done, sysState.Total = "Linux", v.ID, 0, total
@@ -195,6 +228,15 @@ func sysLinuxDownload(v sysLinuxVer, dir string) error {
 	info := sysInfo{Part: "linux", ID: sysLinuxDir(v.ID), Version: v.ID + " (MiSTer-devel's)", FirstSeen: time.Now().Unix()}
 	c := &http.Client{Timeout: 60 * time.Minute}
 	var base int64
+	// the small files first (the order they're put back in, Linux last)
+	if o := v.Other; o != nil {
+		got, n, err := sysLinuxOther(c, o.Asset, o.Files, tmp, base)
+		if err != nil {
+			return err
+		}
+		base += n
+		info.Files = append(info.Files, got...)
+	}
 	for _, f := range v.Files {
 		req, _ := http.NewRequest("GET", sysLinuxRelease+f.Asset, nil)
 		req.Header.Set("User-Agent", "SS1Tool/"+appVersion)
@@ -246,4 +288,71 @@ func sysLinuxDownload(v sysLinuxVer, dir string) error {
 		return err
 	}
 	return nil
+}
+
+// sysLinuxOther downloads the .tar.gz of the rest of files/linux and keeps the files linux.json lists, each
+// checked against its md5
+func sysLinuxOther(c *http.Client, asset string, want []sysLinuxFile, tmp string, base int64) ([]sysFileInfo, int64, error) {
+	req, _ := http.NewRequest("GET", sysLinuxRelease+asset, nil)
+	req.Header.Set("User-Agent", "SS1Tool/"+appVersion)
+	resp, err := c.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return nil, 0, fmt.Errorf("HTTP %d for %s", resp.StatusCode, asset)
+	}
+	cr := &sysReadCounter{r: resp.Body, base: base}
+	gz, err := gzip.NewReader(cr)
+	if err != nil {
+		return nil, 0, err
+	}
+	byPath := map[string]sysLinuxFile{}
+	for _, f := range want {
+		byPath[f.Path] = f
+	}
+	done := map[string]bool{}
+	tr := tar.NewReader(gz)
+	for {
+		h, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, 0, err
+		}
+		f, ok := byPath[h.Name]
+		if !ok || h.Typeflag != tar.TypeReg {
+			continue
+		}
+		local := sysLocal(tmp, f.Path)
+		if err := os.MkdirAll(filepath.Dir(local), 0o755); err != nil {
+			return nil, 0, err
+		}
+		lf, err := os.Create(local)
+		if err != nil {
+			return nil, 0, err
+		}
+		hh := md5.New()
+		n, err := io.Copy(io.MultiWriter(lf, hh), io.LimitReader(tr, 64<<20))
+		if e := lf.Close(); err == nil {
+			err = e
+		}
+		if err != nil {
+			return nil, 0, err
+		}
+		if n != f.Size || hex.EncodeToString(hh.Sum(nil)) != f.MD5 {
+			return nil, 0, errors.New(f.Path + " didn't download intact (size or checksum differs)")
+		}
+		done[f.Path] = true
+	}
+	var out []sysFileInfo
+	for _, f := range want { // in linux.json's order
+		if !done[f.Path] {
+			return nil, 0, errors.New(f.Path + " is missing from " + asset)
+		}
+		out = append(out, sysFileInfo{Path: f.Path, Size: f.Size, MD5: f.MD5, Mode: "755"})
+	}
+	return out, cr.n, nil
 }
