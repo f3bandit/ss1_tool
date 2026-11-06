@@ -1,0 +1,9 @@
+# MiSTer Linux versions SS1 Tool can download and put back (MiSTer > MiSTer & Linux backups), for anyone
+# without a backup of the version they need. One per line: the date in MiSTer-devel's SD installer file names
+# (release_<date>.7z, github.com/MiSTer-devel/SD-Installer-Win64_MiSTer). Adding a line here and pushing to
+# main publishes it (.github/workflows/mister-linux.yml). MiSTer Linux is the same for every SuperStation.
+20231108
+20241008
+20250402
+20260907
+20260912
