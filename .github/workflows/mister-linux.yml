@@ -1,7 +1,8 @@
 # Publishes the MiSTer Linux versions listed in linux-versions/versions.txt on the "mister-linux" release, for
 # SS1 Tool's MiSTer & Linux backups (a version can be downloaded there and put back on the SuperStation by
 # anyone without a backup of it). For each version not published yet: MiSTer-devel's SD installer archive
-# (release_<date>.7z, or .7z.001 + .002), its files/linux/zImage_dtb and linux.img (gzipped), the version
+# (release_<date>.7z, or .7z.001 + .002), its files/linux/zImage_dtb, linux.img (gzipped) and the rest of
+# files/linux the Linux update copies over (linux-<v>.other.tar.gz: u-boot, the viewers and so on), the version
 # read from inside the image (/MiSTer.version), and linux.json listing every version with each file's size
 # and md5 (of the file as it's put on the card). The release is never marked latest: SS1 Tool's own updater
 # reads releases/latest. Published as f3bandit when the RELEASE_TOKEN secret is set.
@@ -38,8 +39,8 @@ jobs:
           changed=0
           for d in $(grep -v '^#' linux-versions/versions.txt | tr -d ' \r' | grep -E '^20[0-9]{6}$'); do
             v="${d#20}"
-            if grep -qx "linux-$v.img.gz" have.txt && grep -qx "linux-$v.zImage_dtb" have.txt \
-              && jq -e --arg v "$v" '.versions[] | select(.id == $v)' linux.json > /dev/null; then
+            if grep -qx "linux-$v.img.gz" have.txt && grep -qx "linux-$v.zImage_dtb" have.txt && grep -qx "linux-$v.other.tar.gz" have.txt \
+              && jq -e --arg v "$v" '.versions[] | select(.id == $v and .other != null)' linux.json > /dev/null; then
               echo "$v: published"; continue
             fi
             rm -rf w && mkdir w
@@ -49,22 +50,34 @@ jobs:
               curl -fsSL -o w/r.7z.003 "$SRC/release_$d.7z.003" 2> /dev/null || rm -f w/r.7z.003
               a=w/r.7z.001
             fi
-            7z x -y -ow/x "$a" files/linux/zImage_dtb files/linux/linux.img > /dev/null
+            7z x -y -ow/x "$a" 'files/linux/*' -r > /dev/null
             z=w/x/files/linux/zImage_dtb; i=w/x/files/linux/linux.img
             [ -s "$z" ] && [ -s "$i" ] || { echo "::error::$d: no zImage_dtb or linux.img in the archive"; exit 1; }
             inside="$(debugfs -R 'cat /MiSTer.version' "$i" 2> /dev/null | tr -d ' \r\n')"
             [ "$inside" = "$v" ] || { echo "::error::$d: the image says it's '$inside', not $v"; exit 1; }
             cp "$z" "w/linux-$v.zImage_dtb"
             gzip -9 -n -c "$i" > "w/linux-$v.img.gz"
+            # the rest of files/linux, which MiSTer's Linux update also copies over (its rsync leaves out
+            # gamecontrollerdb/): u-boot (uboot.img, put on the card by updateboot), the viewers and so on
+            (cd w/x/files && find linux -type f ! -path linux/linux.img ! -path linux/zImage_dtb ! -path 'linux/gamecontrollerdb/*' | LC_ALL=C sort) > w/other.txt
+            tar -C w/x/files --owner=0 --group=0 --numeric-owner --mtime=@0 -czf "w/linux-$v.other.tar.gz" -T w/other.txt
+            echo '[]' > w/other.json
+            while read -r f; do
+              jq --arg p "$f" --argjson s "$(stat -c %s "w/x/files/$f")" --arg m "$(md5sum "w/x/files/$f" | cut -c1-32)" \
+                '. + [{path: $p, size: $s, md5: $m}]' w/other.json > w/o.new && mv w/o.new w/other.json
+            done < w/other.txt
+            echo "$v: other files: $(tr '\n' ' ' < w/other.txt)"
             jq --arg v "$v" --arg d "$d" \
               --argjson zs "$(stat -c %s "$z")" --arg zm "$(md5sum "$z" | cut -c1-32)" \
               --argjson is "$(stat -c %s "$i")" --arg im "$(md5sum "$i" | cut -c1-32)" \
               --argjson gs "$(stat -c %s "w/linux-$v.img.gz")" \
+              --argjson os "$(stat -c %s "w/linux-$v.other.tar.gz")" --slurpfile of w/other.json \
               '.versions = ([.versions[] | select(.id != $v)] + [{id: $v, date: $d, source: ("release_" + $d + ".7z"), files: [
                  {path: "linux/zImage_dtb", asset: ("linux-" + $v + ".zImage_dtb"), size: $zs, md5: $zm},
-                 {path: "linux/linux.img", asset: ("linux-" + $v + ".img.gz"), gzip: true, size: $is, md5: $im, download_size: $gs}]}]
+                 {path: "linux/linux.img", asset: ("linux-" + $v + ".img.gz"), gzip: true, size: $is, md5: $im, download_size: $gs}],
+                 other: {asset: ("linux-" + $v + ".other.tar.gz"), download_size: $os, files: $of[0]}}]
                | sort_by(.id))' linux.json > linux.json.new && mv linux.json.new linux.json
-            gh release upload "$TAG" --clobber "w/linux-$v.zImage_dtb" "w/linux-$v.img.gz"
+            gh release upload "$TAG" --clobber "w/linux-$v.zImage_dtb" "w/linux-$v.img.gz" "w/linux-$v.other.tar.gz"
             echo "$v: published ($(stat -c %s "$i") bytes, md5 $(md5sum "$i" | cut -c1-32))"
             changed=1
             rm -rf w
