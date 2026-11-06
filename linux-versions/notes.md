@@ -2,6 +2,6 @@ MiSTer's Linux, the earlier versions included, for going back to one when an upd
 
 **Easiest:** SS1 Tool › MiSTer › MiSTer & Linux backups › Older Linux versions › Download, then Put back. SS1 Tool checks every file, keeps the version in use so it can be undone, swaps the files and restarts the SuperStation.
 
-**By hand (SD card in a PC):** download the version's `linux-<version>.zImage_dtb` and `linux-<version>.img.gz`, unzip the .gz (7-Zip), rename them to `zImage_dtb` and `linux.img`, and copy both into the card's `linux` folder, replacing the ones there.
+**By hand (SD card in a PC):** download the version's `linux-<version>.zImage_dtb`, `linux-<version>.img.gz` and `linux-<version>.other.tar.gz`. Unzip the .img.gz (7-Zip) and rename the two to `zImage_dtb` and `linux.img`, then copy both into the card's `linux` folder, replacing the ones there. Open the .other.tar.gz (7-Zip) and copy its `linux` folder over the card's: that's the rest of what MiSTer's Linux update replaces (u-boot's `uboot.img`, `updateboot`, the PDF and help viewers). u-boot itself is only rewritten when `updateboot` runs on the SuperStation (SS1 Tool does this for you).
 
 These are MiSTer-devel's own files, unchanged, from their SD installer (github.com/MiSTer-devel/SD-Installer-Win64_MiSTer, `release_<date>.7z`), the same for every SuperStation. `linux.json` lists each version's files with their size and md5. MiSTer Linux is GPL software: its source is published by MiSTer-devel (github.com/MiSTer-devel/Linux-Kernel_MiSTer and the buildroot it's made with).
