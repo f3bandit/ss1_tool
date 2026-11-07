@@ -195,17 +195,21 @@ func mcStore(name string, img []byte, real bool) (string, error) {
 }
 
 // mcRecognise finds the library card that a card image most likely is.
-func mcRecognise(img []byte) (string, float64) {
+func mcRecognise(img []byte) (string, float64) { return mcRecogniseIn("pc", img) }
+
+// mcRecogniseIn: the same, among the cards of one library ("cm" = Console Mode's)
+func mcRecogniseIn(lib string, img []byte) (string, float64) {
 	c, err := mcParse(img, false)
 	if err != nil || len(c.Saves) == 0 {
 		return "", 0
 	}
 	best, score := "", 0.0
-	for _, ci := range mcLibrary() {
+	cards, _ := mcLibList(lib)
+	for _, ci := range cards {
 		if !ci.Real {
 			continue
 		}
-		other, err := mcLoad(ci.Name, "")
+		other, err := mcLibLoad(lib, ci.Name, "")
 		if err != nil {
 			continue
 		}
@@ -636,7 +640,10 @@ func mcAddSave(img, x []byte) ([]byte, []int, error) {
 }
 
 // mcBackup reads the card in port 1 and keeps it in the library under name ("" = recognise it).
-func mcBackup(name string, o mcOpts) (string, string, []byte, error) {
+func mcBackup(name string, o mcOpts) (string, string, []byte, error) { return mcBackupTo("pc", name, o) }
+
+// mcBackupTo backs the card in port 1 up into a library ("cm" = Console Mode's on the SuperStation)
+func mcBackupTo(lib, name string, o mcOpts) (string, string, []byte, error) {
 	rep, img, err := mcRunCore(mcJobBackup, make([]byte, mcSize), o)
 	if err != nil {
 		return "", "", nil, err
@@ -648,7 +655,7 @@ func mcBackup(name string, o mcOpts) (string, string, []byte, error) {
 	mcLibMu.Lock()
 	defer mcLibMu.Unlock()
 	if name == "" {
-		if n, score := mcRecognise(img); score >= 0.5 {
+		if n, score := mcRecogniseIn(lib, img); score >= 0.5 {
 			name = n
 			mcLog("Recognised the card as %q (%.0f%% of its saves match)", n, score*100)
 		} else {
@@ -659,12 +666,16 @@ func mcBackup(name string, o mcOpts) (string, string, []byte, error) {
 	if err != nil {
 		return "", "", nil, err
 	}
-	ver, err := mcStore(name, img, true)
+	ver, err := mcLibStoreReal(lib, name, img, true)
 	if err != nil {
 		return "", "", nil, err
 	}
 	mcSet(func(s *mcJobState) { s.Card, s.Version = name, ver })
-	mcLog("Saved as %s / %s", name, ver)
+	if lib == "cm" {
+		mcLog("Saved in Console Mode's library as %s / %s", name, ver)
+	} else {
+		mcLog("Saved as %s / %s", name, ver)
+	}
 	return name, ver, img, nil
 }
 
@@ -780,7 +791,7 @@ func apiMcRun(w http.ResponseWriter, r *http.Request) {
 	case "backup":
 		title = "Back up the memory card"
 		fn = func() error {
-			_, _, _, err := mcBackup(req.Name, mcOpts{})
+			_, _, _, err := mcBackupTo(req.Lib, req.Name, mcOpts{})
 			return err
 		}
 	case "verify":
@@ -837,7 +848,7 @@ func apiMcRun(w http.ResponseWriter, r *http.Request) {
 			// always a fresh backup first: step 1 of 2, nothing is written yet
 			step1 := mcOpts{Step: 1, Label: "Step 1 of 2: reading the card (safety backup). Nothing is written yet"}
 			mcStep(step1.Label)
-			name, _, cur, err := mcBackup("", step1)
+			name, _, cur, err := mcBackupTo(req.Lib, "", step1)
 			if err != nil {
 				return err
 			}
@@ -871,7 +882,7 @@ func apiMcRun(w http.ResponseWriter, r *http.Request) {
 				return err
 			}
 			mcLibMu.Lock()
-			ver, err := mcStore(name, img, true)
+			ver, err := mcLibStoreReal(req.Lib, name, img, true)
 			mcLibMu.Unlock()
 			if err == nil {
 				mcSet(func(s *mcJobState) { s.Card, s.Version = name, ver })
@@ -953,8 +964,17 @@ func apiMcEdit(w http.ResponseWriter, r *http.Request) {
 	err := func() error {
 		if req.Lib == "cm" {
 			switch req.Op {
-			case "rename", "delete", "delversion":
-				return errors.New("SS1 Tool doesn't rename or delete anything in Console Mode's library: do that in Console Mode (Media › Memory Cards)")
+			case "rename":
+				n, err := mcSafeName(req.NewName)
+				if err != nil {
+					return err
+				}
+				res["name"] = n
+				return cmMcRename(req.Name, n)
+			case "delete":
+				return cmMcDelete(req.Name)
+			case "delversion":
+				return cmMcDelVersion(req.Name, req.Version)
 			case "new":
 				n, err := mcSafeName(req.NewName)
 				if err != nil {
