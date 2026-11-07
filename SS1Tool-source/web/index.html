@@ -876,7 +876,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
 </div>
 <div class="subpage" id="mcards">
  <h2>Memory cards</h2>
- <div class="jump tabs mcSub" id="mcTabs" role="tablist" aria-label="Which library"><a href="#" role="tab" id="mcTabPc" class="on" aria-selected="true" onclick="mcTab('pc');return false">MiSTer <span class="mcN" id="mcTabPcN"></span></a><a href="#" role="tab" id="mcTabCm" aria-selected="false" onclick="mcTab('cm');return false">Console Mode <span class="mcN" id="mcTabCmN"></span></a></div>
+ <div class="jump tabs mcSub" id="mcTabs" role="tablist" aria-label="Which library"><a href="#" role="tab" id="mcTabPc" class="on" aria-selected="true" onclick="mcTab('pc');return false">MiSTer</a><a href="#" role="tab" id="mcTabCm" aria-selected="false" onclick="mcTab('cm');return false">Console Mode</a></div>
  <p class="sub" id="mcIntroPc" style="margin-top:0">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works. This works the same on any MiSTer and on a SuperStation with or without Console Mode.</p>
  <p class="sub" id="mcIntroCm" style="margin-top:0;display:none">Console Mode 2.0 and later keep their own memory card library on the SuperStation (Media &rsaquo; Memory Cards in Console Mode). This tab does everything the MiSTer tab does, on that library: back up and check the card in front port 1, edit, import and export saves and cards, rename and delete. Copy cards between the two libraries with the buttons below.</p>
  <div class="card" id="mcFront"><h3>The card in front port 1 <span class="muted" style="font-weight:400;font-size:13px">&middot; backups go into <b id="mcInto">the MiSTer library</b></span></h3>
@@ -2120,7 +2120,7 @@ async function mcCmLoad(){let S=null;try{S=await api("/api/mc/cm")}catch(e){}
  MC.cm=S&&S.connected&&S.has?S:null;
  $("mcCmNone").style.display=MC.cm?"none":"";$("mcCmLibBox").style.display=MC.cm?"":"none";$("mcFront").style.display=MC.lib==="cm"&&!MC.cm?"none":"";
  $("mcCmNoneTxt").textContent=!S||!S.connected?"Connect to the SuperStation to see Console Mode's memory cards.":"This MiSTer doesn't have Console Mode 2.0 or later, which keeps its own memory card library. Your cards are in the MiSTer tab.";
- if(!MC.cm)$("mcTabCmN").textContent="";mcRender()}
+ mcRender()}
 function mcTab(l){if(l===MC.lib)return;MC.lib=l;MC.sel="";MC.ver="";$("mcCardBox").style.display="none";$("mcAs").value="";$("mcNew").style.display="none";
  $("mcIntroPc").style.display=l==="pc"?"":"none";$("mcIntroCm").style.display=l==="cm"?"":"none";
  for(const [id,on] of [["mcTabPc",l==="pc"],["mcTabCm",l==="cm"]]){$(id).classList.toggle("on",on);$(id).setAttribute("aria-selected",on)}
@@ -2160,8 +2160,8 @@ function mcRender(){const S=MC.state;if(!S)return;const L=S.library||[],TL=MC.li
  $("mcTo").innerHTML=MC.cm?`<optgroup label="MiSTer library (${mcHere()})">${L.filter(c=>!mine("pc",c)).map(c=>opt("pc",c)).join("")}</optgroup><optgroup label="Console Mode library (SuperStation)">${CL.filter(c=>!mine("cm",c)).map(c=>opt("cm",c)).join("")}</optgroup>`
   :L.filter(c=>!mine("pc",c)).map(c=>opt("pc",c)).join("");
  $("mcLib").innerHTML=L.length?mcLibTable(L,"pc"):'<span class="muted">No cards yet: back up a card, or make a blank one.</span>';
- $("mcTabPcN").textContent=`(${L.length})`;
- if(MC.cm){$("mcCmLib").innerHTML=CL.length?mcLibTable(CL,"cm"):'<span class="muted">Console Mode has no cards yet: back one up in Console Mode (Media › Memory Cards), copy them from the MiSTer tab, or make a blank one.</span>';$("mcTabCmN").textContent=`(${CL.length})`}
+ 
+ if(MC.cm){$("mcCmLib").innerHTML=CL.length?mcLibTable(CL,"cm"):'<span class="muted">Console Mode has no cards yet: back one up in Console Mode (Media › Memory Cards), copy them from the MiSTer tab, or make a blank one.</span>'}
  const cur=MC.lib==="cm"?CL:L;if(MC.sel&&(MC.lib==="pc"||MC.cm)&&!cur.some(c=>c.name===MC.sel)){MC.sel="";$("mcCardBox").style.display="none"}}
 async function mcShow(name,ver){MC.sel=name;MC.ver=ver||"";const lib=MC.lib;let d;try{d=await api(`/api/mc/card?lib=${lib}&name=${encodeURIComponent(name)}&version=${encodeURIComponent(MC.ver)}`)}catch(e){return toast(e.message,true)}
  if(lib!==MC.lib||name!==MC.sel)return;
