@@ -875,9 +875,9 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div id="artClean" style="margin-top:10px"></div></div>
 </div>
 <div class="subpage" id="mcards">
+ <h2>Memory cards</h2>
  <div class="jump tabs mcSub" id="mcTabs" role="tablist" aria-label="Which library"><a href="#" role="tab" id="mcTabPc" class="on" aria-selected="true" onclick="mcTab('pc');return false">MiSTer <span class="mcN" id="mcTabPcN"></span></a><a href="#" role="tab" id="mcTabCm" aria-selected="false" onclick="mcTab('cm');return false">Console Mode <span class="mcN" id="mcTabCmN"></span></a></div>
- <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works. This works the same on any MiSTer and on a SuperStation with or without Console Mode. Console Mode 2.0 and later have their own memory card manager (Media &rsaquo; Memory Cards) with their own library, so there are two tabs above: <b>MiSTer</b> (SS1 Tool's library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>) and <b>Console Mode</b> (Console Mode's library on the SuperStation). The editor always says which one you're changing.</p>
- <div id="mcPcPane">
+ <div id="mcPcPane"><p class="sub" style="margin-top:0">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works. This works the same on any MiSTer and on a SuperStation with or without Console Mode.</p>
  <div class="card"><h3>The card in front port 1</h3>
   <p class="muted" id="mcCore" style="margin:0 0 8px"></p>
   <div class="row"><label for="mcAs">Keep the backup as</label><select id="mcAs" onchange="$('mcNew').style.display=this.value==='+'?'':'none'"></select><input id="mcNew" placeholder="Card name" style="display:none;width:180px">
@@ -893,6 +893,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div id="mcLib"><span class="muted">No cards yet: back up a card, or make a blank one.</span></div></div>
  </div>
  <div id="mcCmPane" style="display:none">
+ <p class="sub" style="margin-top:0">Console Mode 2.0 and later have their own memory card manager (Media &rsaquo; Memory Cards) with their own library on the SuperStation. Here you can see and edit those cards, and copy cards between Console Mode and the MiSTer tab.</p>
  <div class="card" id="mcCmNone" style="display:none"><h3>No Console Mode library</h3><p class="muted" id="mcCmNoneTxt" style="margin:0"></p></div>
  <div class="card mcLibCm" id="mcCmLibBox"><h3>Console Mode library <span class="muted" style="font-weight:400;font-size:13px">&middot; on the SuperStation, <code>/media/fat/ConsoleMode/memcards/library</code></span></h3>
   <p class="muted" style="margin:0 0 8px">The cards Console Mode keeps (Media &rsaquo; Memory Cards). Changes here are saved as new versions in Console Mode's library, the same way as in the MiSTer tab: nothing is overwritten. Renaming and deleting cards here is left to Console Mode's own menu. Copying between the two libraries only copies versions the other side doesn't have.</p>
