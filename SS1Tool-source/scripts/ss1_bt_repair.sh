@@ -73,7 +73,9 @@ check() {
 			iu=$(df -P -i "$MNT" 2>/dev/null | awk 'NR == 2 { sub(/%/, "", $5); print $5 }')
 			[ -n "$iu" ] && [ "$iu" -ge 90 ] && found "The pairings image has no room for more files ($iu% of its file slots used): new pairings can't be saved"
 		fi
-		[ -z "$AFTER" ] && dmesg 2>/dev/null | grep -i "EXT4-fs.*loop" | grep -iqE "error|corrupt|remount" && found "Linux logged errors on a loop image since it started (possibly the pairings image)"
+		# errors Linux logged on the pairings image's own loop device (other images use other loops)
+		lp=$(losetup -a 2>/dev/null | grep -F "$IMG" | grep -vF "$IMG." | head -n 1 | cut -d: -f1); lp=${lp#/dev/}
+		[ -z "$AFTER" ] && [ -n "$lp" ] && dmesg 2>/dev/null | grep -i "EXT4-fs[^:]*($lp)" | grep -iqE "error|corrupt|remount" && found "Linux logged errors on the pairings image since it started"
 		v=$(under_view)
 		if [ -n "$v" ]; then
 			n=$(pairings_in "$v")
@@ -97,6 +99,30 @@ check() {
 		[ -n "$bad" ] && found "Some pairing files have the wrong owner or permissions"
 		log "Pairings: $(pairings_in "$MNT")"
 	fi
+}
+
+sb() {   # <image> <superblock field>: read from the superblock (dumpe2fs -h), which survives damage to the rest
+	dumpe2fs -h "$1" 2>/dev/null | awk -F': *' -v k="$2" '$1 == k { gsub(/[ \t]/, "", $2); print $2; exit }'
+}
+
+# The pairings image is one 2 MB block group, and ext4 keeps no backup of a single group's descriptors (so
+# e2fsck -b can't help): when they're damaged, e2fsck "relocates" the inode table and every pairing is lost.
+# The layout of an image this size is always the same, so the descriptors are rebuilt from a new image made the
+# same way (only when its superblock matches), and e2fsck then fixes the counts and checksums.
+fix_descriptors() {
+	command -v dumpe2fs > /dev/null 2>&1 || return 1
+	e2fsck -fn "$IMG" 2>&1 | grep -qi "corrupt group descriptor" || return 1
+	bc=$(sb "$IMG" "Block count"); bpg=$(sb "$IMG" "Blocks per group"); bs=$(sb "$IMG" "Block size")
+	ic=$(sb "$IMG" "Inode count"); is=$(sb "$IMG" "Inode size")
+	[ -n "$bc" ] && [ -n "$bpg" ] && [ "$bc" -le "$bpg" ] || return 1
+	dd if=/dev/zero of="$W/fresh" bs=1024 count=$(( bc * bs / 1024 )) 2> /dev/null || return 1
+	mkfs.ext4 -q -F -b "$bs" -N "$ic" -I "$is" "$W/fresh" > /dev/null 2>&1 || return 1
+	for k in "Block count" "Inode count" "Reserved GDT blocks" "Inode size" "Filesystem features" "First block"; do
+		[ "$(sb "$W/fresh" "$k")" = "$(sb "$IMG" "$k")" ] || { log "Can't rebuild the group descriptors: a new image is laid out differently ($k)"; rm -f "$W/fresh"; return 1; }
+	done
+	gd=$(( $(sb "$IMG" "First block") + 1 ))
+	dd if="$W/fresh" of="$IMG" bs="$bs" skip="$gd" seek="$gd" count=1 conv=notrunc 2> /dev/null && rm -f "$W/fresh" &&
+		found "The pairings image's group descriptors were damaged: rebuilt them"
 }
 
 mkimg() {   # <file> <size in KB>: a new ext4 image as S45bluetooth makes it, with 1024 file slots (its own get 256)
@@ -132,6 +158,9 @@ repair() {
 
 		step "Checking and repairing the pairings image"
 		size=$(( ($(wc -c < "$IMG") + 1023) / 1024 )); [ "$size" -ge 1024 ] || size=2048
+		# files the image held (from its superblock): an empty one has 11, so more means it had pairings to keep
+		held=0; ic=$(sb "$IMG" "Inode count"); fi_=$(sb "$IMG" "Free inodes"); [ -n "$ic" ] && [ -n "$fi_" ] && held=$((ic - fi_))
+		command -v e2fsck > /dev/null 2>&1 && fix_descriptors
 		if ! command -v e2fsck > /dev/null 2>&1; then
 			log "No e2fsck on this Linux: the image isn't checked"; : > "$W/fsck"; rc=0
 		else e2fsck -fy "$IMG" > "$W/fsck" 2>&1; rc=$?; fi
@@ -229,7 +258,9 @@ repair() {
 	grep '^FOUND|' "$W/after" | sed 's/^FOUND|/LOG|Still: /'
 	[ -z "$pairs" ] && pairs=$(pairings_in "$MNT")
 	rm -rf "$W"
-	if [ "$left" -eq 0 ]; then echo "RESULT|ok|Bluetooth is working again ($pairs pairing(s) kept)"
+	if [ "${held:-0}" -gt 12 ] && [ "$pairs" -eq 0 ]; then
+		echo "RESULT|fail|Bluetooth works again, but the pairings couldn't be read back from the damaged image: a copy of it is kept as ${b:-$IMG.bak-*}. Restore a pairings backup, or pair the controllers again"
+	elif [ "$left" -eq 0 ]; then echo "RESULT|ok|Bluetooth is working again ($pairs pairing(s) kept)"
 	else echo "RESULT|fail|Bluetooth was repaired as far as it could be, but $left problem(s) are left (see the log)"; fi
 }
 
