@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-06 16:00 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, MiSTer Main `cc47bad`.
+Checked 2026-11-07 15:46 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `cc47bad`.
 
 | | Verdict |
 |---|---|
@@ -10,7 +10,7 @@ Checked 2026-11-06 16:00 UTC: Console Mode **1.2.5**, MiSTer Linux **260912**, M
 ## Linux alert (what SS1 Tool shows)
 
 ```
-< unsafe > MiSTer Linux 2026-09-12 (kernel 6.18.38), checked against Console Mode 1.2.5. Installing it (update_linux) replaces Console Mode's own Linux (kernel 5.15.1).
+< unsafe > MiSTer Linux 2026-09-12 (kernel 6.18.38), checked against Console Mode 2.0-RC-1. Installing it (update_linux) replaces Console Mode's own Linux (kernel 5.15.1).
 What breaks or changes for Console Mode:
 • 1 USB WiFi/Bluetooth adapter(s) Console Mode's drivers support have no driver in it: rtl8192cu: 07B8:8188
 • New kernel series: Console Mode's Linux is 5.15.1, this one 6.18.38 (drivers and timing change)
@@ -28,7 +28,7 @@ Keep update_linux = false for now.
 ## Cores alert
 
 ```
-< warning > Console Mode 1.2.5 runs its own MiSTer program (built 2026-10-30), with MiSTer's changes up to about May 26 2026. Update All's MiSTer update doesn't replace it.
+< warning > Console Mode 2.0-RC-1 runs its own MiSTer program (built 2026-10-30), with MiSTer's changes up to about May 26 2026. Update All's MiSTer update doesn't replace it.
 Cores that need newer MiSTer support than Console Mode has, so they may not work fully under it:
 • Nintendo 64: Improved CIC detection (Sep 18); 64DD Support (Jul 25); and 1 more
 • Saturn: detect RAM cartridge via boot metadata (Oct 16)

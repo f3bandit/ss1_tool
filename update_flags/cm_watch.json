@@ -1,7 +1,7 @@
 {
- "checked": "2026-11-06T16:00:45+00:00",
- "cm_manifest": "299c966a17db36c1cafed541a9f579f8",
- "cm_version": "1.2.5",
+ "checked": "2026-11-07T15:46:25+00:00",
+ "cm_manifest": "d369a51bc6422137c71e78dadc038cd7",
+ "cm_version": "2.0-RC-1",
  "known": "932faa982d76b8839bee0eb3fea5a18e",
  "linux": {
   "adapters_checked": 808,
