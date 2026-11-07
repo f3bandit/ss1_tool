@@ -870,7 +870,7 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div id="artClean" style="margin-top:10px"></div></div>
 </div>
 <div class="subpage" id="mcards">
- <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works.</p>
+ <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works. This works the same on any MiSTer and on a SuperStation with or without Console Mode. When the SuperStation runs Console Mode 2.0 or later, which has its own memory card manager (Media &rsaquo; Memory Cards), a section below also copies cards between Console Mode's library and this one.</p>
  <div class="card"><h3>The card in front port 1</h3>
   <p class="muted" id="mcCore" style="margin:0 0 8px"></p>
   <div class="row"><label for="mcAs">Keep the backup as</label><select id="mcAs" onchange="$('mcNew').style.display=this.value==='+'?'':'none'"></select><input id="mcNew" placeholder="Card name" style="display:none;width:180px">
@@ -884,6 +884,10 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
  <div class="card"><h3>Library</h3>
   <div class="row" style="margin-bottom:8px"><button class="b" onclick="mcNewCard()">New blank card</button><button class="b pc-only" onclick="api('/api/mc/open',{})">Open memcards folder</button><span class="muted">Kept in <code>memcards</code> <span class="pc-only">next to SS1Tool.exe</span><span class="android-only">in SS1 Tool's folder on this phone</span>: one folder per card, one file per version (raw 128 KB .mcd, which PC emulators open too). Nothing is ever overwritten.</span></div>
   <div id="mcLib"><span class="muted">No cards yet: back up a card, or make a blank one.</span></div></div>
+ <div class="card" id="mcCmBox" style="display:none"><h3>Console Mode's memory cards</h3>
+  <p class="muted" style="margin:0 0 8px">Console Mode 2.0 has the memory card manager too (Media &rsaquo; Memory Cards), with its own library on the SuperStation (<code>ConsoleMode/memcards/library</code>), kept the same way as this one. Copy cards between the two: only versions the other side doesn't have are copied, under the same names. Nothing is overwritten or removed on either side.</p>
+  <div class="row" style="margin-bottom:8px"><button class="b p" onclick="mcCmCopy('pc','',this)">Copy everything to <span class="pc-only">this PC</span><span class="android-only">this phone</span></button><button class="b" onclick="mcCmCopy('cm','',this)">Copy everything to Console Mode</button><button class="b" onclick="mcCmLoad()">Refresh</button></div>
+  <div id="mcCmList"></div></div>
  <div class="card" id="mcCardBox" style="display:none"><h3 id="mcCardName"></h3>
   <div class="row" style="margin-bottom:8px"><label for="mcVer">Version</label><select id="mcVer" onchange="mcShow(MC.sel,this.value)"></select><span class="muted" id="mcCardInfo"></span></div>
   <div id="mcSaves"></div>
@@ -2092,7 +2096,17 @@ const artPct=(a,b)=>b?Math.round(100*a/b)+"%":"-";
 let MC={sel:"",ver:"",card:null,state:null};let mcPolling=false;
 const MCCOL=["#343a50","#38c058","#e8c030","#e84040","#d070e8","#4a9cf0"];
 const MCLEG=[[1,"read OK"],[2,"needed a retry"],[3,"failed"],[4,"differs"],[5,"written and checked"],[0,"not done yet"]];
-async function mcLoad(){try{MC.state=await api("/api/mc/state")}catch(e){return}mcRender();const j=MC.state.job;if(j&&j.id)mcJobShow(j);if(j&&j.running)mcPoll()}
+async function mcLoad(){try{MC.state=await api("/api/mc/state")}catch(e){return}mcRender();const j=MC.state.job;if(j&&j.id)mcJobShow(j);if(j&&j.running)mcPoll();mcCmLoad()}
+// Console Mode 2.0's own card library on the SuperStation (memcard_cm.go): copied both ways, nothing overwritten
+async function mcCmLoad(){let S;try{S=await api("/api/mc/cm")}catch(e){$("mcCmBox").style.display="none";return}
+ if(!S.connected||!S.has){$("mcCmBox").style.display="none";return}$("mcCmBox").style.display="";
+ const vs=n=>n+(n===1?" version":" versions"),rows=(S.cards||[]).map(c=>{const st=c.to_pc||c.to_cm?[c.to_pc?`${vs(c.to_pc)} not on <span class="pc-only">this PC</span><span class="android-only">this phone</span>`:"",c.to_cm?`${vs(c.to_cm)} not in Console Mode`:""].filter(x=>x).join(", "):"The same on both";
+  return `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span><b>${esc(c.name)}</b> <span class="muted">${vs(c.versions.length)} in Console Mode${c.on_pc?"":" (not in this library yet)"} &middot; ${st}</span></span><span>${c.to_pc?`<button class="b sm" onclick="mcCmCopy('pc',${esc(JSON.stringify(c.name))},this)">Copy here</button>`:""}${c.to_cm&&c.on_pc?`<button class="b sm" onclick="mcCmCopy('cm',${esc(JSON.stringify(c.local))},this)">Copy to Console Mode</button>`:""}</span></div>`}),
+ only=(S.pc_only||[]).map(n=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span><b>${esc(n)}</b> <span class="muted">only in this library</span></span><button class="b sm" onclick="mcCmCopy('cm',${esc(JSON.stringify(n))},this)">Copy to Console Mode</button></div>`);
+ $("mcCmList").innerHTML=rows.concat(only).join("")||`<span class="muted">No cards in Console Mode's library or this one yet.</span>`}
+async function mcCmCopy(to,card,btn){await busy(btn,async()=>{try{const r=await api("/api/mc/cm/copy",{to,card});
+ toast(r.ok?(r.copied?`Copied ${r.copied} version${r.copied===1?"":"s"}`:"Nothing to copy: both have them"):r.error,!r.ok)}catch(e){toast(e.message,true)}
+ try{MC.state=await api("/api/mc/state");mcRender()}catch(e){}mcCmLoad()})}
 function mcVerName(v){const m=/^(\d{4})-(\d\d)-(\d\d)_(\d\d)(\d\d)(\d\d)/.exec(v);return m?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]).toLocaleString():v}
 function mcRender(){const S=MC.state;if(!S)return;const L=S.library||[];
  const inst=S.installed,lat=S.latest;

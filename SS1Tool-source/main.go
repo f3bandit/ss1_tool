@@ -200,6 +200,7 @@ func main() {
 	registerWatchRoutes(mux)
 	registerArtworkRoutes(mux)
 	registerMemcardRoutes(mux)
+	registerMemcardCMRoutes(mux)
 	registerSnacPort2Routes(mux)
 	registerPsxCfgRoutes(mux)
 	registerCoreRoutes(mux)
