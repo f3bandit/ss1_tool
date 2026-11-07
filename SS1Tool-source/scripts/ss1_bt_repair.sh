@@ -31,6 +31,7 @@ IMG="${BT_IMG:-/media/fat/linux/bluetooth}"
 MNT="${BT_MNT:-/var/lib/bluetooth}"
 W="/tmp/ss1_btfix.$$"
 S="${BT_S45:-$(ls /etc/init.d/S*blue* 2>/dev/null | head -n1)}"
+CONF="${BT_CONF:-/etc/bluetooth/main.conf}"
 NF=0
 
 step() { echo "STEP|$*"; }
@@ -83,6 +84,7 @@ check() {
 			under_release
 		fi
 	fi
+	autoenable_off && found "Bluetooth isn't set to switch on when the SuperStation starts (AutoEnable in $CONF): it stays off after a restart"
 	pidof bluetoothd > /dev/null 2>&1 || found "Bluetooth (bluetoothd) isn't running"
 	ls -d /sys/class/bluetooth/hci* > /dev/null 2>&1 || found "No Bluetooth adapter: the SuperStation's Bluetooth chip isn't showing up (a full power off and on may bring it back)"
 	if command -v rfkill > /dev/null 2>&1; then
@@ -123,6 +125,29 @@ fix_descriptors() {
 	gd=$(( $(sb "$IMG" "First block") + 1 ))
 	dd if="$W/fresh" of="$IMG" bs="$bs" skip="$gd" seek="$gd" count=1 conv=notrunc 2> /dev/null && rm -f "$W/fresh" &&
 		found "The pairings image's group descriptors were damaged: rebuilt them"
+}
+
+# BlueZ doesn't remember that Bluetooth was switched off: AutoEnable = true in main.conf ([Policy]) switches it on
+# each time bluetoothd starts (MiSTer's Linux has it). Without it Bluetooth stays off after every restart.
+autoenable_off() {
+	[ -f "$CONF" ] || return 1
+	v=$(awk '/^[[:space:]]*\[/ { p = ($0 ~ /^[[:space:]]*\[Policy\]/) } p && /^[[:space:]]*AutoEnable[[:space:]]*=/ { sub(/^[^=]*=[[:space:]]*/, ""); sub(/[[:space:]]*$/, ""); a = tolower($0) } END { print a }' "$CONF")
+	[ "$v" != "true" ]
+}
+fix_autoenable() {
+	cp -p "$CONF" "$CONF.bak-ss1" 2> /dev/null
+	if grep -q '^[[:space:]]*\[Policy\]' "$CONF"; then
+		awk '/^[[:space:]]*\[/ { if (p && !d) { print "AutoEnable = true"; d = 1 } p = ($0 ~ /^[[:space:]]*\[Policy\]/) }
+		     p && /^[[:space:]]*#?[[:space:]]*AutoEnable[[:space:]]*=/ { if (!d) print "AutoEnable = true"; d = 1; next }
+		     { print } END { if (p && !d) print "AutoEnable = true" }' "$CONF" > "$CONF.ss1new"
+	else
+		{ cat "$CONF"; printf '\n[Policy]\nAutoEnable = true\n'; } > "$CONF.ss1new"
+	fi
+	if [ -s "$CONF.ss1new" ] && mv -f "$CONF.ss1new" "$CONF" 2> /dev/null && ! autoenable_off; then
+		found "Bluetooth wasn't set to switch on when the SuperStation starts (AutoEnable in $CONF): set it"
+	else
+		rm -f "$CONF.ss1new"; log "Couldn't set AutoEnable in $CONF (Linux may be read-only): Bluetooth may stay off after a restart"
+	fi
 }
 
 mkimg() {   # <file> <size in KB>: a new ext4 image as S45bluetooth makes it, with 1024 file slots (its own get 256)
@@ -235,6 +260,7 @@ repair() {
 		command -v e2fsck > /dev/null 2>&1 && e2fsck -fy "$IMG" > /dev/null 2>&1
 	fi
 
+	autoenable_off && fix_autoenable
 	step "Starting Bluetooth"
 	command -v rfkill > /dev/null 2>&1 && rfkill unblock bluetooth 2> /dev/null
 	if [ -n "$S" ]; then "$S" start > /dev/null 2>&1
