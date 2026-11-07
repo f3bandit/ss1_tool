@@ -765,6 +765,7 @@ type mcRunReq struct {
 	Version string `json:"version"` // verify/restore: version ("" = latest)
 	Slots   []int  `json:"slots"`   // copy: saves of the source card to put on the card in port 1
 	Menu    bool   `json:"menu"`    // go back to the menu afterwards
+	Lib     string `json:"lib"`     // verify/restore/copy: the source card's library ("cm" = Console Mode's)
 }
 
 func apiMcRun(w http.ResponseWriter, r *http.Request) {
@@ -783,7 +784,7 @@ func apiMcRun(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 	case "verify":
-		img, err := mcLoad(req.Name, req.Version)
+		img, err := mcLibLoad(req.Lib, req.Name, req.Version)
 		if err != nil {
 			fail(w, 400, err.Error())
 			return
@@ -805,7 +806,7 @@ func apiMcRun(w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 	case "restore", "copy":
-		src, err := mcLoad(req.Name, req.Version)
+		src, err := mcLibLoad(req.Lib, req.Name, req.Version)
 		if err != nil {
 			fail(w, 400, err.Error())
 			return
@@ -907,7 +908,8 @@ func apiMcRun(w http.ResponseWriter, r *http.Request) {
 // apiMcCard shows one card version with its saves.
 func apiMcCard(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	img, err := mcLoad(q.Get("name"), q.Get("version"))
+	lib := q.Get("lib")
+	img, err := mcLibLoad(lib, q.Get("name"), q.Get("version"))
 	if err != nil {
 		fail(w, 404, err.Error())
 		return
@@ -917,7 +919,7 @@ func apiMcCard(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err.Error())
 		return
 	}
-	writeJSON(w, map[string]any{"card": c, "versions": mcVersions(q.Get("name")), "meta": mcReadMeta(q.Get("name"))})
+	writeJSON(w, map[string]any{"card": c, "versions": mcLibVersions(lib, q.Get("name")), "meta": mcLibMeta(lib, q.Get("name"))})
 }
 
 type mcEditReq struct {
@@ -927,16 +929,50 @@ type mcEditReq struct {
 	Version string `json:"version"`
 	Slots   []int  `json:"slots"`
 	To      string `json:"to"`
+	Lib     string `json:"lib"`    // the card's library: "cm" = Console Mode's on the SuperStation, else this PC's
+	ToLib   string `json:"to_lib"` // copy, move: the library of the card they go to
 }
 
-// apiMcEdit changes the library on this PC. Saves are copied and removed into new versions.
+// apiMcEdit changes a library: this PC's, or Console Mode's on the SuperStation (lib "cm"). Saves are copied and removed into new versions.
 func apiMcEdit(w http.ResponseWriter, r *http.Request) {
 	var req mcEditReq
 	_ = readJSON(r, &req)
 	mcLibMu.Lock()
 	defer mcLibMu.Unlock()
 	res := map[string]any{"ok": true}
+	if req.Op == "copy" || req.Op == "move" {
+		if req.ToLib == "" {
+			req.ToLib = req.Lib
+		}
+	} else {
+		req.ToLib = ""
+	}
+	if (req.Lib == "cm" || req.ToLib == "cm") && !needConn(w) {
+		return
+	}
 	err := func() error {
+		if req.Lib == "cm" {
+			switch req.Op {
+			case "rename", "delete", "delversion":
+				return errors.New("SS1 Tool doesn't rename or delete anything in Console Mode's library: do that in Console Mode (Media › Memory Cards)")
+			case "new":
+				n, err := mcSafeName(req.NewName)
+				if err != nil {
+					return err
+				}
+				if cmMcBad(n) {
+					return errors.New("bad card name")
+				}
+				if v, err := cmMcVersions(n); err != nil {
+					return err
+				} else if len(v) > 0 {
+					return fmt.Errorf("Console Mode already has a card called %q", n)
+				}
+				_, err = cmMcStore(n, mcBlank(), false)
+				res["name"] = n
+				return err
+			}
+		}
 		switch req.Op {
 		case "new":
 			n, err := mcSafeName(req.NewName)
@@ -977,14 +1013,14 @@ func apiMcEdit(w http.ResponseWriter, r *http.Request) {
 			}
 			return os.Remove(filepath.Join(mcRoot(), req.Name, req.Version+".mcd"))
 		case "copy", "move":
-			if req.To == req.Name {
+			if req.To == req.Name && (req.ToLib == "cm") == (req.Lib == "cm") {
 				return errors.New("pick another card to copy to")
 			}
-			src, err := mcLoad(req.Name, req.Version)
+			src, err := mcLibLoad(req.Lib, req.Name, req.Version)
 			if err != nil {
 				return err
 			}
-			dst, err := mcLoad(req.To, "")
+			dst, err := mcLibLoad(req.ToLib, req.To, "")
 			if err != nil {
 				return err
 			}
@@ -1003,15 +1039,15 @@ func apiMcEdit(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
-			if _, err := mcStore(req.To, dst, mcReadMeta(req.To).Real); err != nil {
+			if _, err := mcLibStore(req.ToLib, req.To, dst); err != nil {
 				return err
 			}
 			if req.Op == "move" {
-				_, err = mcStore(req.Name, newSrc, mcReadMeta(req.Name).Real)
+				_, err = mcLibStore(req.Lib, req.Name, newSrc)
 			}
 			return err
 		case "remove":
-			img, err := mcLoad(req.Name, req.Version)
+			img, err := mcLibLoad(req.Lib, req.Name, req.Version)
 			if err != nil {
 				return err
 			}
@@ -1020,7 +1056,7 @@ func apiMcEdit(w http.ResponseWriter, r *http.Request) {
 					return err
 				}
 			}
-			_, err = mcStore(req.Name, img, mcReadMeta(req.Name).Real)
+			_, err = mcLibStore(req.Lib, req.Name, img)
 			return err
 		}
 		return errors.New("unknown change")
@@ -1035,7 +1071,7 @@ func apiMcEdit(w http.ResponseWriter, r *http.Request) {
 // apiMcExport downloads one save (.mcs) or a whole card version (.mcd).
 func apiMcExport(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	img, err := mcLoad(q.Get("name"), q.Get("version"))
+	img, err := mcLibLoad(q.Get("lib"), q.Get("name"), q.Get("version"))
 	if err != nil {
 		fail(w, 404, err.Error())
 		return
