@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 )
 
 const cmMcLib = "/media/fat/ConsoleMode/memcards/library"
@@ -252,6 +253,171 @@ func cmMcToCM(local string, remote *cmMcCard) (int, error) {
 	return n, nil
 }
 
+// ---------------------------------------------------------------- editing Console Mode's library
+// Files › Memory cards has two tabs: MiSTer (SS1 Tool's library on this PC) and Console Mode (its library on
+// the SuperStation). Editing in the Console Mode tab works the way it does here: every change is a new version
+// of the card (saved to a temporary name, checked by md5, then put in place); nothing in Console Mode's library
+// is overwritten, renamed or deleted (that's Console Mode's own menu, Media › Memory Cards).
+
+func cmMcDir(name string) string { return cmMcLib + "/" + name }
+
+// cmMcVersions lists a Console Mode card's versions, oldest first
+func cmMcVersions(name string) ([]string, error) {
+	if cmMcBad(name) {
+		return nil, errors.New("bad card name")
+	}
+	out, err := run(`cd ` + shq(cmMcDir(name)) + ` 2>/dev/null || exit 0
+for v in *.mcd; do [ -f "$v" ] && [ "$(stat -c %s "$v")" = 131072 ] && printf '%s\n' "${v%.mcd}"; done`)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't read Console Mode's memory cards: %v %s", err, strings.TrimSpace(out))
+	}
+	var v []string
+	for _, ln := range strings.Split(out, "\n") {
+		if ln = strings.TrimRight(ln, "\r"); !cmMcBad(ln) {
+			v = append(v, ln)
+		}
+	}
+	sort.Strings(v)
+	return v, nil
+}
+
+func cmMcMeta(name string) mcMeta {
+	var m mcMeta
+	if cmMcBad(name) {
+		return m
+	}
+	var buf bytes.Buffer
+	if runTo("cat "+shq(cmMcDir(name)+"/card.json")+" 2>/dev/null", &buf) == nil {
+		_ = json.Unmarshal(buf.Bytes(), &m)
+	}
+	return m
+}
+
+// cmMcLoad reads a version of a Console Mode card ("" = the latest)
+func cmMcLoad(name, ver string) ([]byte, error) {
+	if ver == "" {
+		v, err := cmMcVersions(name)
+		if err != nil {
+			return nil, err
+		}
+		if len(v) == 0 {
+			return nil, fmt.Errorf("Console Mode has no card called %q", name)
+		}
+		ver = v[len(v)-1]
+	}
+	if cmMcBad(name) || cmMcBad(ver) {
+		return nil, errors.New("bad name")
+	}
+	var buf bytes.Buffer
+	if err := runTo("cat "+shq(cmMcDir(name)+"/"+ver+".mcd"), &buf); err != nil {
+		return nil, fmt.Errorf("couldn't read %s / %s from Console Mode: %v", name, ver, err)
+	}
+	if buf.Len() != mcSize {
+		return nil, fmt.Errorf("%s / %s in Console Mode isn't 128 KB", name, ver)
+	}
+	return buf.Bytes(), nil
+}
+
+// cmMcStore saves a new version of a Console Mode card (the card is made when Console Mode doesn't have it)
+func cmMcStore(name string, img []byte, real bool) (string, error) {
+	if len(img) != mcSize {
+		return "", errors.New("a card image is 131072 bytes")
+	}
+	if cmMcBad(name) {
+		return "", errors.New("bad card name")
+	}
+	vers, err := cmMcVersions(name)
+	if err != nil {
+		return "", err
+	}
+	if len(vers) > 0 { // the same contents as the latest version: nothing new to keep
+		if old, err := cmMcLoad(name, vers[len(vers)-1]); err == nil && bytes.Equal(old, img) {
+			return vers[len(vers)-1], nil
+		}
+	}
+	dir := cmMcDir(name)
+	if out, err := run("mkdir -p " + shq(dir)); err != nil {
+		return "", fmt.Errorf("couldn't make %s on the SuperStation: %v %s", dir, err, strings.TrimSpace(out))
+	}
+	if len(vers) == 0 {
+		if out, _ := run("[ -f " + shq(dir+"/card.json") + " ] && echo yes"); strings.TrimSpace(out) != "yes" {
+			b, _ := json.Marshal(mcMeta{Created: time.Now().Unix(), Real: real})
+			if err := upload(dir+"/card.json", bytes.NewReader(b), "644"); err != nil {
+				return "", err
+			}
+		}
+	}
+	have := map[string]bool{}
+	for _, v := range vers {
+		have[v] = true
+	}
+	ver := time.Now().Format("2006-01-02_150405")
+	for i := 2; have[ver]; i++ {
+		ver = time.Now().Format("2006-01-02_150405") + fmt.Sprintf("_%d", i)
+	}
+	s := md5.Sum(img)
+	sum, tmp, dst := hex.EncodeToString(s[:]), dir+"/."+ver+".mcd.tmp", dir+"/"+ver+".mcd"
+	if err := upload(tmp, bytes.NewReader(img), "644"); err != nil {
+		_, _ = run("rm -f " + shq(tmp))
+		return "", err
+	}
+	out, err := run(`t=` + shq(tmp) + `; [ "$(md5sum < "$t" | cut -c1-32)" = ` + shq(sum) + ` ] && [ ! -e ` + shq(dst) + ` ] && mv "$t" ` + shq(dst) + ` && sync && echo ok || { rm -f "$t"; echo bad; }`)
+	if err != nil || strings.TrimSpace(out) != "ok" {
+		return "", fmt.Errorf("the new version of %s didn't arrive whole on the SuperStation: nothing was changed", name)
+	}
+	return ver, nil
+}
+
+// cmMcInfo: Console Mode's cards the way the library table shows them (saves and free blocks of the latest)
+func cmMcInfo(cards []cmMcCard) []mcCardInfo {
+	out := []mcCardInfo{}
+	for _, c := range cards {
+		ci := mcCardInfo{Name: c.Name, Created: c.Created, Real: c.Real}
+		for _, v := range c.Versions {
+			ci.Versions = append(ci.Versions, v.Ver)
+		}
+		ci.Latest = ci.Versions[len(ci.Versions)-1]
+		if img, err := cmMcLoad(c.Name, ci.Latest); err == nil {
+			if p, err := mcParse(img, false); err == nil {
+				ci.Saves, ci.Free = len(p.Saves), p.Free
+			}
+		}
+		out = append(out, ci)
+	}
+	sort.Slice(out, func(i, j int) bool { return strings.ToLower(out[i].Name) < strings.ToLower(out[j].Name) })
+	return out
+}
+
+// the same calls for either library: lib "cm" is Console Mode's, anything else SS1 Tool's on this PC
+func mcLibLoad(lib, name, ver string) ([]byte, error) {
+	if lib == "cm" {
+		return cmMcLoad(name, ver)
+	}
+	return mcLoad(name, ver)
+}
+
+func mcLibStore(lib, name string, img []byte) (string, error) {
+	if lib == "cm" {
+		return cmMcStore(name, img, cmMcMeta(name).Real)
+	}
+	return mcStore(name, img, mcReadMeta(name).Real)
+}
+
+func mcLibVersions(lib, name string) []string {
+	if lib == "cm" {
+		v, _ := cmMcVersions(name)
+		return v
+	}
+	return mcVersions(name)
+}
+
+func mcLibMeta(lib, name string) mcMeta {
+	if lib == "cm" {
+		return cmMcMeta(name)
+	}
+	return mcReadMeta(name)
+}
+
 func registerMemcardCMRoutes(mux *http.ServeMux) {
 	h := func(p string, f http.HandlerFunc) { mux.HandleFunc(p, guard(f)) }
 	h("/api/mc/cm", apiMcCM)
@@ -273,7 +439,7 @@ func apiMcCM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cards = cmMcCompare(cards)
-	writeJSON(w, map[string]any{"connected": true, "has": true, "dir": cmMcLib, "cards": cards, "pc_only": cmMcPCOnly(cards)})
+	writeJSON(w, map[string]any{"connected": true, "has": true, "dir": cmMcLib, "cards": cards, "pc_only": cmMcPCOnly(cards), "library": cmMcInfo(cards)})
 }
 
 // POST {"to":"pc"|"cm","card":"<name>" or "" for every card}; to "cm", card is SS1 Tool's name for it

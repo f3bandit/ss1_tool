@@ -6,6 +6,11 @@
 <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABc0lEQVR4nO2bMW7CQBBF44gzBFzAEeAAdGk4Mw1dDpAcISlwOAOSaeMx8mi0Xh7K/NetjYavr9nd78U0L4busO/ttf/E6vjR/B2/UkKeBRlAC6BpvDn/fr4+SksVTu1i8n76DpABtACa0QTZfn4TOqqxvQzHX7vNYJy+A2QALYBGBtACaGQALYBmOijf4fccywnLdjN5f+56dp/3ck36DpABtAAadw2wc9TOwUv3E/rCvh8eP5TW6w77yfujenoWGCIDaAE04Rxg59Tbal0koLSe3edtDvBI3wEygBZA464Bdp+2+7j3+dr1SknfATKAFkATzgFedveyfu16UdJ3gAygBdCE1wCLl92jWX/ueh7pO0AG0AJowmeCHo/+HaCU9B0gA2gBNOHzgOi5vd2n565nib7jlL4DZAAtgCb8LFCavWvXi9ZP3wEygBZAIwNoATQygBZAM8oB0ffsnh3vfYH0HSADaAE0jb2g/w4nQwbQAmhuqUhiF+XJIpEAAAAASUVORK5CYII=">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+.mcSub{margin:0 0 14px;display:flex;flex-wrap:wrap;gap:8px}.mcSub a{font-size:13px!important;padding:5px 14px!important;text-decoration:none}.mcSub a.on{background:var(--panel2)!important;color:var(--text)!important;border-width:2px!important}#mcTabPc.on{border-color:#4c8dff!important}#mcTabCm.on{border-color:#f0a040!important}.mcN{color:var(--dim);font-weight:400}
+.mcLibPc{border-top:4px solid #4c8dff}.mcLibCm{border-top:4px solid #f0a040}#mcCardBox.pc{border-top:4px solid #4c8dff}#mcCardBox.cm{border-top:4px solid #f0a040}
+.mcWhere{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:-4px 0 10px;padding:8px 12px;border-radius:6px;font-size:13px}.mcWhere b{font-size:12px;letter-spacing:.04em;padding:3px 8px;border-radius:4px}.mcWhere code{word-break:break-all}
+.mcWhere.pc{background:#1b2740;color:#d6e4ff}.mcWhere.pc b{background:#4c8dff;color:#0b1222}.mcWhere.cm{background:#2a2418;color:#f3d9a8}.mcWhere.cm b{background:#f0a040;color:#1f1405}
+.mcNote{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:10px;padding:8px 12px;border-radius:6px;font-size:13px;background:var(--panel2);border:1px solid var(--line)}.mcNote:empty{display:none}
 :root{--bg:#0f1115;--panel:#171a21;--panel2:#1e222b;--line:#2a2f3a;--text:#e6e8ec;--dim:#9aa3b2;--acc:#e8473b;--ok:#3fb950;--warn:#e3b341;--bad:#f85149}
 *{box-sizing:border-box}body{margin:0;font:14px/1.45 "Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text)}
 header{display:flex;align-items:center;gap:14px;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
@@ -870,7 +875,9 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div id="artClean" style="margin-top:10px"></div></div>
 </div>
 <div class="subpage" id="mcards">
- <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works. This works the same on any MiSTer and on a SuperStation with or without Console Mode. When the SuperStation runs Console Mode 2.0 or later, which has its own memory card manager (Media &rsaquo; Memory Cards), a section below also copies cards between Console Mode's library and this one.</p>
+ <div class="jump tabs mcSub" id="mcTabs" role="tablist" aria-label="Which library"><a href="#" role="tab" id="mcTabPc" class="on" aria-selected="true" onclick="mcTab('pc');return false">MiSTer <span class="mcN" id="mcTabPcN"></span></a><a href="#" role="tab" id="mcTabCm" aria-selected="false" onclick="mcTab('cm');return false">Console Mode <span class="mcN" id="mcTabCmN"></span></a></div>
+ <h2>Memory cards</h2><p class="sub">Back up the PlayStation memory card in the SuperStation's <b>front port 1</b>, keep every card in a library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>, move saves between cards, and copy saves back onto a real card. It uses the <a href="https://github.com/f3bandit/SS1_MemCard_MiSTer" target="_blank" rel="noopener">SS1 Memory Card Tool</a> core, which you install in Setup (or with the button below); SS1 Tool starts it for each job, and the TV shows a live map of the card while it works. This works the same on any MiSTer and on a SuperStation with or without Console Mode. Console Mode 2.0 and later have their own memory card manager (Media &rsaquo; Memory Cards) with their own library, so there are two tabs above: <b>MiSTer</b> (SS1 Tool's library <span class="pc-only">on this PC</span><span class="android-only">on this phone</span>) and <b>Console Mode</b> (Console Mode's library on the SuperStation). The editor always says which one you're changing.</p>
+ <div id="mcPcPane">
  <div class="card"><h3>The card in front port 1</h3>
   <p class="muted" id="mcCore" style="margin:0 0 8px"></p>
   <div class="row"><label for="mcAs">Keep the backup as</label><select id="mcAs" onchange="$('mcNew').style.display=this.value==='+'?'':'none'"></select><input id="mcNew" placeholder="Card name" style="display:none;width:180px">
@@ -881,19 +888,24 @@ body.repshot #toast,body.repshot #toTop{display:none!important}
   <div id="mcJob" style="display:none;margin-top:12px"><div class="row" style="align-items:flex-start;gap:16px"><canvas id="mcMap" width="256" height="256" style="width:256px;height:256px;image-rendering:pixelated;border-radius:4px"></canvas>
    <div style="flex:1;min-width:220px"><b id="mcTitle"></b><div id="mcStep" style="margin:4px 0"></div><div id="mcCounts" class="muted"></div><div id="mcLegend" class="muted" style="margin-top:8px;font-size:12px"></div><div id="mcMsg" style="margin-top:8px"></div><button class="b d sm" id="mcStop" style="display:none;margin-top:8px" onclick="mcStopJob()">Stop</button></div></div>
    <pre class="out" id="mcLog" style="max-height:140px;margin-top:8px"></pre></div></div>
- <div class="card"><h3>Library</h3>
+ <div class="card mcLibPc"><h3>MiSTer library <span class="muted" style="font-weight:400;font-size:13px">&middot; SS1 Tool's cards <span class="pc-only">on this PC</span><span class="android-only">on this phone</span></span></h3>
   <div class="row" style="margin-bottom:8px"><button class="b" onclick="mcNewCard()">New blank card</button><button class="b pc-only" onclick="api('/api/mc/open',{})">Open memcards folder</button><span class="muted">Kept in <code>memcards</code> <span class="pc-only">next to SS1Tool.exe</span><span class="android-only">in SS1 Tool's folder on this phone</span>: one folder per card, one file per version (raw 128 KB .mcd, which PC emulators open too). Nothing is ever overwritten.</span></div>
   <div id="mcLib"><span class="muted">No cards yet: back up a card, or make a blank one.</span></div></div>
- <div class="card" id="mcCmBox" style="display:none"><h3>Console Mode's memory cards</h3>
-  <p class="muted" style="margin:0 0 8px">Console Mode 2.0 has the memory card manager too (Media &rsaquo; Memory Cards), with its own library on the SuperStation (<code>ConsoleMode/memcards/library</code>), kept the same way as this one. Copy cards between the two: only versions the other side doesn't have are copied, under the same names. Nothing is overwritten or removed on either side.</p>
-  <div class="row" style="margin-bottom:8px"><button class="b p" onclick="mcCmCopy('pc','',this)">Copy everything to <span class="pc-only">this PC</span><span class="android-only">this phone</span></button><button class="b" onclick="mcCmCopy('cm','',this)">Copy everything to Console Mode</button><button class="b" onclick="mcCmLoad()">Refresh</button></div>
-  <div id="mcCmList"></div></div>
- <div class="card" id="mcCardBox" style="display:none"><h3 id="mcCardName"></h3>
+ </div>
+ <div id="mcCmPane" style="display:none">
+ <div class="card" id="mcCmNone" style="display:none"><h3>No Console Mode library</h3><p class="muted" id="mcCmNoneTxt" style="margin:0"></p></div>
+ <div class="card mcLibCm" id="mcCmLibBox"><h3>Console Mode library <span class="muted" style="font-weight:400;font-size:13px">&middot; on the SuperStation, <code>/media/fat/ConsoleMode/memcards/library</code></span></h3>
+  <p class="muted" style="margin:0 0 8px">The cards Console Mode keeps (Media &rsaquo; Memory Cards). Changes here are saved as new versions in Console Mode's library, the same way as in the MiSTer tab: nothing is overwritten. Renaming and deleting cards here is left to Console Mode's own menu. Copying between the two libraries only copies versions the other side doesn't have.</p>
+  <div class="row" style="margin-bottom:8px"><button class="b" onclick="mcNewCard()">New blank card</button><button class="b" onclick="mcCmCopy('pc','',this)">Copy everything to <span class="pc-only">this PC</span><span class="android-only">this phone</span></button><button class="b" onclick="mcCmCopy('cm','',this)">Copy everything from <span class="pc-only">this PC</span><span class="android-only">this phone</span></button><button class="b" onclick="mcCmLoad()">Refresh</button></div>
+  <div id="mcCmLib"><span class="muted">Reading Console Mode's cards...</span></div></div>
+ </div>
+ <div class="card" id="mcCardBox" style="display:none"><div class="mcWhere" id="mcWhere"></div><h3 id="mcCardName"></h3>
   <div class="row" style="margin-bottom:8px"><label for="mcVer">Version</label><select id="mcVer" onchange="mcShow(MC.sel,this.value)"></select><span class="muted" id="mcCardInfo"></span></div>
   <div id="mcSaves"></div>
+  <div class="mcNote" id="mcNote"></div>
   <div class="row" style="margin-top:10px"><label for="mcTo">Ticked saves:</label><select id="mcTo"></select><button class="b" onclick="mcEditSaves('copy')">Copy to that card</button><button class="b" onclick="mcEditSaves('move')">Move to that card</button><button class="b d" onclick="mcEditSaves('remove')">Remove</button></div>
   <div class="row" style="margin-top:8px"><button class="b p" onclick="mcRun('copy')">Copy ticked saves to the card in front port 1</button><button class="b" onclick="mcRun('restore')" title="Makes the card in front port 1 exactly like this version">Put this whole card on the card in front port 1</button></div>
-  <div class="row" style="margin-top:8px"><button class="b" onclick="mcDownload()">Download this version (.mcd)</button><button class="b" onclick="mcRename()">Rename</button><button class="b d" onclick="mcDelVersion()">Delete this version</button><button class="b d" onclick="mcDelCard()">Delete the card</button></div></div>
+  <div class="row" style="margin-top:8px"><button class="b" onclick="mcDownload()">Download this version (.mcd)</button><span id="mcPcOnly" class="row" style="gap:8px;margin:0"><button class="b" onclick="mcRename()">Rename</button><button class="b d" onclick="mcDelVersion()">Delete this version</button><button class="b d" onclick="mcDelCard()">Delete the card</button></span></div></div>
 </div>
 </section>
 <section id="devices">
@@ -2093,20 +2105,36 @@ async function nbPoll(){if(nbPolling)return;nbPolling=true;try{for(;;){const j=a
 let ART=null,artPolling=false;
 const artPct=(a,b)=>b?Math.round(100*a/b)+"%":"-";
 // ---------------------------------------------------------------- memory cards
-let MC={sel:"",ver:"",card:null,state:null};let mcPolling=false;
+let MC={sel:"",ver:"",card:null,state:null,lib:"pc",cm:null};let mcPolling=false;
 const MCCOL=["#343a50","#38c058","#e8c030","#e84040","#d070e8","#4a9cf0"];
 const MCLEG=[[1,"read OK"],[2,"needed a retry"],[3,"failed"],[4,"differs"],[5,"written and checked"],[0,"not done yet"]];
 async function mcLoad(){try{MC.state=await api("/api/mc/state")}catch(e){return}mcRender();const j=MC.state.job;if(j&&j.id)mcJobShow(j);if(j&&j.running)mcPoll();mcCmLoad()}
 // Console Mode 2.0's own card library on the SuperStation (memcard_cm.go): copied both ways, nothing overwritten
-async function mcCmLoad(){let S;try{S=await api("/api/mc/cm")}catch(e){$("mcCmBox").style.display="none";return}
- if(!S.connected||!S.has){$("mcCmBox").style.display="none";return}$("mcCmBox").style.display="";
- const vs=n=>n+(n===1?" version":" versions"),rows=(S.cards||[]).map(c=>{const st=c.to_pc||c.to_cm?[c.to_pc?`${vs(c.to_pc)} not on <span class="pc-only">this PC</span><span class="android-only">this phone</span>`:"",c.to_cm?`${vs(c.to_cm)} not in Console Mode`:""].filter(x=>x).join(", "):"The same on both";
-  return `<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span><b>${esc(c.name)}</b> <span class="muted">${vs(c.versions.length)} in Console Mode${c.on_pc?"":" (not in this library yet)"} &middot; ${st}</span></span><span>${c.to_pc?`<button class="b sm" onclick="mcCmCopy('pc',${esc(JSON.stringify(c.name))},this)">Copy here</button>`:""}${c.to_cm&&c.on_pc?`<button class="b sm" onclick="mcCmCopy('cm',${esc(JSON.stringify(c.local))},this)">Copy to Console Mode</button>`:""}</span></div>`}),
- only=(S.pc_only||[]).map(n=>`<div class="row" style="justify-content:space-between;border-top:1px solid var(--line);padding:6px 0"><span><b>${esc(n)}</b> <span class="muted">only in this library</span></span><button class="b sm" onclick="mcCmCopy('cm',${esc(JSON.stringify(n))},this)">Copy to Console Mode</button></div>`);
- $("mcCmList").innerHTML=rows.concat(only).join("")||`<span class="muted">No cards in Console Mode's library or this one yet.</span>`}
+// Two libraries, one tab each: "pc" = MiSTer (SS1 Tool's library on this PC/phone), "cm" = Console Mode's on the SuperStation
+const mcHere=()=>document.documentElement.dataset.platform==="android"?"this phone":"this PC";
+const mcVn=n=>n+(n===1?" version":" versions");
+async function mcCmLoad(){let S=null;try{S=await api("/api/mc/cm")}catch(e){}
+ MC.cm=S&&S.connected&&S.has?S:null;
+ $("mcCmNone").style.display=MC.cm?"none":"";$("mcCmLibBox").style.display=MC.cm?"":"none";
+ $("mcCmNoneTxt").textContent=!S||!S.connected?"Connect to the SuperStation to see Console Mode's memory cards.":"This MiSTer doesn't have Console Mode 2.0 or later, which keeps its own memory card library. Your cards are in the MiSTer tab.";
+ if(!MC.cm)$("mcTabCmN").textContent="";mcRender()}
+function mcTab(l){if(l===MC.lib)return;MC.lib=l;MC.sel="";MC.ver="";$("mcCardBox").style.display="none";
+ for(const [id,on] of [["mcTabPc",l==="pc"],["mcTabCm",l==="cm"]]){$(id).classList.toggle("on",on);$(id).setAttribute("aria-selected",on)}
+ $("mcPcPane").style.display=l==="pc"?"":"none";$("mcCmPane").style.display=l==="cm"?"":"none";
+ if(l==="cm")mcCmLoad();else mcRender()}
+// how a card compares with the other library
+function mcCmOf(pcName){return MC.cm?(MC.cm.cards||[]).find(c=>c.local.toLowerCase()===pcName.toLowerCase()):null}
+function mcSync(lib,name){if(!MC.cm)return"";
+ if(lib==="pc"){const c=mcCmOf(name);if(!c)return'<span class="muted">Not in Console Mode</span>';
+  return c.to_cm?`<span style="color:#f0b870">${mcVn(c.to_cm)} not in Console Mode</span>`:c.to_pc?`<span class="muted">Console Mode has ${mcVn(c.to_pc)} more</span>`:'<span class="muted">Same in Console Mode</span>'}
+ const c=(MC.cm.cards||[]).find(x=>x.name===name);if(!c||!c.on_pc)return`<span class="muted">Not on ${mcHere()}</span>`;
+ return c.to_pc?`<span style="color:#8fb6ff">${mcVn(c.to_pc)} not on ${mcHere()}</span>`:c.to_cm?`<span class="muted">${mcHere()} has ${mcVn(c.to_cm)} more</span>`:`<span class="muted">Same on ${mcHere()}</span>`}
+function mcLibTable(L,lib){const sync=!!MC.cm,other=lib==="pc"?"Console Mode":"On "+mcHere();
+ return`<table><thead><tr><th>Card</th><th>Saves</th><th>Free blocks</th><th>Versions</th><th>Latest</th>${sync?`<th>${other}</th>`:""}</tr></thead><tbody>`+
+  L.map(c=>`<tr style="cursor:pointer${c.name===MC.sel&&lib===MC.lib?";background:var(--hover,#ffffff10)":""}" onclick="mcShow(${esc(JSON.stringify(c.name))})"><td><b>${esc(c.name)}</b> ${c.real?'<span class="pill good">real card</span>':'<span class="pill muted">made here</span>'}</td><td>${c.saves}</td><td>${c.free} / 15</td><td>${c.versions.length}</td><td>${esc(mcVerName(c.latest))}</td>${sync?`<td>${mcSync(lib,c.name)}</td>`:""}</tr>`).join("")+"</tbody></table>"}
 async function mcCmCopy(to,card,btn){await busy(btn,async()=>{try{const r=await api("/api/mc/cm/copy",{to,card});
- toast(r.ok?(r.copied?`Copied ${r.copied} version${r.copied===1?"":"s"}`:"Nothing to copy: both have them"):r.error,!r.ok)}catch(e){toast(e.message,true)}
- try{MC.state=await api("/api/mc/state");mcRender()}catch(e){}mcCmLoad()})}
+ toast(r.ok?(r.copied?`Copied ${r.copied} version${r.copied===1?"":"s"} to ${to==="cm"?"Console Mode":mcHere()}`:"Nothing to copy: both have them"):r.error,!r.ok)}catch(e){toast(e.message,true)}
+ try{MC.state=await api("/api/mc/state")}catch(e){}await mcCmLoad();if(MC.sel)mcShow(MC.sel,MC.ver)})}
 function mcVerName(v){const m=/^(\d{4})-(\d\d)-(\d\d)_(\d\d)(\d\d)(\d\d)/.exec(v);return m?new Date(+m[1],m[2]-1,+m[3],+m[4],+m[5],+m[6]).toLocaleString():v}
 function mcRender(){const S=MC.state;if(!S)return;const L=S.library||[];
  const inst=S.installed,lat=S.latest;
@@ -2123,14 +2151,23 @@ function mcRender(){const S=MC.state;if(!S)return;const L=S.library||[];
  $("mcAs").innerHTML=`<option value="">Recognise it (or a new card)</option>`+real.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("")+`<option value="+">New card...</option>`;
  if([...$("mcAs").options].some(o=>o.value===keepAs))$("mcAs").value=keepAs;
  $("mcVs").innerHTML=L.length?L.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (latest)</option>`).join(""):`<option value="">No cards in the library yet</option>`;
- $("mcTo").innerHTML=L.filter(c=>c.name!==MC.sel).map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.free} free)</option>`).join("");
- $("mcLib").innerHTML=L.length?`<table><thead><tr><th>Card</th><th>Saves</th><th>Free blocks</th><th>Versions</th><th>Latest</th></tr></thead><tbody>`+
-  L.map(c=>`<tr style="cursor:pointer${c.name===MC.sel?";background:var(--hover,#ffffff10)":""}" onclick="mcShow('${esc(c.name).replace(/'/g,"\\'")}')"><td><b>${esc(c.name)}</b> ${c.real?'<span class="pill good">real card</span>':'<span class="pill muted">made here</span>'}</td><td>${c.saves}</td><td>${c.free} / 15</td><td>${c.versions.length}</td><td>${esc(mcVerName(c.latest))}</td></tr>`).join("")+"</tbody></table>"
-  :'<span class="muted">No cards yet: back up a card, or make a blank one.</span>';
- if(MC.sel&&!L.some(c=>c.name===MC.sel)){MC.sel="";$("mcCardBox").style.display="none"}}
-async function mcShow(name,ver){MC.sel=name;MC.ver=ver||"";let d;try{d=await api(`/api/mc/card?name=${encodeURIComponent(name)}&version=${encodeURIComponent(MC.ver)}`)}catch(e){return toast(e.message,true)}
+ const CL=MC.cm?MC.cm.library||[]:[],opt=(lib,c)=>`<option value="${lib}:${esc(c.name)}">${esc(c.name)} (${c.free} free)</option>`,mine=(lib,c)=>lib===MC.lib&&c.name===MC.sel;
+ $("mcTo").innerHTML=MC.cm?`<optgroup label="MiSTer library (${mcHere()})">${L.filter(c=>!mine("pc",c)).map(c=>opt("pc",c)).join("")}</optgroup><optgroup label="Console Mode library (SuperStation)">${CL.filter(c=>!mine("cm",c)).map(c=>opt("cm",c)).join("")}</optgroup>`
+  :L.filter(c=>!mine("pc",c)).map(c=>opt("pc",c)).join("");
+ $("mcLib").innerHTML=L.length?mcLibTable(L,"pc"):'<span class="muted">No cards yet: back up a card, or make a blank one.</span>';
+ $("mcTabPcN").textContent=`(${L.length})`;
+ if(MC.cm){$("mcCmLib").innerHTML=CL.length?mcLibTable(CL,"cm"):'<span class="muted">Console Mode has no cards yet: back one up in Console Mode (Media › Memory Cards), copy them from the MiSTer tab, or make a blank one.</span>';$("mcTabCmN").textContent=`(${CL.length})`}
+ const cur=MC.lib==="cm"?CL:L;if(MC.sel&&(MC.lib==="pc"||MC.cm)&&!cur.some(c=>c.name===MC.sel)){MC.sel="";$("mcCardBox").style.display="none"}}
+async function mcShow(name,ver){MC.sel=name;MC.ver=ver||"";const lib=MC.lib;let d;try{d=await api(`/api/mc/card?lib=${lib}&name=${encodeURIComponent(name)}&version=${encodeURIComponent(MC.ver)}`)}catch(e){return toast(e.message,true)}
+ if(lib!==MC.lib||name!==MC.sel)return;
  MC.card=d.card;const V=d.versions||[];if(!MC.ver)MC.ver=V[V.length-1]||"";
- $("mcCardBox").style.display="";$("mcCardName").textContent=name;
+ $("mcCardBox").style.display="";$("mcCardName").textContent=name;$("mcCardBox").className="card "+lib;
+ const cm=lib==="cm",file=cm?`/media/fat/ConsoleMode/memcards/library/${name}/${MC.ver}.mcd`:`memcards/${name}/${MC.ver}.mcd`;
+ $("mcWhere").className="mcWhere "+lib;$("mcWhere").innerHTML=cm?`<b>EDITING IN CONSOLE MODE</b><span>On the SuperStation: <code>${esc(file)}</code></span>`:`<b>EDITING IN MISTER</b><span>SS1 Tool's library on ${mcHere()}: <code>${esc(file)}</code></span>`;
+ $("mcPcOnly").style.display=cm?"none":"";
+ const other=cm?mcHere():"Console Mode",sy=MC.cm?mcSync(lib,name):"";
+ $("mcNote").innerHTML=`<span>Changes are saved as a new version ${cm?"in Console Mode's library on the SuperStation":"in the MiSTer library on "+mcHere()}. ${MC.cm?`${other}'s copy doesn't change until you copy it there.`:""}${sy?` · ${sy}`:""}</span>`+
+  (MC.cm?`<button class="b sm" onclick="mcCmCopy('${cm?"pc":"cm"}',${esc(JSON.stringify(name))},this)">Copy this card to ${esc(other)}</button>`:"");
  $("mcVer").innerHTML=V.slice().reverse().map((v,i)=>`<option value="${esc(v)}">${esc(mcVerName(v))}${i==0?" (latest)":""}</option>`).join("");$("mcVer").value=MC.ver;
  const c=d.card;$("mcCardInfo").textContent=c.formatted?`${c.saves?c.saves.length:0} saves · ${c.free} of 15 blocks free`:"Not formatted";
  const S=c.saves||[];$("mcSaves").innerHTML=S.length?`<table><thead><tr><th><input type="checkbox" onchange="document.querySelectorAll('.mcSv').forEach(x=>x.checked=this.checked)"></th><th></th><th>Save</th><th>Game</th><th>Blocks</th><th></th></tr></thead><tbody>`+
@@ -2138,15 +2175,15 @@ async function mcShow(name,ver){MC.sel=name;MC.ver=ver||"";let d;try{d=await api
   :'<span class="muted">No saves on this card.</span>';
  mcRender()}
 function mcTicked(){return [...document.querySelectorAll(".mcSv:checked")].map(x=>+x.value)}
-async function mcEditSaves(op){const slots=mcTicked();if(!slots.length)return toast("Tick the saves first",true);const to=$("mcTo").value;
+async function mcEditSaves(op){const slots=mcTicked();if(!slots.length)return toast("Tick the saves first",true);const tv=$("mcTo").value,ci=tv.indexOf(":"),toLib=ci>0?tv.slice(0,ci):"pc",to=ci>0?tv.slice(ci+1):"",where=l=>l==="cm"?"Console Mode":"MiSTer";
  if(op!=="remove"&&!to)return toast("Make or back up another card first",true);
  if(op==="remove"&&!confirm(`Remove ${slots.length} save(s) from ${MC.sel}?\n\nA new version is made: the current one stays in the library.`))return;
- try{await api("/api/mc/edit",{op,name:MC.sel,version:MC.ver,slots,to});toast(op==="remove"?"Removed (new version)":op==="move"?`Moved to ${to}`:`Copied to ${to}`);MC.state=await api("/api/mc/state");mcShow(MC.sel)}catch(e){toast(e.message,true)}}
-async function mcNewCard(){const n=prompt("Name for the new blank card:");if(!n)return;try{const r=await api("/api/mc/edit",{op:"new",new_name:n});MC.state=await api("/api/mc/state");mcShow(r.name)}catch(e){toast(e.message,true)}}
+ try{await api("/api/mc/edit",{op,name:MC.sel,version:MC.ver,slots,to,lib:MC.lib,to_lib:toLib});toast(op==="remove"?"Removed (new version)":`${op==="move"?"Moved":"Copied"} to ${to} (${where(toLib)})`);MC.state=await api("/api/mc/state");if(MC.cm)await mcCmLoad();mcShow(MC.sel)}catch(e){toast(e.message,true)}}
+async function mcNewCard(){const lib=MC.lib,n=prompt(`Name for the new blank card (${lib==="cm"?"in Console Mode's library on the SuperStation":"in the MiSTer library on "+mcHere()}):`);if(!n)return;try{const r=await api("/api/mc/edit",{op:"new",new_name:n,lib});MC.state=await api("/api/mc/state");if(lib==="cm")await mcCmLoad();mcShow(r.name)}catch(e){toast(e.message,true)}}
 async function mcRename(){const n=prompt("New name for "+MC.sel+":",MC.sel);if(!n||n===MC.sel)return;try{const r=await api("/api/mc/edit",{op:"rename",name:MC.sel,new_name:n});MC.state=await api("/api/mc/state");mcShow(r.name)}catch(e){toast(e.message,true)}}
 async function mcDelVersion(){if(!confirm(`Delete the version from ${mcVerName(MC.ver)} of ${MC.sel}?`))return;try{await api("/api/mc/edit",{op:"delversion",name:MC.sel,version:MC.ver});MC.state=await api("/api/mc/state");mcShow(MC.sel)}catch(e){toast(e.message,true)}}
 async function mcDelCard(){if(!confirm(`Delete ${MC.sel} and all its versions from this PC?\n\nThe real card isn't touched.`))return;try{await api("/api/mc/edit",{op:"delete",name:MC.sel});MC.sel="";$("mcCardBox").style.display="none";mcLoad()}catch(e){toast(e.message,true)}}
-function mcDownload(slot){location.href=`/api/mc/export?t=${encodeURIComponent(TOKEN)}&name=${encodeURIComponent(MC.sel)}&version=${encodeURIComponent(MC.ver)}${slot?"&slot="+slot:""}`}
+function mcDownload(slot){location.href=`/api/mc/export?t=${encodeURIComponent(TOKEN)}&lib=${MC.lib}&name=${encodeURIComponent(MC.sel)}&version=${encodeURIComponent(MC.ver)}${slot?"&slot="+slot:""}`}
 async function mcInstall(){if(!confirm("Install the newest memory card core on the SuperStation?\n\nIt goes in /media/fat/_Utility (Utility in MiSTer's core list)."))return;try{await api("/api/mc/install",{});mcPoll()}catch(e){toast(e.message,true)}}
 const PSX={pads:[]};
 function psxFill(id,pads,port){const e=$(id);e.innerHTML=pads.map((n,i)=>`<option value="${i}">${esc(n==="SNAC"?"SNAC (real controller in front port "+port+")":n)}</option>`).join("")}
@@ -2185,7 +2222,7 @@ async function mcRun(action){if(!connectedHost)return toast("Connect to the Supe
  if(action==="backup"){body.name=$("mcAs").value==="+"?$("mcNew").value.trim():$("mcAs").value;if($("mcAs").value==="+"&&!body.name)return toast("Type a name for the card",true);
   if(!confirm(`Back up the memory card in front port 1?\n\n${closes}\nThe card is only read.`))return}
  else if(action==="verify"){body.name=$("mcVs").value;if(!body.name)return toast("Back up a card first",true);if(!confirm(`Check the card in front port 1 against ${body.name}?\n\n${closes}\nThe card is only read.`))return}
- else{body.name=MC.sel;body.version=MC.ver;
+ else{body.name=MC.sel;body.version=MC.ver;body.lib=MC.lib;
   if(action==="copy"){body.slots=mcTicked();if(!body.slots.length)return toast("Tick the saves to copy",true);
    if(!confirm(`Copy ${body.slots.length} save(s) from ${MC.sel} to the memory card in front port 1?\n\n${closes}\nSS1 Tool first backs the card up (it lands in the library), adds the saves to that copy, then the core writes only the sectors that change and reads each one back. Don't remove the card while it works.`))return}
   else if(!confirm(`Make the memory card in front port 1 exactly like ${MC.sel} (${mcVerName(MC.ver)})?\n\nEverything on that card is replaced. ${closes}\nSS1 Tool first backs the card up (it lands in the library), then the core writes only the sectors that differ and reads each one back. Don't remove the card while it works.`))return}
