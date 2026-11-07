@@ -30,6 +30,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -640,7 +641,9 @@ func mcAddSave(img, x []byte) ([]byte, []int, error) {
 }
 
 // mcBackup reads the card in port 1 and keeps it in the library under name ("" = recognise it).
-func mcBackup(name string, o mcOpts) (string, string, []byte, error) { return mcBackupTo("pc", name, o) }
+func mcBackup(name string, o mcOpts) (string, string, []byte, error) {
+	return mcBackupTo("pc", name, o)
+}
 
 // mcBackupTo backs the card in port 1 up into a library ("cm" = Console Mode's on the SuperStation)
 func mcBackupTo(lib, name string, o mcOpts) (string, string, []byte, error) {
@@ -961,7 +964,69 @@ func apiMcEdit(w http.ResponseWriter, r *http.Request) {
 	if (req.Lib == "cm" || req.ToLib == "cm") && !needConn(w) {
 		return
 	}
+	if (req.Lib == "cmport" || req.Lib == "cmimg" || req.ToLib == "cmport" || req.ToLib == "cmimg") && !needConn(w) {
+		return
+	}
 	err := func() error {
+		if req.Op == "format" {
+			_, err := mcLibStore(req.Lib, req.Name, mcBlank())
+			return err
+		}
+		if req.Op == "backup" { // a card in a port or a card image into Console Mode's backups
+			img, err := mcLibLoad(req.Lib, req.Name, "")
+			if err != nil {
+				return err
+			}
+			n := cmImgStem(req.Name)
+			if req.Lib == "cmport" {
+				if img, err = cmPortRead(mustPort(req.Name)); err != nil {
+					return err
+				}
+				nn, v, err := cmPortBackup(img)
+				res["name"], res["version"] = nn, v
+				return err
+			}
+			if req.Lib != "cmimg" {
+				return errors.New("only a card in a port or a card image is backed up this way")
+			}
+			v, err := cmMcStore(n, img, false)
+			res["name"], res["version"] = n, v
+			return err
+		}
+		if req.Lib == "cmport" {
+			switch req.Op {
+			case "rename", "delete", "delversion", "new":
+				return errors.New("a card in a front port can't be renamed or deleted: format it, or remove its saves")
+			}
+		}
+		if req.Lib == "cmimg" {
+			switch req.Op {
+			case "rename":
+				n, err := mcSafeName(req.NewName)
+				if err != nil {
+					return err
+				}
+				if path.Ext(n) == "" {
+					n += path.Ext(req.Name)
+				}
+				res["name"] = n
+				return cmImgRename(req.Name, n)
+			case "delete":
+				return cmImgDelete(req.Name)
+			case "delversion":
+				return errors.New("a card image has one version: Console Mode's backups keep the older ones")
+			case "new":
+				n, err := mcSafeName(req.NewName)
+				if err != nil {
+					return err
+				}
+				if path.Ext(n) == "" {
+					n += ".mcd"
+				}
+				res["name"] = n
+				return cmImgStore(n, mcBlank(), true)
+			}
+		}
 		if req.Lib == "cm" {
 			switch req.Op {
 			case "rename":

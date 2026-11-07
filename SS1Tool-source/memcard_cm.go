@@ -21,6 +21,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -391,6 +392,17 @@ func cmMcInfo(cards []cmMcCard) []mcCardInfo {
 
 // the same calls for either library: lib "cm" is Console Mode's, anything else SS1 Tool's on this PC
 func mcLibLoad(lib, name, ver string) ([]byte, error) {
+	switch lib {
+	case "cmport":
+		p, err := cmPortOK(name)
+		if err != nil {
+			return nil, err
+		}
+		img, _, err := cmPortCached(p)
+		return img, err
+	case "cmimg":
+		return cmImgLoad(name)
+	}
 	if lib == "cm" {
 		return cmMcLoad(name, ver)
 	}
@@ -398,6 +410,16 @@ func mcLibLoad(lib, name, ver string) ([]byte, error) {
 }
 
 func mcLibStore(lib, name string, img []byte) (string, error) {
+	switch lib {
+	case "cmport":
+		p, err := cmPortOK(name)
+		if err != nil {
+			return "", err
+		}
+		return "current", cmPortWrite(p, img)
+	case "cmimg":
+		return "current", cmImgStore(name, img, false)
+	}
 	if lib == "cm" {
 		return cmMcStore(name, img, cmMcMeta(name).Real)
 	}
@@ -405,6 +427,12 @@ func mcLibStore(lib, name string, img []byte) (string, error) {
 }
 
 func mcLibVersions(lib, name string) []string {
+	if lib == "cmport" || lib == "cmimg" {
+		if _, err := mcLibLoad(lib, name, ""); err != nil {
+			return nil
+		}
+		return []string{"current"}
+	}
 	if lib == "cm" {
 		v, _ := cmMcVersions(name)
 		return v
@@ -413,6 +441,9 @@ func mcLibVersions(lib, name string) []string {
 }
 
 func mcLibStoreReal(lib, name string, img []byte, real bool) (string, error) {
+	if lib == "cmport" || lib == "cmimg" {
+		return mcLibStore(lib, name, img)
+	}
 	if lib == "cm" {
 		return cmMcStore(name, img, real)
 	}
@@ -536,6 +567,20 @@ func apiMcImport(w http.ResponseWriter, r *http.Request) {
 			if _, err := mcParse(img, false); err != nil {
 				return fmt.Errorf("that file isn't a PlayStation memory card: %v", err)
 			}
+			if name == "" && lib == "cmimg" {
+				n, err := mcSafeName(q.Get("new_name"))
+				if err != nil {
+					return err
+				}
+				if path.Ext(n) == "" {
+					n += ".mcd"
+				}
+				res["name"], res["version"] = n, "current"
+				return cmImgStore(n, img, true)
+			}
+			if name == "" && lib == "cmport" {
+				return errors.New("pick the port to put the card on")
+			}
 			if name == "" {
 				if name, err = mcSafeName(q.Get("new_name")); err != nil {
 					return err
@@ -563,6 +608,12 @@ func apiMcImport(w http.ResponseWriter, r *http.Request) {
 }
 
 func mcLibMeta(lib, name string) mcMeta {
+	if lib == "cmport" {
+		return mcMeta{Real: true}
+	}
+	if lib == "cmimg" {
+		return mcMeta{}
+	}
 	if lib == "cm" {
 		return cmMcMeta(name)
 	}
@@ -574,6 +625,7 @@ func registerMemcardCMRoutes(mux *http.ServeMux) {
 	h("/api/mc/cm", apiMcCM)
 	h("/api/mc/cm/copy", apiMcCMCopy)
 	h("/api/mc/import", apiMcImport)
+	h("/api/mc/cm/port", apiMcCMPort)
 }
 
 func apiMcCM(w http.ResponseWriter, r *http.Request) {
@@ -591,7 +643,16 @@ func apiMcCM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	cards = cmMcCompare(cards)
-	writeJSON(w, map[string]any{"connected": true, "has": true, "dir": cmMcLib, "cards": cards, "pc_only": cmMcPCOnly(cards), "library": cmMcInfo(cards)})
+	res := map[string]any{"connected": true, "has": true, "dir": cmMcLib, "cards": cards, "pc_only": cmMcPCOnly(cards), "library": cmMcInfo(cards), "ports": cmPortsInfo(), "psx_running": cmPSXRunning()}
+	if imgs, err := cmImgList(); err == nil {
+		res["images"] = imgs
+	} else {
+		res["images_error"] = err.Error()
+	}
+	if err := cmPortReady(); err != nil {
+		res["port_error"] = err.Error()
+	}
+	writeJSON(w, res)
 }
 
 // POST {"to":"pc"|"cm","card":"<name>" or "" for every card}; to "cm", card is SS1 Tool's name for it
