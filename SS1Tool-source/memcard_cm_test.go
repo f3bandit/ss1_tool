@@ -37,3 +37,32 @@ func TestCmMcCompare(t *testing.T) {
 		}
 	}
 }
+
+// card files from other tools, and a save imported into a card in the library on this PC
+func TestMcImportFiles(t *testing.T) {
+	raw := mcBlank()
+	if b, err := mcCardFromFile(raw); err != nil || len(b) != mcSize {
+		t.Fatal("raw", err)
+	}
+	gme := append(append([]byte("123-456-STD"), make([]byte, 3904-11)...), raw...)
+	if b, err := mcCardFromFile(gme); err != nil || b[0] != 'M' {
+		t.Fatal("gme", err)
+	}
+	vmp := append(append([]byte("\x00PMV"), make([]byte, 0x80-4)...), raw...)
+	if b, err := mcCardFromFile(vmp); err != nil || b[0] != 'M' {
+		t.Fatal("vmp", err)
+	}
+	if _, err := mcCardFromFile(make([]byte, 1000)); err == nil {
+		t.Fatal("a short file should be refused")
+	}
+	t.Setenv("SS1TOOL_DATA", t.TempDir())
+	if _, err := mcLibStoreReal("pc", "Blank", raw, false); err != nil {
+		t.Fatal(err)
+	}
+	if v := mcLibVersions("pc", "Blank"); len(v) != 1 {
+		t.Fatalf("versions: %v", v)
+	}
+	if l, err := mcLibList("pc"); err != nil || len(l) != 1 || l[0].Free != 15 {
+		t.Fatalf("list: %+v %v", l, err)
+	}
+}

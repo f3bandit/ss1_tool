@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -255,9 +256,9 @@ func cmMcToCM(local string, remote *cmMcCard) (int, error) {
 
 // ---------------------------------------------------------------- editing Console Mode's library
 // Files › Memory cards has two tabs: MiSTer (SS1 Tool's library on this PC) and Console Mode (its library on
-// the SuperStation). Editing in the Console Mode tab works the way it does here: every change is a new version
-// of the card (saved to a temporary name, checked by md5, then put in place); nothing in Console Mode's library
-// is overwritten, renamed or deleted (that's Console Mode's own menu, Media › Memory Cards).
+// the SuperStation), with the same features: back up and check the card in front port 1, edit, import and export
+// saves and cards, rename and delete. Every change to a card is a new version (on the SuperStation: saved to a
+// temporary name, checked by md5, then put in place); no version is overwritten.
 
 func cmMcDir(name string) string { return cmMcLib + "/" + name }
 
@@ -411,6 +412,156 @@ func mcLibVersions(lib, name string) []string {
 	return mcVersions(name)
 }
 
+func mcLibStoreReal(lib, name string, img []byte, real bool) (string, error) {
+	if lib == "cm" {
+		return cmMcStore(name, img, real)
+	}
+	return mcStore(name, img, real)
+}
+
+// mcLibList lists a library's cards
+func mcLibList(lib string) ([]mcCardInfo, error) {
+	if lib != "cm" {
+		return mcLibrary(), nil
+	}
+	cards, err := cmMcRemote()
+	if err != nil {
+		return nil, err
+	}
+	return cmMcInfo(cards), nil
+}
+
+func cmMcRename(old, n string) error {
+	if cmMcBad(old) || cmMcBad(n) {
+		return errors.New("bad card name")
+	}
+	if v, err := cmMcVersions(old); err != nil {
+		return err
+	} else if len(v) == 0 {
+		return errors.New("no such card")
+	}
+	out, err := run(`[ -e ` + shq(cmMcDir(n)) + ` ] && { echo exists; exit 0; }; mv ` + shq(cmMcDir(old)) + ` ` + shq(cmMcDir(n)) + ` && sync && echo ok`)
+	switch strings.TrimSpace(out) {
+	case "ok":
+		return nil
+	case "exists":
+		return fmt.Errorf("Console Mode already has a card called %q", n)
+	}
+	return fmt.Errorf("couldn't rename the card on the SuperStation: %v %s", err, strings.TrimSpace(out))
+}
+
+func cmMcDelete(name string) error {
+	if v, err := cmMcVersions(name); err != nil {
+		return err
+	} else if len(v) == 0 {
+		return errors.New("no such card")
+	}
+	out, err := run("rm -rf " + shq(cmMcDir(name)) + " && sync && echo ok")
+	if strings.TrimSpace(out) != "ok" {
+		return fmt.Errorf("couldn't delete the card on the SuperStation: %v %s", err, strings.TrimSpace(out))
+	}
+	return nil
+}
+
+func cmMcDelVersion(name, ver string) error {
+	v, err := cmMcVersions(name)
+	if err != nil {
+		return err
+	}
+	if len(v) < 2 {
+		return errors.New("a card keeps at least one version: delete the card instead")
+	}
+	found := false
+	for _, x := range v {
+		found = found || x == ver
+	}
+	if !found || cmMcBad(ver) {
+		return errors.New("bad version")
+	}
+	out, err := run("rm -f " + shq(cmMcDir(name)+"/"+ver+".mcd") + " && sync && echo ok")
+	if strings.TrimSpace(out) != "ok" {
+		return fmt.Errorf("couldn't delete the version on the SuperStation: %v %s", err, strings.TrimSpace(out))
+	}
+	return nil
+}
+
+// mcCardFromFile: a whole card from a file: raw (.mcd .mcr .mc .srm .bin, 128 KB), DexDrive (.gme) or PSP/PS3 (.vmp)
+func mcCardFromFile(b []byte) ([]byte, error) {
+	switch {
+	case len(b) == mcSize:
+		return b, nil
+	case len(b) == mcSize+3904 && bytes.HasPrefix(b, []byte("123-456-STD")):
+		return b[3904:], nil
+	case len(b) == mcSize+0x80 && bytes.HasPrefix(b, []byte("\x00PMV")):
+		return b[0x80:], nil
+	}
+	return nil, errors.New("not a memory card file: it needs to be a 128 KB card (.mcd, .mcr, .mc, .srm), a DexDrive card (.gme) or a PSP card (.vmp)")
+}
+
+// apiMcImport: POST the file itself. kind=save adds a .mcs save to card name (a new version); kind=card adds a
+// whole card file as a new version of card name, or as a new card called new_name
+func apiMcImport(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	lib, name := q.Get("lib"), q.Get("name")
+	if lib == "cm" && !needConn(w) {
+		return
+	}
+	b, err := io.ReadAll(io.LimitReader(r.Body, 1<<20))
+	_ = r.Body.Close()
+	if err != nil {
+		fail(w, 400, err.Error())
+		return
+	}
+	mcLibMu.Lock()
+	defer mcLibMu.Unlock()
+	res := map[string]any{"ok": true}
+	err = func() error {
+		switch q.Get("kind") {
+		case "save":
+			img, err := mcLibLoad(lib, name, "")
+			if err != nil {
+				return err
+			}
+			if img, err = mcImport(img, b); err != nil {
+				return err
+			}
+			v, err := mcLibStore(lib, name, img)
+			res["name"], res["version"] = name, v
+			return err
+		case "card":
+			img, err := mcCardFromFile(b)
+			if err != nil {
+				return err
+			}
+			if _, err := mcParse(img, false); err != nil {
+				return fmt.Errorf("that file isn't a PlayStation memory card: %v", err)
+			}
+			if name == "" {
+				if name, err = mcSafeName(q.Get("new_name")); err != nil {
+					return err
+				}
+				if lib == "cm" && cmMcBad(name) {
+					return errors.New("bad card name")
+				}
+				if len(mcLibVersions(lib, name)) > 0 {
+					return fmt.Errorf("there's already a card called %q", name)
+				}
+			} else if len(mcLibVersions(lib, name)) == 0 {
+				return errors.New("no such card")
+			}
+			v, err := mcLibStoreReal(lib, name, img, mcLibMeta(lib, name).Real)
+			res["name"], res["version"] = name, v
+			return err
+		}
+		return errors.New("say what the file is (save or card)")
+	}()
+	if err != nil {
+		fail(w, 400, err.Error())
+		return
+	}
+	writeJSON(w, res)
+}
+
 func mcLibMeta(lib, name string) mcMeta {
 	if lib == "cm" {
 		return cmMcMeta(name)
@@ -422,6 +573,7 @@ func registerMemcardCMRoutes(mux *http.ServeMux) {
 	h := func(p string, f http.HandlerFunc) { mux.HandleFunc(p, guard(f)) }
 	h("/api/mc/cm", apiMcCM)
 	h("/api/mc/cm/copy", apiMcCMCopy)
+	h("/api/mc/import", apiMcImport)
 }
 
 func apiMcCM(w http.ResponseWriter, r *http.Request) {
