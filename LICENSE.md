@@ -17,6 +17,9 @@ built with (go.mod: their own licences).
 Versions released before this licence was adopted (Nov 4 2026) were under
 the GNU GPL, version 3; those copies keep the terms they were released with.
 
+Retro Remake and Taki Udon have an additional permission for f3bandit's own code here,
+commercial use included: LICENSE-RETRO-REMAKE.md.
+
 Required Notice: Copyright (C) 2026 f3bandit (https://github.com/f3bandit)
 
 The full text follows.
