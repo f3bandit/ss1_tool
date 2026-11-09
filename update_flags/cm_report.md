@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-07 15:46 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `cc47bad`.
+Checked 2026-11-09 11:50 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `75e204a`.
 
 | | Verdict |
 |---|---|
@@ -38,14 +38,14 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • Apple II: floppy disk fixes (Sep 18); WOZ support, save states, screenshots (Sep 13)
 • Apple IIgs: disk-format codec + MiSTer integration (Jun 15)
 • Macintosh: add MacPPC7300 support (SCSI/CD, DDR3 ring Ethernet) (Oct 10); fast scsi (Oct 5); and 2 more
+• VideoBrain: create/mount new tape/printer images (Nov 9)
 • PC-8801: mount one disk of a multi-disk D88 (Oct 27); let a floppy image grow when the core moves a track (Oct 15)
 • SGI Indy: Ethernet and SCSI write buffer (Oct 24)
 • PCAT-286: Add PCAT-286 core support (Oct 19)
 • HP 9000: HP9K715 and HP9K385 support (support/hp9k) (Oct 19)
 • Sun family: Add Sun family support (Sun-2, Sun-3, SPARCstation) (Oct 6)
-• Atari Falcon SCSI: Add Atari Falcon SCSI support (support/falcon) (Oct 5)
-• and 3 more systems (full report: update_flags/cm_report.md)
-MiSTer fixes it doesn't have yet (video, input, menu): 23.
+• and 4 more systems (full report: update_flags/cm_report.md)
+MiSTer fixes it doesn't have yet (video, input, menu): 25.
 ```
 
 ## Linux details
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 23.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 271. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 92.
+Commits checked since 2025-10-01: 275. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 93.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -145,7 +145,12 @@ Commits checked since 2025-10-01: 271. Its base: about **2026-05-26**. Commits a
 ### Sun family
 - `ebcdb4e` 2026-10-06 Add Sun family support (Sun-2, Sun-3, SPARCstation) (#1344)
 
+### VideoBrain
+- `75e204a` 2026-11-09 VideoBrain: create/mount new tape/printer images (#1418)
+
 ### MiSTer itself (video, input, menu, files)
+- `90bcbad` 2026-11-09 Tk2000 dsk nibblizer (#1417)
+- `410b2ef` 2026-11-09 input: support GameControllerDB right-stick and Misc1 core mappings (#1409)
 - `b4aac02` 2026-10-28 input: force feedback requested by the core (#1393)
 - `e8e915a` 2026-10-19 MGL: option sets an OSD option by its name and value
 - `7dfdd47` 2026-10-17 Add screenshot_info config setting to toggle screenshot popups (#1363)
