@@ -1,5 +1,5 @@
 {
- "checked": "2026-11-09T11:50:31+00:00",
+ "checked": "2026-11-09T22:32:05+00:00",
  "cm_manifest": "d369a51bc6422137c71e78dadc038cd7",
  "cm_version": "2.0-RC-1",
  "known": "932faa982d76b8839bee0eb3fea5a18e",
@@ -26,7 +26,7 @@
  "linux_hash": "7cec2206e2a1133aa307c541219aa08f",
  "linux_url": "https://github.com/MiSTer-devel/Distribution_MiSTer/releases/download/all_releases/linux_release_20260912.7z",
  "linux_version": "260912",
- "main_head": "75e204a7f36599f7641ed0935d0281b564461151",
+ "main_head": "6ebb80b3291c7a90942d5cdcc7682d3fd3842a77",
  "verdicts": {
   "cores": "warning",
   "linux": "unsafe"
