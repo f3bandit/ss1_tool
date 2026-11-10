@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-09 22:32 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `6ebb80b`.
+Checked 2026-11-10 13:37 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `3bba2bc`.
 
 | | Verdict |
 |---|---|
@@ -36,7 +36,7 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • Minimig (Amiga): CD32 disc spin-up at Original speed (Oct 31); CD32 drive protocol of the real Chinon (Oct 30); and 23 more
 • Atari ST: apply MGL file items (floppy, ACSI, cartridge, TOS) (Oct 19)
 • Apple II: floppy disk fixes (Sep 18); WOZ support, save states, screenshots (Sep 13)
-• Apple IIgs: disk-format codec + MiSTer integration (Jun 15)
+• Apple IIgs: Uthernet II (W5100) Ethernet card support (Nov 10); disk-format codec + MiSTer integration (Jun 15)
 • Macintosh: add MacPPC7300 support (SCSI/CD, DDR3 ring Ethernet) (Oct 10); fast scsi (Oct 5); and 2 more
 • VideoBrain: create/mount new tape/printer images (Nov 9)
 • PC-8801: mount one disk of a multi-disk D88 (Oct 27); let a floppy image grow when the core moves a track (Oct 15)
@@ -45,7 +45,7 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • HP 9000: HP9K715 and HP9K385 support (support/hp9k) (Oct 19)
 • Sun family: Add Sun family support (Sun-2, Sun-3, SPARCstation) (Oct 6)
 • and 4 more systems (full report: update_flags/cm_report.md)
-MiSTer fixes it doesn't have yet (video, input, menu): 25.
+MiSTer fixes it doesn't have yet (video, input, menu): 27.
 ```
 
 ## Linux details
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 25.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 276. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 94.
+Commits checked since 2025-10-01: 279. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 94.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -69,6 +69,7 @@ Commits checked since 2025-10-01: 276. Its base: about **2026-05-26**. Commits a
 - `6e14ab2` 2026-09-30 Apple-III: disk and block-storage support (#1334)
 
 ### Apple IIgs
+- `353d485` 2026-11-10 Apple IIgs: Uthernet II (W5100) Ethernet card support (#1416)
 - `f8a198e` 2026-06-15 Apple IIgs: disk-format codec + MiSTer integration (#1216)
 
 ### Atari Falcon SCSI
@@ -149,6 +150,8 @@ Commits checked since 2025-10-01: 276. Its base: about **2026-05-26**. Commits a
 - `75e204a` 2026-11-09 VideoBrain: create/mount new tape/printer images (#1418)
 
 ### MiSTer itself (video, input, menu, files)
+- `3bba2bc` 2026-11-10 Add IBMRS6000 Support to Main_MiSTer (#1388)
+- `3e6037a` 2026-11-10 Add AT&T UNIX PC (3B1) Ethernet bridge (#1413)
 - `90bcbad` 2026-11-09 Tk2000 dsk nibblizer (#1417)
 - `410b2ef` 2026-11-09 input: support GameControllerDB right-stick and Misc1 core mappings (#1409)
 - `b4aac02` 2026-10-28 input: force feedback requested by the core (#1393)
