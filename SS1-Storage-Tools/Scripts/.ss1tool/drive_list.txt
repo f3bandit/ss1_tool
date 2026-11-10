@@ -10,7 +10,7 @@
 # rule doesn't compile, and then keeps using its built-in copy.
 #
 # Raise 'version' with every change: SS1 Tool uses the newest of its built-in list and this file.
-version 2
+version 3
 
 # ---- Gen 4 and newer
 gen4 WDS[0-9]+[GT][0-9][BGX]0E
@@ -53,6 +53,7 @@ gen4 LEGEND ?[789][0-9]0
 gen4 S70 ?BLADE
 gen4 GAMMIX ?S70
 gen4 KINGSTON NV[23]
+gen4 MTFDKBK[0-9A-Z]+QFM
 
 # ---- Gen 3
 gen3 WDS[0-9]+[GT][0-9][BGX]0C
