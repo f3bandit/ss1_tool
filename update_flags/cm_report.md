@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-10 13:37 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `3bba2bc`.
+Checked 2026-11-11 07:50 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `04f91c6`.
 
 | | Verdict |
 |---|---|
@@ -34,7 +34,7 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • Saturn: detect RAM cartridge via boot metadata (Oct 16)
 • PC-FX: Adds PCFX system support (Oct 17)
 • Minimig (Amiga): CD32 disc spin-up at Original speed (Oct 31); CD32 drive protocol of the real Chinon (Oct 30); and 23 more
-• Atari ST: apply MGL file items (floppy, ACSI, cartridge, TOS) (Oct 19)
+• Atari ST: STX, SCP and IPF floppy images (Nov 11); apply MGL file items (floppy, ACSI, cartridge, TOS) (Oct 19)
 • Apple II: floppy disk fixes (Sep 18); WOZ support, save states, screenshots (Sep 13)
 • Apple IIgs: Uthernet II (W5100) Ethernet card support (Nov 10); disk-format codec + MiSTer integration (Jun 15)
 • Macintosh: add MacPPC7300 support (SCSI/CD, DDR3 ring Ethernet) (Oct 10); fast scsi (Oct 5); and 2 more
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 27.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 279. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 94.
+Commits checked since 2025-10-01: 280. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 94.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -76,6 +76,7 @@ Commits checked since 2025-10-01: 279. Its base: about **2026-05-26**. Commits a
 - `93033fe` 2026-10-05 Add Atari Falcon SCSI support (support/falcon) (#1338)
 
 ### Atari ST
+- `04f91c6` 2026-11-11 Atari ST: STX, SCP and IPF floppy images (#1419)
 - `8bc47c0` 2026-10-19 Atari ST: apply MGL file items (floppy, ACSI, cartridge, TOS) (#1369)
 
 ### FM Towns Marty
