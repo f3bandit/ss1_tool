@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-14 14:19 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `fed03e5`.
+Checked 2026-11-16 22:20 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `f47acd3`.
 
 | | Verdict |
 |---|---|
@@ -45,7 +45,7 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • PCAT-286: Add PCAT-286 core support (Oct 19)
 • HP 9000: HP9K715 and HP9K385 support (support/hp9k) (Oct 19)
 • and 5 more systems (full report: update_flags/cm_report.md)
-MiSTer fixes it doesn't have yet (video, input, menu): 27.
+MiSTer fixes it doesn't have yet (video, input, menu): 29.
 ```
 
 ## Linux details
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 27.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 283. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 95.
+Commits checked since 2025-10-01: 289. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 99.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -155,6 +155,8 @@ Commits checked since 2025-10-01: 283. Its base: about **2026-05-26**. Commits a
 - `75e204a` 2026-11-09 VideoBrain: create/mount new tape/printer images (#1418)
 
 ### MiSTer itself (video, input, menu, files)
+- `50f0bd3` 2026-11-16 Move core identification declarations into support code.
+- `e106d44` 2026-11-16 Minimig, NeXT: move core-specific code to support.
 - `3bba2bc` 2026-11-10 Add IBMRS6000 Support to Main_MiSTer (#1388)
 - `3e6037a` 2026-11-10 Add AT&T UNIX PC (3B1) Ethernet bridge (#1413)
 - `90bcbad` 2026-11-09 Tk2000 dsk nibblizer (#1417)
