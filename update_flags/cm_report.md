@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-21 02:33 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `fb7d444`.
+Checked 2026-11-23 14:58 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `ac2e102`.
 
 | | Verdict |
 |---|---|
@@ -38,13 +38,13 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • Apple II: floppy disk fixes (Sep 18); WOZ support, save states, screenshots (Sep 13)
 • Apple IIgs: Uthernet II (W5100) Ethernet card support (Nov 10); disk-format codec + MiSTer integration (Jun 15)
 • Macintosh: add MacPPC7300 support (SCSI/CD, DDR3 ring Ethernet) (Oct 10); fast scsi (Oct 5); and 2 more
+• Firebeat: serve CD/DVD and hard disk CHDs (Nov 23)
 • DECAlphaStation200: support/decalpha, the DEC AlphaStation 200 core's Main side (Nov 14)
 • VideoBrain: create/mount new tape/printer images (Nov 9)
 • PC-8801: mount one disk of a multi-disk D88 (Oct 27); let a floppy image grow when the core moves a track (Oct 15)
 • SGI Indy: Ethernet and SCSI write buffer (Oct 24)
 • PCAT-286: Add PCAT-286 core support (Oct 19)
-• HP 9000: HP9K715 and HP9K385 support (support/hp9k) (Oct 19)
-• and 5 more systems (full report: update_flags/cm_report.md)
+• and 6 more systems (full report: update_flags/cm_report.md)
 MiSTer fixes it doesn't have yet (video, input, menu): 29.
 ```
 
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 29.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 291. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 101.
+Commits checked since 2025-10-01: 293. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 102.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -85,6 +85,9 @@ Commits checked since 2025-10-01: 291. Its base: about **2026-05-26**. Commits a
 
 ### FM Towns Marty
 - `ce432dc` 2026-09-30 Add support for FM Towns Marty (#1333)
+
+### Firebeat
+- `ac2e102` 2026-11-23 Firebeat: serve CD/DVD and hard disk CHDs (#1430)
 
 ### HP 9000
 - `144cee3` 2026-10-19 HP 9000 family: HP9K715 and HP9K385 support (support/hp9k) (#1368)
