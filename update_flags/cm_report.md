@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-25 17:26 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `8b692cb`.
+Checked 2026-11-26 11:07 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `f739cc4`.
 
 | | Verdict |
 |---|---|
@@ -45,7 +45,7 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • SGI Indy: Ethernet and SCSI write buffer (Oct 24)
 • PCAT-286: Add PCAT-286 core support (Oct 19)
 • and 6 more systems (full report: update_flags/cm_report.md)
-MiSTer fixes it doesn't have yet (video, input, menu): 29.
+MiSTer fixes it doesn't have yet (video, input, menu): 31.
 ```
 
 ## Linux details
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 29.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 294. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 103.
+Commits checked since 2025-10-01: 297. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 104.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -158,6 +158,8 @@ Commits checked since 2025-10-01: 294. Its base: about **2026-05-26**. Commits a
 - `75e204a` 2026-11-09 VideoBrain: create/mount new tape/printer images (#1418)
 
 ### MiSTer itself (video, input, menu, files)
+- `f739cc4` 2026-11-26 Add opt-in USB mt32-pi control and per-core synth selection (#1437)
+- `a5c1b78` 2026-11-25 input: set the PlayStation lightbar for Kernel 6.18 (#1436)
 - `50f0bd3` 2026-11-16 Move core identification declarations into support code.
 - `e106d44` 2026-11-16 Minimig, NeXT: move core-specific code to support.
 - `3bba2bc` 2026-11-10 Add IBMRS6000 Support to Main_MiSTer (#1388)
