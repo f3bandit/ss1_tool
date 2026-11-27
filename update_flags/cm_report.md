@@ -1,6 +1,6 @@
 # Console Mode safety report
 
-Checked 2026-11-26 11:07 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `f739cc4`.
+Checked 2026-11-27 22:08 UTC: Console Mode **2.0-RC-1**, MiSTer Linux **260912**, MiSTer Main `8f2fc4c`.
 
 | | Verdict |
 |---|---|
@@ -38,13 +38,13 @@ Cores that need newer MiSTer support than Console Mode has, so they may not work
 • Apple II: floppy disk fixes (Sep 18); WOZ support, save states, screenshots (Sep 13)
 • Apple IIgs: Uthernet II (W5100) Ethernet card support (Nov 10); disk-format codec + MiSTer integration (Jun 15)
 • Macintosh: add MacPPC7300 support (SCSI/CD, DDR3 ring Ethernet) (Oct 10); fast scsi (Oct 5); and 2 more
+• XL1200: Ethernet bridge (the 82586 in the FPGA, Main as the wire) and the cloc (Nov 27)
 • Firebeat: serve CD/DVD and hard disk CHDs (Nov 23)
 • DECAlphaStation200: support/decalpha, the DEC AlphaStation 200 core's Main side (Nov 14)
 • VideoBrain: create/mount new tape/printer images (Nov 9)
 • PC-8801: mount one disk of a multi-disk D88 (Oct 27); let a floppy image grow when the core moves a track (Oct 15)
 • SGI Indy: Ethernet and SCSI write buffer (Oct 24)
-• PCAT-286: Add PCAT-286 core support (Oct 19)
-• and 6 more systems (full report: update_flags/cm_report.md)
+• and 7 more systems (full report: update_flags/cm_report.md)
 MiSTer fixes it doesn't have yet (video, input, menu): 31.
 ```
 
@@ -59,7 +59,7 @@ MiSTer fixes it doesn't have yet (video, input, menu): 31.
 
 ## Upstream MiSTer Main changes Console Mode's MiSTer doesn't have
 
-Commits checked since 2025-10-01: 297. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 104.
+Commits checked since 2025-10-01: 298. Its base: about **2026-05-26**. Commits after that whose changes can't be told from strings: 104.
 
 ### Apple II
 - `75b96ac` 2026-09-18 Apple-II:  floppy disk fixes (#1317)
@@ -156,6 +156,9 @@ Commits checked since 2025-10-01: 297. Its base: about **2026-05-26**. Commits a
 
 ### VideoBrain
 - `75e204a` 2026-11-09 VideoBrain: create/mount new tape/printer images (#1418)
+
+### XL1200
+- `8f2fc4c` 2026-11-27 XL1200: Ethernet bridge (the 82586 in the FPGA, Main as the wire) and the clock as UTC (#1438)
 
 ### MiSTer itself (video, input, menu, files)
 - `f739cc4` 2026-11-26 Add opt-in USB mt32-pi control and per-core synth selection (#1437)
